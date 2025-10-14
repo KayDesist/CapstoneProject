@@ -19,7 +19,7 @@ public class MainMenuUI : MonoBehaviour
     {
         joinPanel.SetActive(false);
 
-        // Assign events
+        // Button events
         hostButton.GetComponent<Button>().onClick.AddListener(OnHostClicked);
         joinButton.GetComponent<Button>().onClick.AddListener(OnJoinClicked);
         confirmJoinButton.onClick.AddListener(OnConfirmJoinClicked);
@@ -34,11 +34,11 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnJoinClicked()
     {
-        // Hide main buttons, show join panel
+        // Hide menu buttons, show join UI
         hostButton.SetActive(false);
         joinButton.SetActive(false);
         joinPanel.SetActive(true);
-        joinCodeInput.text = ""; // clear field
+        joinCodeInput.text = "";
     }
 
     private void OnConfirmJoinClicked()
@@ -58,7 +58,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnCancelJoinClicked()
     {
-        // Hide join panel, bring main buttons back
+        // Bring buttons back, hide join panel
         joinPanel.SetActive(false);
         hostButton.SetActive(true);
         joinButton.SetActive(true);

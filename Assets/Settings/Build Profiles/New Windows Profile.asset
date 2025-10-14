@@ -20,7 +20,7 @@ MonoBehaviour:
     rid: 3046426811816738817
   m_OverrideGlobalSceneList: 1
   m_Scenes:
-  - m_enabled: 1
+  - m_enabled: 0
     m_path: Assets/Scenes/NetTestScene.unity
   - m_enabled: 1
     m_path: Assets/Scenes/MainMenu.unity
