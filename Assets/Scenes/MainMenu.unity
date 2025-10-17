@@ -1909,7 +1909,7 @@ MonoBehaviour:
   NetworkManagerExpanded: 0
   NetworkConfig:
     ProtocolVersion: 0
-    NetworkTransport: {fileID: 0}
+    NetworkTransport: {fileID: 1483424058}
     PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
@@ -2493,8 +2493,8 @@ CanvasRenderer:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1803464016}
   - {fileID: 648807389}
   - {fileID: 1036815897}
-  - {fileID: 769726387}
-  - {fileID: 1803464016}
   - {fileID: 1483424060}
+  - {fileID: 769726387}
