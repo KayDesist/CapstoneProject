@@ -28,7 +28,7 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnHostClicked()
     {
-        PlayerPrefs.SetString("LobbyMode", "Host");
+        CrossSceneData.LobbyMode = "Host";
         SceneManager.LoadScene("Lobby");
     }
 
@@ -51,8 +51,8 @@ public class MainMenuUI : MonoBehaviour
             return;
         }
 
-        PlayerPrefs.SetString("LobbyMode", "Client");
-        PlayerPrefs.SetString("JoinCode", code);
+        CrossSceneData.LobbyMode = "Client";
+        CrossSceneData.JoinCode = code;
         SceneManager.LoadScene("Lobby");
     }
 

@@ -5,102 +5,131 @@ using System.Collections.Generic;
 
 public class LobbyUIManager : MonoBehaviour
 {
-    [Header("Lobby UI")]
-    [SerializeField] private TextMeshProUGUI lobbyCodeText;
-    [SerializeField] private List<GameObject> playerSlots;
+    [Header("UI References")]
+    [SerializeField] private TMP_Text playerCountText;
+    [SerializeField] private TMP_Text lobbyCodeText;
     [SerializeField] private Button startButton;
-    [SerializeField] private Button forceStartButton;
-    [SerializeField] private Button readyButton;
     [SerializeField] private Button leaveButton;
 
-    private bool isReady = false;
-    private LobbyManager lobby;
+    [Header("Player Slots - Drag ALL player slots here")]
+    [SerializeField] private List<GameObject> playerSlots; // Drag Player_1, Player_2, etc. here
 
-    private void Start()
+    [Header("Manager Reference")]
+    [SerializeField] private LobbyManager lobbyManager;
+
+    private void Awake()
     {
-        lobby = FindObjectOfType<LobbyManager>();
+        if (lobbyManager == null)
+            lobbyManager = FindObjectOfType<LobbyManager>();
 
-        if (startButton != null) startButton.onClick.AddListener(OnStartClicked);
-        if (forceStartButton != null) forceStartButton.onClick.AddListener(OnForceStartClicked);
-        if (readyButton != null) readyButton.onClick.AddListener(OnReadyClicked);
-        if (leaveButton != null) leaveButton.onClick.AddListener(OnLeaveClicked);
+        SetupUI();
 
-        if (readyButton != null)
-            readyButton.GetComponentInChildren<TextMeshProUGUI>().text = "Ready";
+        // Initially hide all player slots
+        HideAllPlayerSlots();
     }
 
-    public void UpdateLobbyCode(string code)
+    private void SetupUI()
+    {
+        // Button listeners
+        if (startButton != null)
+            startButton.onClick.AddListener(OnStartClicked);
+
+        if (leaveButton != null)
+            leaveButton.onClick.AddListener(OnLeaveClicked);
+
+        // Initially hide start button
+        if (startButton != null)
+            startButton.gameObject.SetActive(false);
+    }
+
+    private void HideAllPlayerSlots()
+    {
+        foreach (var slot in playerSlots)
+        {
+            if (slot != null)
+                slot.SetActive(false);
+        }
+    }
+
+    private void Update()
+    {
+        UpdatePlayerCountDisplay();
+    }
+
+    public void UpdatePlayerCountDisplay()
+    {
+        if (playerCountText != null && lobbyManager != null)
+        {
+            int playerCount = lobbyManager.GetCurrentPlayerCount();
+            playerCountText.text = $"Players: {playerCount}/10";
+        }
+    }
+
+    public void UpdateLobbyCodeDisplay(string joinCode)
     {
         if (lobbyCodeText != null)
-            lobbyCodeText.text = $"Lobby Code: {code}";
+        {
+            lobbyCodeText.text = $"Join Code: {joinCode}";
+        }
     }
 
-    public void UpdatePlayerList(List<string> names, List<bool> readyStates)
+    public void UpdatePlayerList(List<LobbyPlayerData> players)
     {
-        for (int i = 0; i < playerSlots.Count; i++)
+        // First hide all slots
+        HideAllPlayerSlots();
+
+        // Then show and update slots for current players
+        for (int i = 0; i < players.Count && i < playerSlots.Count; i++)
         {
-            var slot = playerSlots[i];
-            if (i < names.Count)
+            if (playerSlots[i] != null)
             {
-                slot.SetActive(true);
-                var nameText = slot.GetComponentInChildren<TextMeshProUGUI>();
-                nameText.text = names[i] + (readyStates[i] ? " (Ready)" : "");
-            }
-            else
-            {
-                slot.SetActive(false);
+                playerSlots[i].SetActive(true);
+                SetupPlayerSlot(playerSlots[i], players[i]);
             }
         }
     }
 
-    public void SetStartInteractable(bool interactable)
+    private void SetupPlayerSlot(GameObject playerSlot, LobbyPlayerData playerData)
     {
-        if (startButton != null)
-            startButton.interactable = interactable;
+        // Find the child text components and update them
+        TMP_Text playerNameText = playerSlot.transform.Find("Player Name")?.GetComponent<TMP_Text>();
+        TMP_Text readyStateText = playerSlot.transform.Find("Ready State")?.GetComponent<TMP_Text>();
+
+        if (playerNameText != null)
+        {
+            playerNameText.text = playerData.PlayerName.ToString();
+
+            // Add (Host) indicator if this is the host
+            if (playerData.ClientId == 0) // Host is usually client ID 0
+            {
+                playerNameText.text += " (Host)";
+            }
+        }
+
+        if (readyStateText != null)
+        {
+            readyStateText.text = playerData.IsReady ? "Ready ✓" : "Not Ready";
+            readyStateText.color = playerData.IsReady ? Color.green : Color.gray;
+        }
     }
 
-    public void SetForceStartVisible(bool visible)
+    public void SetStartButtonVisible(bool visible)
     {
-        if (forceStartButton != null)
-            forceStartButton.gameObject.SetActive(visible);
+        if (startButton != null)
+        {
+            startButton.gameObject.SetActive(visible);
+        }
     }
 
     private void OnStartClicked()
     {
-        if (lobby != null)
-            lobby.StartGame(false);
-    }
-
-    private void OnForceStartClicked()
-    {
-        if (lobby != null)
-            lobby.StartGame(true);
-    }
-
-    private void OnReadyClicked()
-    {
-        if (lobby == null || Unity.Netcode.NetworkManager.Singleton == null ||
-            !Unity.Netcode.NetworkManager.Singleton.IsConnectedClient)
-        {
-            Debug.LogWarning("[UI] Not connected yet – ignoring ready press.");
-            return;
-        }
-
-        isReady = !isReady;
-        readyButton.GetComponentInChildren<TextMeshProUGUI>().text = isReady ? "Unready" : "Ready";
-        lobby.SetReadyServerRpc(Unity.Netcode.NetworkManager.Singleton.LocalClientId, isReady);
+        if (lobbyManager != null)
+            lobbyManager.StartGame();
     }
 
     private void OnLeaveClicked()
     {
-        if (lobby != null)
-            lobby.LeaveLobby();
-    }
-
-    // Auto refresh patch
-    public void AutoRefreshOnConnect(LobbyManager lobby)
-    {
-        if (lobby != null)
-            lobby.Invoke(nameof(lobby.RefreshUI), 0.3f);
+        if (lobbyManager != null)
+            lobbyManager.LeaveLobby();
     }
 }

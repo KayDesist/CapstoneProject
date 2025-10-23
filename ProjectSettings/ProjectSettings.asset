@@ -931,10 +931,10 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: 11e4e035-5a5c-4ae5-8bf8-f6d56cc3d0b8
+  cloudProjectId: c6dec482-8e07-4a73-8368-6d8cf431f56c
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: CapstoneProject 2025-10-01_22-00-49
+  projectName: CapstoneProject
   organizationId: lil_kale_leaf
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
