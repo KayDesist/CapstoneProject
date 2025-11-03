@@ -15,6 +15,7 @@ public class NetworkPlayerController : NetworkBehaviour
     private Rigidbody rb;
     private float xRotation = 0f;
     private bool isGrounded = true;
+    private RoleManager.PlayerRole currentRole;
 
     private void Start()
     {
@@ -43,6 +44,37 @@ public class NetworkPlayerController : NetworkBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+
+        // Get player role
+        if (RoleManager.Instance != null)
+        {
+            currentRole = RoleManager.Instance.GetLocalPlayerRole();
+            ApplyRoleSpecificSettings();
+        }
+    }
+
+    private void ApplyRoleSpecificSettings()
+    {
+        if (!IsOwner) return;
+
+        switch (currentRole)
+        {
+            case RoleManager.PlayerRole.Survivor:
+                // Survivor-specific settings
+                Debug.Log("You are a Survivor");
+                break;
+            case RoleManager.PlayerRole.Cultist:
+                // Cultist-specific settings
+                Debug.Log("You are the Cultist!");
+                // Example: Cultist might have different speed or abilities
+                moveSpeed *= 1.1f; // Cultist is slightly faster
+                break;
+        }
+    }
+
+    public RoleManager.PlayerRole GetPlayerRole()
+    {
+        return currentRole;
     }
 
     private void Update()
