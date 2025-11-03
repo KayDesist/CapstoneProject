@@ -1,4 +1,4 @@
-using UnityEngine;
+/*using UnityEngine;
 using Unity.Netcode;
 
 public class InteractableObject : NetworkBehaviour
@@ -75,4 +75,4 @@ public class InteractableObject : NetworkBehaviour
         // Visual feedback
         // You can add particle effects, sound, etc.
     }
-}
+}*/
