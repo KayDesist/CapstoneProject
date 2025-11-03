@@ -32,28 +32,54 @@ public class RoleManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log($"RoleManager spawned - IsServer: {IsServer}, IsClient: {IsClient}");
+
+        cultistPlayerId.OnValueChanged += OnCultistAssigned;
+
         if (IsServer)
         {
             // Wait a moment for all players to connect, then assign roles
             StartCoroutine(AssignRolesWithDelay());
         }
-
-        cultistPlayerId.OnValueChanged += OnCultistAssigned;
+        else
+        {
+            // Client checks if roles are already assigned
+            StartCoroutine(CheckForExistingRoles());
+        }
     }
 
     private IEnumerator AssignRolesWithDelay()
     {
+        yield return new WaitForSeconds(3f); // Wait for all clients to connect
+        AssignRolesServerRpc();
+    }
+
+    private IEnumerator CheckForExistingRoles()
+    {
         yield return new WaitForSeconds(1f);
-        AssignRoles();
+        // If cultist is already assigned, trigger the update
+        if (cultistPlayerId.Value != -1)
+        {
+            OnCultistAssigned(-1, cultistPlayerId.Value);
+        }
     }
 
     [ServerRpc]
     private void AssignRolesServerRpc()
     {
-        if (rolesAssigned) return;
+        if (rolesAssigned)
+        {
+            Debug.Log("Roles already assigned, skipping");
+            return;
+        }
 
-        var connectedClients = NetworkManager.Singleton.ConnectedClientsIds;
-        if (connectedClients.Count < 2) return;
+        var connectedClients = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+
+        if (connectedClients.Count < 1)
+        {
+            Debug.LogWarning("No connected clients to assign roles to");
+            return;
+        }
 
         // Clear previous assignments
         playerRoles.Clear();
@@ -62,11 +88,12 @@ public class RoleManager : NetworkBehaviour
         int randomIndex = Random.Range(0, connectedClients.Count);
         ulong cultistId = connectedClients[randomIndex];
 
-        // Assign roles
+        // Assign roles to all connected clients
         foreach (ulong clientId in connectedClients)
         {
             PlayerRole role = (clientId == cultistId) ? PlayerRole.Cultist : PlayerRole.Survivor;
             playerRoles[clientId] = role;
+            Debug.Log($"Assigned {role} to client {clientId}");
         }
 
         // Sync the cultist ID across network
@@ -74,28 +101,69 @@ public class RoleManager : NetworkBehaviour
         rolesAssigned = true;
 
         Debug.Log($"Roles assigned! Cultist: {cultistId}, Total players: {connectedClients.Count}");
+
+        // Notify all clients about their roles
+        NotifyClientsOfRolesClientRpc();
     }
 
-    private void AssignRoles()
+    [ClientRpc]
+    private void NotifyClientsOfRolesClientRpc()
     {
-        AssignRolesServerRpc();
+        Debug.Log("Received role notification from server");
+        // Force role update on all clients
+        if (cultistPlayerId.Value != -1)
+        {
+            OnCultistAssigned(-1, cultistPlayerId.Value);
+        }
     }
 
     private void OnCultistAssigned(int oldCultistId, int newCultistId)
     {
+        Debug.Log($"Cultist assignment changed: {oldCultistId} -> {newCultistId}");
+
         // Update local player's role knowledge
         ulong localClientId = NetworkManager.Singleton.LocalClientId;
         PlayerRole localRole = (localClientId == (ulong)newCultistId) ? PlayerRole.Cultist : PlayerRole.Survivor;
 
         playerRoles[localClientId] = localRole;
 
-        // Show role UI to player
-        if (RoleDisplayUI.Instance != null)
-        {
-            RoleDisplayUI.Instance.ShowRole(localRole);
-        }
+        Debug.Log($"Your role is: {localRole} (Client ID: {localClientId}, Cultist ID: {newCultistId})");
 
-        Debug.Log($"Your role: {localRole}");
+        // Apply role-specific settings to player
+        ApplyRoleToPlayer(localRole);
+
+        // Show role UI to player via GameHUDManager
+        if (GameHUDManager.Instance != null)
+        {
+            Debug.Log("Notifying GameHUDManager of role assignment");
+            GameHUDManager.Instance.OnRoleAssigned(localRole);
+        }
+        else
+        {
+            Debug.LogWarning("GameHUDManager.Instance is null!");
+
+            // Fallback: try to use RoleDisplayUI directly
+            if (RoleDisplayUI.Instance != null)
+            {
+                RoleDisplayUI.Instance.ShowRole(localRole);
+            }
+        }
+    }
+
+
+    private void ApplyRoleToPlayer(PlayerRole role)
+    {
+        // Find the local player and apply role settings
+        NetworkPlayerController[] allPlayers = FindObjectsOfType<NetworkPlayerController>();
+        foreach (NetworkPlayerController player in allPlayers)
+        {
+            if (player.IsOwner)
+            {
+                player.ApplyRoleSpecificSettings(role);
+                Debug.Log($"Applied {role} settings to local player");
+                break;
+            }
+        }
     }
 
     public PlayerRole GetLocalPlayerRole()
@@ -105,6 +173,8 @@ public class RoleManager : NetworkBehaviour
         {
             return playerRoles[localClientId];
         }
+
+        Debug.LogWarning($"No role found for local client {localClientId}, defaulting to Survivor");
         return PlayerRole.Survivor; // Default to survivor
     }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System;
 
 public class RoleDisplayUI : MonoBehaviour
 {
@@ -22,11 +23,15 @@ public class RoleDisplayUI : MonoBehaviour
     [SerializeField] private string survivorDescription = "Complete tasks and survive! Work with other survivors to escape before the cultist completes their ritual.";
     [SerializeField] private string cultistDescription = "Eliminate all survivors or complete the dark ritual before they escape! Use your abilities to hunt them down.";
 
+    // Event for when the role display is hidden
+    public static event Action OnRoleDisplayHidden;
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -52,12 +57,14 @@ public class RoleDisplayUI : MonoBehaviour
             case RoleManager.PlayerRole.Survivor:
                 roleTitleText.text = "SURVIVOR";
                 roleDescriptionText.text = survivorDescription;
-                roleBackground.color = survivorColor;
+                if (roleBackground != null)
+                    roleBackground.color = survivorColor;
                 break;
             case RoleManager.PlayerRole.Cultist:
                 roleTitleText.text = "CULTIST";
                 roleDescriptionText.text = cultistDescription;
-                roleBackground.color = cultistColor;
+                if (roleBackground != null)
+                    roleBackground.color = cultistColor;
                 break;
         }
 
@@ -80,6 +87,10 @@ public class RoleDisplayUI : MonoBehaviour
             roleDisplayPanel.SetActive(false);
 
         StopAllCoroutines();
+
+        // Notify that the role display has been hidden
+        OnRoleDisplayHidden?.Invoke();
+        Debug.Log("RoleDisplayUI hidden and event triggered");
     }
 
     // For testing in editor
@@ -93,5 +104,11 @@ public class RoleDisplayUI : MonoBehaviour
     private void TestCultistDisplay()
     {
         ShowRole(RoleManager.PlayerRole.Cultist);
+    }
+
+    [ContextMenu("Hide Display")]
+    private void TestHideDisplay()
+    {
+        HideRoleDisplay();
     }
 }

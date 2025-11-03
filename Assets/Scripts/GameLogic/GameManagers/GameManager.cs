@@ -7,7 +7,8 @@ using System.Collections;
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private GameObject roleManagerPrefab; // Drag your RoleManager prefab here
+    [SerializeField] private GameObject roleManagerPrefab;
+    [SerializeField] private GameObject taskManagerPrefab;
 
     private void OnEnable()
     {
@@ -31,6 +32,13 @@ public class GameManager : NetworkBehaviour
         {
             GameObject roleManager = Instantiate(roleManagerPrefab);
             roleManager.GetComponent<NetworkObject>().Spawn();
+        }
+
+        // Spawn TaskManager if it doesn't exist
+        if (TaskManager.Instance == null && taskManagerPrefab != null)
+        {
+            GameObject taskManager = Instantiate(taskManagerPrefab);
+            taskManager.GetComponent<NetworkObject>().Spawn();
         }
 
         // Wait a frame to ensure all network objects are ready
