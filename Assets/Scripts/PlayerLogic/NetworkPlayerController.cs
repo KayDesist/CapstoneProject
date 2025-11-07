@@ -5,9 +5,9 @@ using UnityEngine.SceneManagement;
 public class NetworkPlayerController : NetworkBehaviour
 {
     [Header("Movement Settings")]
-    public float walkSpeed = 5f;
-    public float sprintSpeed = 8f;
-    public float mouseSensitivity = 2f;
+    public float walkSpeed = 7f;
+    public float sprintSpeed = 11f;
+    public float mouseSensitivity = 3f;
     public float jumpForce = 7f;
 
     [Header("Stamina Settings")]
@@ -90,20 +90,39 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void HandleSprint()
     {
-        if (Input.GetKey(KeyCode.LeftShift) && playerHealth != null && playerHealth.GetStamina() > 5f && IsMoving())
+        // Check if player is trying to sprint and has enough stamina
+        if (Input.GetKey(KeyCode.LeftShift) && playerHealth != null && playerHealth.GetStamina() > 5f)
         {
-            if (!isSprinting)
-            {
-                Debug.Log("Started sprinting");
-                isSprinting = true;
-                currentSpeed = sprintSpeed;
-            }
+            // Only allow sprinting if actually moving
+            float horizontal = Input.GetAxis("Horizontal");
+            float vertical = Input.GetAxis("Vertical");
+            bool isTryingToMove = (Mathf.Abs(horizontal) > 0.1f || Mathf.Abs(vertical) > 0.1f);
 
-            // Consume stamina while sprinting
-            playerHealth.ConsumeStaminaServerRpc(sprintStaminaCost * Time.deltaTime);
+            if (isTryingToMove)
+            {
+                if (!isSprinting)
+                {
+                    Debug.Log("Started sprinting");
+                    isSprinting = true;
+                    currentSpeed = sprintSpeed;
+                }
+
+                // Consume stamina while sprinting
+                playerHealth.ConsumeStaminaServerRpc(sprintStaminaCost * Time.deltaTime);
+            }
+            else
+            {
+                // Not moving, stop sprinting
+                if (isSprinting)
+                {
+                    isSprinting = false;
+                    currentSpeed = walkSpeed;
+                }
+            }
         }
         else
         {
+            // Not sprinting or out of stamina
             if (isSprinting)
             {
                 Debug.Log("Stopped sprinting");
@@ -112,7 +131,7 @@ public class NetworkPlayerController : NetworkBehaviour
             }
         }
 
-        // If stamina is too low, stop sprinting
+        // Force stop sprinting if stamina is too low
         if (isSprinting && playerHealth != null && playerHealth.GetStamina() <= 0)
         {
             isSprinting = false;
@@ -174,13 +193,13 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             case RoleManager.PlayerRole.Survivor:
                 // Survivor-specific settings
-                walkSpeed = 5f;
-                sprintSpeed = 7f;
+                walkSpeed = 7f;
+                sprintSpeed = 10f;
                 break;
             case RoleManager.PlayerRole.Cultist:
                 // Cultist-specific settings
-                walkSpeed = 6f;
-                sprintSpeed = 9f; // Cultist is faster
+                walkSpeed = 8f;
+                sprintSpeed = 12f; // Cultist is faster
                 break;
         }
 

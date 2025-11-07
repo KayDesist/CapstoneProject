@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 2699573185125244519}
   - component: {fileID: 4766444542765424580}
   - component: {fileID: 2029569197207974863}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: PlayerPrefab
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3701559535
+  GlobalObjectIdHash: 2934530645
   InScenePlacedSourceGlobalObjectIdHash: 2934530645
   DeferredDespawnTick: 0
   Ownership: 1
@@ -153,9 +153,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 5
-  mouseSensitivity: 2
+  walkSpeed: 6
+  sprintSpeed: 20
+  mouseSensitivity: 3
   jumpForce: 7
+  sprintStaminaCost: 20
+  interactionDistance: 3
+  interactionLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
   playerCamera: {fileID: 1747126019920964327}
 --- !u!114 &4766444542765424580
 MonoBehaviour:
@@ -242,7 +248,7 @@ GameObject:
   - component: {fileID: 5009255427899211972}
   - component: {fileID: 7039391107469705769}
   - component: {fileID: 2107341917662649420}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Main Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}

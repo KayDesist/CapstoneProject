@@ -124,7 +124,7 @@ public class GameHUDManager : MonoBehaviour
             Debug.Log("Temporary role display shown via RoleDisplayUI");
 
             // Start coroutine to show persistent HUD after temporary display is hidden
-            StartCoroutine(ShowPersistentHUDAfterDelay(10f)); // Match the auto-hide time in RoleDisplayUI
+            StartCoroutine(ShowPersistentHUDAfterDelay(3f)); // Match the reduced time
         }
         else
         {
@@ -135,7 +135,7 @@ public class GameHUDManager : MonoBehaviour
 
     private IEnumerator ShowPersistentHUDAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSeconds(3f);
         ShowPersistentHUD();
     }
 

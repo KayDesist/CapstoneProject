@@ -71,13 +71,13 @@ public class RoleDisplayUI : MonoBehaviour
         // Show the panel
         roleDisplayPanel.SetActive(true);
 
-        // Auto-hide after 10 seconds if player doesn't click continue
+        // Auto-hide after 3 seconds if player doesn't click continue
         StartCoroutine(AutoHideRoleDisplay());
     }
 
     private IEnumerator AutoHideRoleDisplay()
     {
-        yield return new WaitForSeconds(10f);
+        yield return new WaitForSeconds(3f); // Reduced from 10f to 3f
         HideRoleDisplay();
     }
 
