@@ -1,6 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using TMPro;
 
 public class InteractableObject : NetworkBehaviour
 {
@@ -17,10 +16,6 @@ public class InteractableObject : NetworkBehaviour
     [SerializeField] private Material completeMaterial;
     private MeshRenderer meshRenderer;
 
-    [Header("UI Prompt")]
-    [SerializeField] private GameObject interactionPromptUI;
-    [SerializeField] private TMP_Text interactionTextUI;
-
     private NetworkVariable<bool> isInteractable = new NetworkVariable<bool>(true);
     private NetworkVariable<bool> isCompleted = new NetworkVariable<bool>(false);
     private NetworkVariable<float> interactionProgress = new NetworkVariable<float>(0f);
@@ -33,64 +28,79 @@ public class InteractableObject : NetworkBehaviour
     {
         // Initialize visual feedback
         meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer != null && incompleteMaterial != null)
-        {
-            meshRenderer.material = incompleteMaterial;
-        }
-
-        // Initialize UI prompt
-        if (interactionPromptUI != null)
-        {
-            interactionPromptUI.SetActive(false);
-        }
-
-        if (interactionTextUI != null)
-        {
-            interactionTextUI.text = interactionText;
-        }
+        UpdateVisuals();
 
         // Subscribe to network variable changes
         isCompleted.OnValueChanged += OnCompletedChanged;
         interactionProgress.OnValueChanged += OnProgressChanged;
+
+        // Initialize completed state
+        if (isCompleted.Value)
+        {
+            UpdateVisuals();
+        }
     }
 
     private void Update()
     {
-        if (!IsOwner) return;
+        // Only handle input for local player
+        if (!IsClient) return;
 
-        // Handle interaction input
+        // Check if player can interact at all (role check)
+        if (!CanInteract(NetworkManager.Singleton.LocalClientId))
+        {
+            // If they can't interact due to role, don't process any input
+            if (isInteracting)
+            {
+                CancelInteraction();
+            }
+            return;
+        }
+
+        // If player can interact, handle the input
         if (playerInRange && Input.GetKey(KeyCode.E) && isInteractable.Value && !isCompleted.Value)
         {
             if (!isInteracting)
             {
                 // Start interaction
-                isInteracting = true;
-                StartInteractionServerRpc();
+                StartInteraction();
             }
 
             // Continue interaction
             localInteractionProgress += Time.deltaTime;
-            UpdateInteractionProgressServerRpc(localInteractionProgress);
 
+            // Update progress UI
+            if (GameHUDManager.Instance != null)
+            {
+                GameHUDManager.Instance.ShowInteractionProgress(localInteractionProgress, interactionTime);
+            }
+
+            // Update server with progress
+            if (IsServer)
+            {
+                interactionProgress.Value = localInteractionProgress;
+            }
+            else
+            {
+                UpdateInteractionProgressServerRpc(localInteractionProgress);
+            }
+
+            // Check if interaction is complete
             if (localInteractionProgress >= interactionTime)
             {
-                CompleteInteractionServerRpc();
-                isInteracting = false;
-                localInteractionProgress = 0f;
+                CompleteInteraction();
             }
         }
-        else if (isInteracting)
+        else if (isInteracting && (Input.GetKeyUp(KeyCode.E) || !playerInRange))
         {
             // Cancel interaction if E key is released or player moves away
-            isInteracting = false;
-            localInteractionProgress = 0f;
-            CancelInteractionServerRpc();
+            CancelInteraction();
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsOwner) return;
+        if (!IsClient) return;
 
         // Check if it's a player and if they are the local player
         NetworkPlayerController player = other.GetComponent<NetworkPlayerController>();
@@ -98,57 +108,77 @@ public class InteractableObject : NetworkBehaviour
         {
             playerInRange = true;
 
-            // Check role requirements
-            if (requiresSurvivor && RoleManager.Instance != null)
+            // Check if player can interact based on role
+            if (CanInteract(NetworkManager.Singleton.LocalClientId))
             {
-                var playerRole = RoleManager.Instance.GetLocalPlayerRole();
-                if (playerRole != RoleManager.PlayerRole.Survivor)
+                if (GameHUDManager.Instance != null)
                 {
-                    // Cultist can't interact with survivor tasks
-                    if (interactionTextUI != null)
-                    {
-                        interactionTextUI.text = "Only survivors can interact with this";
-                    }
+                    GameHUDManager.Instance.ShowInteractionPrompt(interactionText);
                 }
+                Debug.Log("Player entered interaction zone - can interact");
             }
-
-            ShowInteractionPromptClientRpc(true);
-            Debug.Log("Player entered interaction zone");
+            else
+            {
+                if (GameHUDManager.Instance != null)
+                {
+                    GameHUDManager.Instance.ShowInteractionPrompt("You cannot interact with this");
+                }
+                Debug.Log("Player entered interaction zone - cannot interact (wrong role)");
+            }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!IsOwner) return;
+        if (!IsClient) return;
 
         NetworkPlayerController player = other.GetComponent<NetworkPlayerController>();
         if (player != null && player.IsOwner)
         {
             playerInRange = false;
-            isInteracting = false;
-            localInteractionProgress = 0f;
-            ShowInteractionPromptClientRpc(false);
+            CancelInteraction();
+
+            if (GameHUDManager.Instance != null)
+            {
+                GameHUDManager.Instance.HideInteractionPrompt();
+                GameHUDManager.Instance.HideInteractionProgress();
+            }
             Debug.Log("Player left interaction zone");
         }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void StartInteractionServerRpc(ServerRpcParams rpcParams = default)
+    private void StartInteraction()
     {
-        var clientId = rpcParams.Receive.SenderClientId;
-
-        // Check role requirements on server
-        if (requiresSurvivor && RoleManager.Instance != null)
+        if (!CanInteract(NetworkManager.Singleton.LocalClientId))
         {
-            var playerRole = RoleManager.Instance.GetPlayerRole(clientId);
-            if (playerRole != RoleManager.PlayerRole.Survivor)
-            {
-                Debug.Log($"Client {clientId} cannot interact - requires survivor role");
-                return;
-            }
+            Debug.Log("Cannot start interaction - role check failed");
+            return;
         }
 
-        Debug.Log($"Client {clientId} started interacting with {gameObject.name}");
+        isInteracting = true;
+        localInteractionProgress = 0f;
+
+        Debug.Log($"Local player started interacting with {gameObject.name}");
+
+        // Notify server
+        if (!IsServer)
+        {
+            StartInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void StartInteractionServerRpc(ulong clientId)
+    {
+        // Server-side role validation - this should never be called if client check worked, but just in case
+        if (!CanInteract(clientId))
+        {
+            Debug.Log($"Server rejected interaction start from client {clientId} - role check failed");
+            return;
+        }
+
+        Debug.Log($"Server approved interaction start from client {clientId} with {gameObject.name}");
+        interactionProgress.Value = 0f;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -157,10 +187,42 @@ public class InteractableObject : NetworkBehaviour
         interactionProgress.Value = progress;
     }
 
+    private void CompleteInteraction()
+    {
+        Debug.Log($"Local interaction completed with {gameObject.name}");
+
+        if (IsServer)
+        {
+            CompleteInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+        else
+        {
+            CompleteInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
+        }
+
+        // Reset local state
+        isInteracting = false;
+        localInteractionProgress = 0f;
+
+        // Hide UI
+        if (GameHUDManager.Instance != null)
+        {
+            GameHUDManager.Instance.HideInteractionPrompt();
+            GameHUDManager.Instance.HideInteractionProgress();
+        }
+    }
+
     [ServerRpc(RequireOwnership = false)]
-    private void CompleteInteractionServerRpc(ServerRpcParams rpcParams = default)
+    private void CompleteInteractionServerRpc(ulong clientId)
     {
         if (isCompleted.Value) return;
+
+        // Final server-side role validation
+        if (!CanInteract(clientId))
+        {
+            Debug.Log($"Server rejected completion from client {clientId} - role check failed");
+            return;
+        }
 
         // Update task progress
         if (TaskManager.Instance != null)
@@ -172,7 +234,36 @@ public class InteractableObject : NetworkBehaviour
         isCompleted.Value = true;
         isInteractable.Value = false;
 
-        Debug.Log($"Client {rpcParams.Receive.SenderClientId} completed interaction with {gameObject.name}");
+        // Update visuals
+        UpdateVisuals();
+
+        Debug.Log($"Server confirmed completion from client {clientId} for {gameObject.name}");
+    }
+
+    private void CancelInteraction()
+    {
+        if (isInteracting)
+        {
+            Debug.Log("Interaction cancelled");
+            isInteracting = false;
+            localInteractionProgress = 0f;
+
+            // Reset progress on server
+            if (IsServer)
+            {
+                interactionProgress.Value = 0f;
+            }
+            else
+            {
+                CancelInteractionServerRpc();
+            }
+
+            // Hide progress UI
+            if (GameHUDManager.Instance != null)
+            {
+                GameHUDManager.Instance.HideInteractionProgress();
+            }
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -181,31 +272,53 @@ public class InteractableObject : NetworkBehaviour
         interactionProgress.Value = 0f;
     }
 
-    [ClientRpc]
-    private void ShowInteractionPromptClientRpc(bool show)
+    private bool CanInteract(ulong clientId)
     {
-        if (interactionPromptUI != null)
+        if (!isInteractable.Value || isCompleted.Value)
+            return false;
+
+        // Role check - this is the key fix!
+        if (RoleManager.Instance != null)
         {
-            interactionPromptUI.SetActive(show && !isCompleted.Value);
+            var playerRole = RoleManager.Instance.GetPlayerRole(clientId);
+            Debug.Log($"CanInteract check - Client {clientId} has role {playerRole}, requiresSurvivor: {requiresSurvivor}, isSurvivorTask: {isSurvivorTask}");
+
+            // If this requires a survivor and player is not survivor, cannot interact
+            if (requiresSurvivor && playerRole != RoleManager.PlayerRole.Survivor)
+            {
+                Debug.Log($"Cannot interact: requires survivor but player is {playerRole}");
+                return false;
+            }
+
+            // Additional safety: if this is a survivor task and player is cultist, cannot interact
+            if (isSurvivorTask && playerRole == RoleManager.PlayerRole.Cultist)
+            {
+                Debug.Log($"Cannot interact: is survivor task but player is cultist");
+                return false;
+            }
+
+            // Additional safety: if this is NOT a survivor task and player is survivor, cannot interact
+            if (!isSurvivorTask && playerRole == RoleManager.PlayerRole.Survivor)
+            {
+                Debug.Log($"Cannot interact: is cultist task but player is survivor");
+                return false;
+            }
         }
+        else
+        {
+            Debug.Log("CanInteract: RoleManager instance is null");
+            return false; // Be safe - if no RoleManager, don't allow interaction
+        }
+
+        return true;
     }
 
     private void OnCompletedChanged(bool oldValue, bool newValue)
     {
+        UpdateVisuals();
+
         if (newValue)
         {
-            // Change material to green when completed
-            if (meshRenderer != null && completeMaterial != null)
-            {
-                meshRenderer.material = completeMaterial;
-            }
-
-            // Hide UI prompt
-            if (interactionPromptUI != null)
-            {
-                interactionPromptUI.SetActive(false);
-            }
-
             Debug.Log($"{gameObject.name} interaction completed!");
         }
     }
@@ -213,9 +326,24 @@ public class InteractableObject : NetworkBehaviour
     private void OnProgressChanged(float oldValue, float newValue)
     {
         // Show progress in console for debugging
-        if (IsOwner && isInteracting)
+        if (isInteracting)
         {
             Debug.Log($"Interaction progress: {newValue:F1}/{interactionTime:F1}");
+        }
+    }
+
+    private void UpdateVisuals()
+    {
+        if (meshRenderer != null)
+        {
+            if (isCompleted.Value && completeMaterial != null)
+            {
+                meshRenderer.material = completeMaterial;
+            }
+            else if (!isCompleted.Value && incompleteMaterial != null)
+            {
+                meshRenderer.material = incompleteMaterial;
+            }
         }
     }
 
@@ -236,10 +364,6 @@ public class InteractableObject : NetworkBehaviour
             {
                 Gizmos.matrix = transform.localToWorldMatrix;
                 Gizmos.DrawWireCube(boxCollider.center, boxCollider.size);
-            }
-            else if (collider is SphereCollider sphereCollider)
-            {
-                Gizmos.DrawWireSphere(transform.position + sphereCollider.center, sphereCollider.radius);
             }
         }
     }

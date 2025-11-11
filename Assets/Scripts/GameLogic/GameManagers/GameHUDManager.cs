@@ -26,6 +26,11 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private TMP_Text totalTasksText;
     [SerializeField] private TMP_Text tasksText;
 
+    [Header("Interaction UI")]
+    [SerializeField] private GameObject interactionPanel;
+    [SerializeField] private TMP_Text interactionText;
+    [SerializeField] private Slider interactionProgressBar;
+
     [Header("Icons")]
     [SerializeField] private Sprite survivorIcon;
     [SerializeField] private Sprite cultistIcon;
@@ -54,6 +59,10 @@ public class GameHUDManager : MonoBehaviour
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
+
+        // Initialize interaction UI
+        if (interactionPanel != null) interactionPanel.SetActive(false);
+        if (interactionProgressBar != null) interactionProgressBar.gameObject.SetActive(false);
 
         // Initialize with default values
         UpdateHealth(100, 100);
@@ -124,7 +133,7 @@ public class GameHUDManager : MonoBehaviour
             Debug.Log("Temporary role display shown via RoleDisplayUI");
 
             // Start coroutine to show persistent HUD after temporary display is hidden
-            StartCoroutine(ShowPersistentHUDAfterDelay(3f)); // Match the reduced time
+            StartCoroutine(ShowPersistentHUDAfterDelay(3f));
         }
         else
         {
@@ -135,7 +144,7 @@ public class GameHUDManager : MonoBehaviour
 
     private IEnumerator ShowPersistentHUDAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(delay);
         ShowPersistentHUD();
     }
 
@@ -287,6 +296,49 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // ============ INTERACTION UI METHODS ============
+    public void ShowInteractionPrompt(string promptText)
+    {
+        if (interactionPanel != null && interactionText != null)
+        {
+            interactionText.text = promptText;
+            interactionPanel.SetActive(true);
+            Debug.Log($"Showing interaction prompt: {promptText}");
+        }
+    }
+
+    public void HideInteractionPrompt()
+    {
+        if (interactionPanel != null)
+        {
+            interactionPanel.SetActive(false);
+            Debug.Log("Hiding interaction prompt");
+        }
+
+        if (interactionProgressBar != null)
+        {
+            interactionProgressBar.gameObject.SetActive(false);
+        }
+    }
+
+    public void ShowInteractionProgress(float progress, float maxProgress)
+    {
+        if (interactionProgressBar != null)
+        {
+            interactionProgressBar.gameObject.SetActive(true);
+            interactionProgressBar.maxValue = maxProgress;
+            interactionProgressBar.value = progress;
+        }
+    }
+
+    public void HideInteractionProgress()
+    {
+        if (interactionProgressBar != null)
+        {
+            interactionProgressBar.gameObject.SetActive(false);
+        }
+    }
+
     // For testing in editor
     [ContextMenu("Test Role Assignment - Survivor")]
     private void TestSurvivorRole()
@@ -315,6 +367,18 @@ public class GameHUDManager : MonoBehaviour
             UpdateTasksText();
             UpdateTotalTasksText(1, currentTasks.Count);
         }
+    }
+
+    [ContextMenu("Test Interaction Prompt")]
+    private void TestInteractionPrompt()
+    {
+        ShowInteractionPrompt("Press E to interact");
+    }
+
+    [ContextMenu("Test Interaction Progress")]
+    private void TestInteractionProgress()
+    {
+        ShowInteractionProgress(1.5f, 3f);
     }
 
     [ContextMenu("Show Persistent HUD")]
