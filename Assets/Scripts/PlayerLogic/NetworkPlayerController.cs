@@ -12,6 +12,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("Stamina Settings")]
     public float sprintStaminaCost = 15f;
+    private float staminaAccumulator = 0f;
 
     [Header("References")]
     public Transform playerCamera;
@@ -69,7 +70,7 @@ public class NetworkPlayerController : NetworkBehaviour
         HandleMouseLook();
         HandleSprint();
         HandleMovement();
-        HandleJump();
+       
 
         // Update movement state
         wasMoving = IsMoving();
@@ -87,6 +88,8 @@ public class NetworkPlayerController : NetworkBehaviour
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
+
+   
 
     private void HandleSprint()
     {
@@ -107,8 +110,15 @@ public class NetworkPlayerController : NetworkBehaviour
                     currentSpeed = sprintSpeed;
                 }
 
-                // Consume stamina while sprinting
-                playerHealth.ConsumeStaminaServerRpc(sprintStaminaCost * Time.deltaTime);
+                // Accumulate stamina cost and consume when it reaches at least 1
+                staminaAccumulator += sprintStaminaCost * Time.deltaTime;
+
+                if (staminaAccumulator >= 1f)
+                {
+                    int staminaToConsume = Mathf.FloorToInt(staminaAccumulator);
+                    playerHealth.ConsumeStaminaServerRpc(staminaToConsume);
+                    staminaAccumulator -= staminaToConsume;
+                }
             }
             else
             {
@@ -150,21 +160,7 @@ public class NetworkPlayerController : NetworkBehaviour
         rb.linearVelocity = moveVelocity;
     }
 
-    private void HandleJump()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            // Check if we have enough stamina to jump
-            if (playerHealth != null && playerHealth.GetStamina() >= 20f)
-            {
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-                isGrounded = false;
-
-                // Consume stamina for jump
-                playerHealth.ConsumeStaminaServerRpc(20f);
-            }
-        }
-    }
+    
 
     private void OnCollisionEnter(Collision collision)
     {
