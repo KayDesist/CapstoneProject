@@ -1866,8 +1866,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   itemName: TestSphere
+  itemType: 0
   heldPrefab: {fileID: 1189160786}
   worldModel: {fileID: 1189160786}
+  heldPositionOffset: {x: 0, y: 0, z: 0}
+  heldRotationOffset: {x: 0, y: 0, z: 0}
+  heldScale: 1
 --- !u!135 &1189160789
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -2790,9 +2794,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  itemName: TestSphere2
+  itemName: knife
+  itemType: 2
   heldPrefab: {fileID: 1672622394}
   worldModel: {fileID: 1672622394}
+  heldPositionOffset: {x: 0, y: 0, z: 0}
+  heldRotationOffset: {x: 0, y: 0, z: 0}
+  heldScale: 1
 --- !u!114 &1672622396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2862,7 +2870,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ccd401106caa0c84b806f3a2f2416c61, type: 2}
+  - {fileID: 2100000, guid: 7c5f0c0b1dc9d09419a109d3aac2e790, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
