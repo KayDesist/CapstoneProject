@@ -41,7 +41,13 @@ public class Weapon : NetworkBehaviour
 
     public virtual void Attack()
     {
-        if (!CanAttack()) return;
+        if (!CanAttack())
+        {
+            Debug.Log("Attack rejected locally - CanAttack returned false");
+            return;
+        }
+
+        Debug.Log($"Local attack initiated by client {ownerId}");
 
         if (IsServer)
         {
@@ -54,11 +60,25 @@ public class Weapon : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void RequestAttackServerRpc()
+    private void RequestAttackServerRpc(ServerRpcParams rpcParams = default)
     {
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+        // Verify the sender owns this weapon
+        if (senderClientId != ownerId)
+        {
+            Debug.LogWarning($"Client {senderClientId} attempted to attack with weapon owned by {ownerId}");
+            return;
+        }
+
         if (CanAttack())
         {
             PerformAttack();
+            Debug.Log($"Server approved attack from client {senderClientId}");
+        }
+        else
+        {
+            Debug.Log($"Server rejected attack from client {senderClientId} - CanAttack returned false");
         }
     }
 
@@ -72,12 +92,32 @@ public class Weapon : NetworkBehaviour
         {
             playerHitbox.SetActive(true, damage, ownerId);
             StartCoroutine(DeactivateHitboxAfterDelay(attackDuration));
+            Debug.Log($"Hitbox activated for player {ownerId} with damage {damage}");
+        }
+        else
+        {
+            Debug.LogError("playerHitbox is null in PerformAttack!");
         }
 
-        // Visual feedback
-        PlayAttackAnimationClientRpc();
+        // Visual feedback on all clients
+        PlayAttackEffectsClientRpc();
 
-        Debug.Log($"Player {ownerId} attacked with {weaponName}");
+        Debug.Log($"Player {ownerId} performed attack with {weaponName}");
+    }
+
+    [ClientRpc]
+    private void PlayAttackEffectsClientRpc()
+    {
+        // Play attack effects on all clients
+        if (IsOwner)
+        {
+            Debug.Log("Playing local attack effects");
+        }
+        else
+        {
+            Debug.Log("Playing remote attack effects");
+            // Add particle effects, sounds, etc. for other players' attacks
+        }
     }
 
     private IEnumerator DeactivateHitboxAfterDelay(float delay)
@@ -86,16 +126,6 @@ public class Weapon : NetworkBehaviour
         if (playerHitbox != null)
         {
             playerHitbox.SetActive(false);
-        }
-    }
-
-    [ClientRpc]
-    private void PlayAttackAnimationClientRpc()
-    {
-        // Play attack animation or effects on all clients
-        if (IsOwner)
-        {
-            Debug.Log("Playing local attack animation");
         }
     }
 

@@ -119,11 +119,11 @@ public class InventorySystem : NetworkBehaviour
             PickupItemServerRpc(itemInRange.NetworkObjectId);
         }
 
-        // Drop current item
+        // Drop current item - FIXED: Now sends both parameters
         if (Input.GetKeyDown(dropKey) && currentSlotIndex.Value != -1)
         {
-            Vector3 dropPosition = transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
-            DropCurrentItemServerRpc(dropPosition);
+            // Send both position and forward direction
+            DropCurrentItemServerRpc(transform.position, transform.forward);
         }
 
         // Weapon attack (left click) - store input for FixedUpdate
@@ -242,10 +242,15 @@ public class InventorySystem : NetworkBehaviour
                     if (playerHitbox == null)
                     {
                         playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
+                        if (playerHitbox == null)
+                        {
+                            Debug.LogError("PlayerHitboxDamage not found on player!");
+                        }
                     }
 
                     // Initialize weapon with all three required parameters
                     weapon.Initialize(OwnerClientId, health, playerHitbox);
+                    Debug.Log($"Weapon {weapon.weaponName} initialized for player {OwnerClientId}");
                 }
 
                 UpdateHeldItemVisualsClientRpc();
@@ -269,7 +274,7 @@ public class InventorySystem : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void DropCurrentItemServerRpc(Vector3 dropPosition)
+    private void DropCurrentItemServerRpc(Vector3 dropPosition, Vector3 forwardDirection)
     {
         if (currentSlotIndex.Value == -1) return;
 
@@ -281,7 +286,7 @@ public class InventorySystem : NetworkBehaviour
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
             if (item != null)
             {
-                item.DropItem(dropPosition);
+                item.DropItem(dropPosition, forwardDirection);
             }
         }
 
@@ -325,7 +330,11 @@ public class InventorySystem : NetworkBehaviour
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
             if (item != null)
             {
+                Debug.Log($"Attempting to use item: {item.ItemName}");
                 item.Use(OwnerClientId);
+
+                // If it's a consumable, it will be destroyed on server
+                // The inventory update will happen when the network variable updates
             }
         }
     }

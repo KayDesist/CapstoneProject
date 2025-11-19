@@ -1,4 +1,3 @@
-// SimplePickupSystem.cs
 using UnityEngine;
 using Unity.Netcode;
 
@@ -75,17 +74,18 @@ public class SimplePickupSystem : NetworkBehaviour
             }
         }
 
-        // Drop item
+        // Drop item - FIXED: Now sends both parameters
         if (Input.GetKeyDown(dropKey) && carriedItemId.Value != 0)
         {
-            Vector3 dropPosition = transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
+            Vector3 dropPosition = transform.position;
+            Vector3 forwardDirection = transform.forward;
             if (IsServer)
             {
-                DropItem(dropPosition);
+                DropItem(dropPosition, forwardDirection);
             }
             else
             {
-                DropItemServerRpc(dropPosition);
+                DropItemServerRpc(dropPosition, forwardDirection);
             }
         }
     }
@@ -120,12 +120,12 @@ public class SimplePickupSystem : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void DropItemServerRpc(Vector3 dropPosition)
+    private void DropItemServerRpc(Vector3 dropPosition, Vector3 forwardDirection)
     {
-        DropItem(dropPosition);
+        DropItem(dropPosition, forwardDirection);
     }
 
-    private void DropItem(Vector3 dropPosition)
+    private void DropItem(Vector3 dropPosition, Vector3 forwardDirection)
     {
         if (carriedItemId.Value == 0)
         {
@@ -138,7 +138,7 @@ public class SimplePickupSystem : NetworkBehaviour
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
             if (item != null)
             {
-                item.DropItem(dropPosition);
+                item.DropItem(dropPosition, forwardDirection);
                 carriedItemId.Value = 0;
                 Debug.Log($"Dropped {item.ItemName}");
             }

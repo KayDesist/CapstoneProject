@@ -29,28 +29,34 @@ public class PlayerHitboxDamage : NetworkBehaviour
         Debug.Log($"Hitbox {(active ? "activated" : "deactivated")} for player {ownerId} with damage {currentDamage}");
     }
 
+    private void Update()
+    {
+        // Update position every frame to follow player
+        if (isActive)
+        {
+            UpdatePosition();
+        }
+    }
+
     private void UpdatePosition()
     {
-        if (!IsOwner) return;
+        if (transform.parent == null) return;
 
         // Get player's position and forward direction
-        Transform playerTransform = transform.parent; // Assuming hitbox is child of player
-        if (playerTransform != null)
+        Transform playerTransform = transform.parent;
+        Vector3 playerPosition = playerTransform.position;
+        Vector3 playerForward = playerTransform.forward;
+
+        // Position hitbox in front of player
+        transform.position = playerPosition + playerForward * (attackRange / 2f);
+        transform.rotation = Quaternion.LookRotation(playerForward);
+
+        // Scale collider based on weapon range
+        BoxCollider collider = GetComponent<BoxCollider>();
+        if (collider != null)
         {
-            Vector3 playerPosition = playerTransform.position;
-            Vector3 playerForward = playerTransform.forward;
-
-            // Position hitbox in front of player
-            transform.position = playerPosition + playerForward * (attackRange / 2f);
-            transform.rotation = Quaternion.LookRotation(playerForward);
-
-            // Scale collider based on weapon range
-            BoxCollider collider = GetComponent<BoxCollider>();
-            if (collider != null)
-            {
-                collider.size = new Vector3(attackWidth, 1f, attackRange);
-                collider.center = new Vector3(0, 0, attackRange / 2f);
-            }
+            collider.size = new Vector3(attackWidth, 1f, attackRange);
+            collider.center = new Vector3(0, 0, attackRange / 2f);
         }
     }
 
@@ -88,6 +94,6 @@ public class PlayerHitboxDamage : NetworkBehaviour
         // Play hit effects on all clients (blood, sound, etc.)
         Debug.Log("Playing hit effect at: " + hitPosition);
 
-        
+
     }
 }

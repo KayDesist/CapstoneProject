@@ -33,7 +33,7 @@ public class PickupableItem : NetworkBehaviour
     public bool CanBePickedUp => !isPickedUp.Value;
     public bool IsPickedUp => isPickedUp.Value;
 
-    // ADD THIS METHOD - Virtual Use method that can be overridden by derived classes
+    // Virtual Use method that can be overridden by derived classes
     public virtual void Use(ulong userClientId)
     {
         Debug.Log($"Base Use method called for {itemName} by user {userClientId}");
@@ -78,20 +78,40 @@ public class PickupableItem : NetworkBehaviour
         UpdateVisualsClientRpc();
     }
 
+    // Overload for backward compatibility
     public void DropItem(Vector3 dropPosition)
     {
-        DropItemServerRpc(dropPosition);
+        DropItem(dropPosition, Vector3.forward);
+    }
+
+    public void DropItem(Vector3 dropPosition, Vector3 forwardDirection)
+    {
+        DropItemServerRpc(dropPosition, forwardDirection);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void DropItemServerRpc(Vector3 dropPosition)
+    public void DropItemServerRpc(Vector3 dropPosition, Vector3 forwardDirection)
     {
         if (!isPickedUp.Value) return;
 
         isPickedUp.Value = false;
-        transform.position = dropPosition;
 
-        UpdateVisualsClientRpc();
+        // Calculate final drop position using both position and direction
+        Vector3 finalDropPosition = dropPosition + forwardDirection * 1.5f + Vector3.up * 0.5f;
+        transform.position = finalDropPosition;
+
+        // Force position sync to all clients
+        UpdateDropPositionClientRpc(finalDropPosition);
+
+        Debug.Log($"Item dropped at position: {finalDropPosition}");
+    }
+
+    [ClientRpc]
+    private void UpdateDropPositionClientRpc(Vector3 newPosition)
+    {
+        // This ensures all clients see the item in the correct dropped position
+        transform.position = newPosition;
+        UpdateVisuals();
     }
 
     [ClientRpc]

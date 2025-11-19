@@ -115,6 +115,18 @@ public class PlayerHealth : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    private void TakeDamageClientRpc(float damage, ulong damagerId)
+    {
+        // Visual/audio feedback for damage on all clients
+        if (IsOwner)
+        {
+            Debug.Log($"You took {damage} damage from player {damagerId}");
+            // Add screen shake, blood effects, etc.
+        }
+    }
+
+
     // Server-only damage method
     public void TakeDamage(float damage, ulong damagerId = 0)
     {
@@ -128,6 +140,9 @@ public class PlayerHealth : NetworkBehaviour
 
         float newHealth = Mathf.Max(0, currentHealth.Value - damage);
         currentHealth.Value = newHealth;
+
+        // Notify all clients about the damage for visual feedback
+        TakeDamageClientRpc(damage, damagerId);
 
         Debug.Log($"Player {OwnerClientId} took {damage} damage from {damagerId}. Health: {newHealth}");
 
@@ -173,7 +188,6 @@ public class PlayerHealth : NetworkBehaviour
         Debug.Log($"Player {OwnerClientId} has died!");
         OnDeath?.Invoke();
 
-        // Handle death effects, respawn, etc.
         if (IsOwner)
         {
             // Show death screen or disable controls
@@ -183,12 +197,7 @@ public class PlayerHealth : NetworkBehaviour
             }
         }
 
-        // Server handles respawn logic
-        if (IsServer)
-        {
-            // Respawn after delay or handle game over
-            // StartCoroutine(RespawnAfterDelay(3f));
-        }
+       
     }
 
     // Public getters for client-side checks
