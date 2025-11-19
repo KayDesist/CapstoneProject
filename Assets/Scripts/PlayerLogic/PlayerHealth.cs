@@ -9,36 +9,53 @@ public class PlayerHealth : NetworkBehaviour
     public float maxStamina = 100f;
     public float staminaRegenRate = 10f;
 
-    private NetworkVariable<float> currentHealth = new NetworkVariable<float>(100f);
-    private NetworkVariable<float> currentStamina = new NetworkVariable<float>(100f);
+    // Network-synced health variable - only server can write, all clients can read
+    public NetworkVariable<float> currentHealth = new NetworkVariable<float>(
+        100f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    // Network-synced stamina variable
+    public NetworkVariable<float> currentStamina = new NetworkVariable<float>(
+        100f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     private GameHUDManager hudManager;
     private NetworkPlayerController playerController;
 
+    // Events for health changes
+    public System.Action<float, float> OnHealthChanged;
+    public System.Action<float> OnDamageTaken;
+    public System.Action OnDeath;
+
     public override void OnNetworkSpawn()
     {
+        // Server sets initial values
+        if (IsServer)
+        {
+            currentHealth.Value = maxHealth;
+            currentStamina.Value = maxStamina;
+        }
+
+        // All clients subscribe to changes
+        currentHealth.OnValueChanged += OnHealthChangedCallback;
+        currentStamina.OnValueChanged += OnStaminaChangedCallback;
+
         if (IsOwner)
         {
-            // Find HUD manager
+            // Find HUD manager for local player
             hudManager = GameHUDManager.Instance;
             playerController = GetComponent<NetworkPlayerController>();
 
-            // Set initial values
-            currentHealth.Value = maxHealth;
-            currentStamina.Value = maxStamina;
-
-            // Update HUD
+            // Update HUD with initial values
             if (hudManager != null)
             {
                 hudManager.UpdateHealth(currentHealth.Value, maxHealth);
                 hudManager.UpdateStamina(currentStamina.Value, maxStamina);
-
-                // Removed SetPlayerName call since we don't have player name display in current HUD design
             }
-
-            // Subscribe to health changes
-            currentHealth.OnValueChanged += OnHealthChanged;
-            currentStamina.OnValueChanged += OnStaminaChanged;
         }
     }
 
@@ -46,87 +63,117 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        // Regenerate stamina
+        // Regenerate stamina when not sprinting
+        if (currentStamina.Value < maxStamina && (!playerController.IsSprinting() || playerController == null))
+        {
+            // Request stamina regen from server
+            RequestStaminaRegenServerRpc();
+        }
+    }
+
+    [ServerRpc]
+    private void RequestStaminaRegenServerRpc()
+    {
         if (currentStamina.Value < maxStamina)
         {
             float newStamina = Mathf.Min(maxStamina, currentStamina.Value + staminaRegenRate * Time.deltaTime);
-            if (IsServer)
-            {
-                currentStamina.Value = newStamina;
-            }
-            else
-            {
-                UpdateStaminaServerRpc(newStamina);
-            }
-        }
-
-        // Consume stamina when moving (example)
-        if (playerController != null && playerController.IsMoving() && currentStamina.Value > 0)
-        {
-            float staminaCost = 15f * Time.deltaTime;
-            if (IsServer)
-            {
-                currentStamina.Value = Mathf.Max(0, currentStamina.Value - staminaCost);
-            }
-            else
-            {
-                ConsumeStaminaServerRpc(staminaCost);
-            }
+            currentStamina.Value = newStamina;
         }
     }
 
-    [ServerRpc]
-    private void UpdateStaminaServerRpc(float newStamina)
+    private void OnHealthChangedCallback(float oldHealth, float newHealth)
     {
-        currentStamina.Value = newStamina;
-    }
-
-    [ServerRpc]
-    public void ConsumeStaminaServerRpc(float staminaCost)
-    {
-        currentStamina.Value = Mathf.Max(0, currentStamina.Value - staminaCost);
-    }
-
-    private void OnHealthChanged(float oldHealth, float newHealth)
-    {
+        // Update HUD for local player
         if (IsOwner && hudManager != null)
         {
             hudManager.UpdateHealth(newHealth, maxHealth);
         }
 
+        // Invoke events for other systems
+        OnHealthChanged?.Invoke(newHealth, maxHealth);
+
+        // Check if damage was taken
+        if (newHealth < oldHealth)
+        {
+            OnDamageTaken?.Invoke(oldHealth - newHealth);
+            Debug.Log($"Player {OwnerClientId} health changed: {oldHealth} -> {newHealth}");
+        }
+
         // Check for death
-        if (newHealth <= 0)
+        if (newHealth <= 0 && oldHealth > 0)
         {
             HandleDeath();
         }
     }
 
-    private void OnStaminaChanged(float oldStamina, float newStamina)
+    private void OnStaminaChangedCallback(float oldStamina, float newStamina)
     {
+        // Update HUD for local player
         if (IsOwner && hudManager != null)
         {
             hudManager.UpdateStamina(newStamina, maxStamina);
         }
     }
 
-    [ServerRpc]
-    public void TakeDamageServerRpc(float damage)
+    // Server-only damage method
+    public void TakeDamage(float damage, ulong damagerId = 0)
     {
-        currentHealth.Value = Mathf.Max(0, currentHealth.Value - damage);
+        if (!IsServer)
+        {
+            Debug.LogWarning("TakeDamage called on client! This should only be called on server.");
+            return;
+        }
+
+        if (currentHealth.Value <= 0) return; // Already dead
+
+        float newHealth = Mathf.Max(0, currentHealth.Value - damage);
+        currentHealth.Value = newHealth;
+
+        Debug.Log($"Player {OwnerClientId} took {damage} damage from {damagerId}. Health: {newHealth}");
+
+        // Check for death after damage
+        if (newHealth <= 0)
+        {
+            HandleDeath();
+        }
     }
 
-    [ServerRpc]
-    public void HealServerRpc(float healAmount)
+    // Server-only heal method
+    public void Heal(float healAmount)
     {
-        currentHealth.Value = Mathf.Min(maxHealth, currentHealth.Value + healAmount);
+        if (!IsServer)
+        {
+            Debug.LogWarning("Heal called on client! This should only be called on server.");
+            return;
+        }
+
+        float newHealth = Mathf.Min(maxHealth, currentHealth.Value + healAmount);
+        currentHealth.Value = newHealth;
+
+        Debug.Log($"Player {OwnerClientId} healed for {healAmount}. Health: {newHealth}");
+    }
+
+    // Server-only stamina methods
+    public void ConsumeStamina(float staminaCost)
+    {
+        if (!IsServer) return;
+
+        currentStamina.Value = Mathf.Max(0, currentStamina.Value - staminaCost);
+    }
+
+    public void RestoreStamina(float staminaAmount)
+    {
+        if (!IsServer) return;
+
+        currentStamina.Value = Mathf.Min(maxStamina, currentStamina.Value + staminaAmount);
     }
 
     private void HandleDeath()
     {
-        // Handle player death
         Debug.Log($"Player {OwnerClientId} has died!");
+        OnDeath?.Invoke();
 
-        // You can add respawn logic or game over logic here
+        // Handle death effects, respawn, etc.
         if (IsOwner)
         {
             // Show death screen or disable controls
@@ -135,18 +182,16 @@ public class PlayerHealth : NetworkBehaviour
                 // playerController.enabled = false;
             }
         }
-    }
 
-    public override void OnNetworkDespawn()
-    {
-        if (IsOwner)
+        // Server handles respawn logic
+        if (IsServer)
         {
-            currentHealth.OnValueChanged -= OnHealthChanged;
-            currentStamina.OnValueChanged -= OnStaminaChanged;
+            // Respawn after delay or handle game over
+            // StartCoroutine(RespawnAfterDelay(3f));
         }
     }
 
-    // Public methods for other systems to interact with health
+    // Public getters for client-side checks
     public float GetHealth()
     {
         return currentHealth.Value;
@@ -160,5 +205,11 @@ public class PlayerHealth : NetworkBehaviour
     public bool IsAlive()
     {
         return currentHealth.Value > 0;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        currentHealth.OnValueChanged -= OnHealthChangedCallback;
+        currentStamina.OnValueChanged -= OnStaminaChangedCallback;
     }
 }

@@ -1,4 +1,3 @@
-// PickupableItem.cs
 using UnityEngine;
 using Unity.Netcode;
 using System;
@@ -33,6 +32,13 @@ public class PickupableItem : NetworkBehaviour
     public GameObject HeldPrefab => heldPrefab;
     public bool CanBePickedUp => !isPickedUp.Value;
     public bool IsPickedUp => isPickedUp.Value;
+
+    // ADD THIS METHOD - Virtual Use method that can be overridden by derived classes
+    public virtual void Use(ulong userClientId)
+    {
+        Debug.Log($"Base Use method called for {itemName} by user {userClientId}");
+        // Base implementation does nothing - override in derived classes
+    }
 
     public override void OnNetworkSpawn()
     {

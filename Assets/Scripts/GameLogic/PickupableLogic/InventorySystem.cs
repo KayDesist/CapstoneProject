@@ -1,4 +1,3 @@
-// InventorySystem.cs
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
@@ -16,17 +15,24 @@ public class InventorySystem : NetworkBehaviour
     [SerializeField] private KeyCode dropKey = KeyCode.Q;
     [SerializeField] private KeyCode useKey = KeyCode.Mouse1;
 
+    [Header("Combat References")]
+    [SerializeField] private PlayerHitboxDamage playerHitbox;
+
     private NetworkList<InventorySlot> inventorySlots;
-    private NetworkVariable<int> currentSlotIndex = new NetworkVariable<int>(0); // Start with slot 0 selected
+    private NetworkVariable<int> currentSlotIndex = new NetworkVariable<int>(0);
 
     private GameObject currentHeldItem;
     private PickupableItem itemInRange;
+
+    // Input handling
+    private bool attackInput = false;
+    private bool useInput = false;
 
     public struct InventorySlot : INetworkSerializable, IEquatable<InventorySlot>
     {
         public ulong itemNetworkId;
         public bool isEmpty;
-        public FixedString32Bytes itemName; // Track item name for debugging
+        public FixedString32Bytes itemName;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -35,41 +41,23 @@ public class InventorySystem : NetworkBehaviour
             serializer.SerializeValue(ref itemName);
         }
 
-        public bool Equals(InventorySlot other)
-        {
-            return itemNetworkId == other.itemNetworkId && isEmpty == other.isEmpty;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is InventorySlot other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 23 + itemNetworkId.GetHashCode();
-                hash = hash * 23 + isEmpty.GetHashCode();
-                return hash;
-            }
-        }
-
-        public static bool operator ==(InventorySlot left, InventorySlot right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(InventorySlot left, InventorySlot right)
-        {
-            return !left.Equals(right);
-        }
+        public bool Equals(InventorySlot other) => itemNetworkId == other.itemNetworkId && isEmpty == other.isEmpty;
+        public override bool Equals(object obj) => obj is InventorySlot other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(itemNetworkId, isEmpty);
+        public static bool operator ==(InventorySlot left, InventorySlot right) => left.Equals(right);
+        public static bool operator !=(InventorySlot left, InventorySlot right) => !left.Equals(right);
     }
 
     private void Awake()
     {
         inventorySlots = new NetworkList<InventorySlot>();
+
+        // Get reference to player's hitbox if not set
+        if (playerHitbox == null)
+        {
+            playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
+        }
+
     }
 
     public override void OnNetworkSpawn()
@@ -82,7 +70,6 @@ public class InventorySystem : NetworkBehaviour
         inventorySlots.OnListChanged += OnInventoryChanged;
         currentSlotIndex.OnValueChanged += OnCurrentSlotChanged;
 
-        // Initialize visuals
         if (IsOwner)
         {
             Invoke(nameof(UpdateHeldItemVisuals), 0.5f);
@@ -100,7 +87,6 @@ public class InventorySystem : NetworkBehaviour
                 itemName = "Empty"
             });
         }
-        Debug.Log("Initialized empty slots");
     }
 
     private void Update()
@@ -125,17 +111,11 @@ public class InventorySystem : NetworkBehaviour
 
                 if (itemInRange != null && itemInRange.CanBePickedUp && HasEmptySlots())
                 {
-                    if (GameHUDManager.Instance != null)
-                    {
-                        GameHUDManager.Instance.ShowInteractionPrompt($"Press {pickupKey} to pickup {itemInRange.ItemName}");
-                    }
+                    GameHUDManager.Instance?.ShowInteractionPrompt($"Press {pickupKey} to pickup {itemInRange.ItemName}");
                 }
                 else if (itemInRange != null && !HasEmptySlots())
                 {
-                    if (GameHUDManager.Instance != null)
-                    {
-                        GameHUDManager.Instance.ShowInteractionPrompt("Inventory full!");
-                    }
+                    GameHUDManager.Instance?.ShowInteractionPrompt("Inventory full!");
                 }
             }
         }
@@ -144,22 +124,19 @@ public class InventorySystem : NetworkBehaviour
             if (itemInRange != null)
             {
                 itemInRange = null;
-                if (GameHUDManager.Instance != null)
-                {
-                    GameHUDManager.Instance.HideInteractionPrompt();
-                }
+                GameHUDManager.Instance?.HideInteractionPrompt();
             }
         }
     }
 
     private void HandleInput()
     {
-        // Fixed slot switching: Key 1 = Slot 0, Key 2 = Slot 1, Key 3 = Slot 2
+        // Slot switching
         for (int i = 0; i < 3; i++)
         {
             if (Input.GetKeyDown(KeyCode.Alpha1 + i) && i < inventorySlots.Count)
             {
-                SwitchToSlot(i);
+                SwitchToSlotServerRpc(i);
             }
         }
 
@@ -176,52 +153,60 @@ public class InventorySystem : NetworkBehaviour
             DropCurrentItemServerRpc(dropPosition);
         }
 
-        // Use item (right click)
-        if (Input.GetKeyDown(useKey) && currentSlotIndex.Value != -1)
+        // Weapon attack (left click) - store input for FixedUpdate
+        if (Input.GetMouseButtonDown(0))
         {
-            UseCurrentItemServerRpc();
+            attackInput = true;
+        }
+
+        // Use item (right click)
+        if (Input.GetMouseButtonDown(1))
+        {
+            useInput = true;
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        // Handle attack input in FixedUpdate for consistent physics
+        if (attackInput)
+        {
+            HandleWeaponAttack();
+            attackInput = false;
+        }
+
+        // Handle use input
+        if (useInput)
+        {
+            HandleItemUse();
+            useInput = false;
         }
     }
 
     [ServerRpc]
     private void SwitchToSlotServerRpc(int slotIndex)
     {
-        SwitchToSlot(slotIndex);
-    }
-
-    private void SwitchToSlot(int slotIndex)
-    {
         if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
         {
             currentSlotIndex.Value = slotIndex;
-            Debug.Log($"Switched to slot {slotIndex}");
         }
     }
 
     [ServerRpc]
+
     private void PickupItemServerRpc(ulong itemId)
     {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
-        {
-            Debug.LogError($"Item with network ID {itemId} not found!");
-            return;
-        }
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId)) return;
 
         NetworkObject itemNetObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[itemId];
         PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
 
-        if (item == null || !item.CanBePickedUp || item.IsPickedUp)
-        {
-            Debug.Log("Item cannot be picked up");
-            return;
-        }
+        if (item == null || !item.CanBePickedUp || item.IsPickedUp) return;
 
-        // Find first empty slot
         for (int i = 0; i < inventorySlots.Count; i++)
         {
             if (inventorySlots[i].isEmpty)
             {
-                // Update inventory slot with item details
                 inventorySlots[i] = new InventorySlot
                 {
                     itemNetworkId = itemId,
@@ -229,22 +214,30 @@ public class InventorySystem : NetworkBehaviour
                     itemName = item.ItemName
                 };
 
-                // Pick up the item
                 item.PickupItem(NetworkObjectId);
 
-                // AUTO-EQUIP FIX: Always update visuals when picking up an item
-                // This ensures the mesh shows up even if no slot was previously selected
+                // Initialize weapon with player's hitbox
+                Weapon weapon = itemNetObject.GetComponent<Weapon>();
+                if (weapon != null)
+                {
+                    PlayerHealth health = GetComponent<PlayerHealth>();
+
+                    // Get reference to player's hitbox if not already set
+                    if (playerHitbox == null)
+                    {
+                        playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
+                    }
+
+                    // Initialize weapon with all three required parameters
+                    weapon.Initialize(OwnerClientId, health, playerHitbox);
+                }
+
                 UpdateHeldItemVisualsClientRpc();
-
                 Debug.Log($"Picked up {item.ItemName} into slot {i}");
-
-                // Log inventory state for debugging
-                LogInventoryState();
                 return;
             }
         }
     }
-
     [ClientRpc]
     private void UpdateHeldItemVisualsClientRpc()
     {
@@ -262,18 +255,15 @@ public class InventorySystem : NetworkBehaviour
         var currentSlot = inventorySlots[currentSlotIndex.Value];
         if (currentSlot.isEmpty) return;
 
-        // Drop the item
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
         {
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
             if (item != null)
             {
                 item.DropItem(dropPosition);
-                Debug.Log($"Dropped {item.ItemName}");
             }
         }
 
-        // Clear the slot
         inventorySlots[currentSlotIndex.Value] = new InventorySlot
         {
             itemNetworkId = 0,
@@ -281,15 +271,28 @@ public class InventorySystem : NetworkBehaviour
             itemName = "Empty"
         };
 
-        // Update visuals after dropping
         UpdateHeldItemVisualsClientRpc();
-
-        // Log inventory state for debugging
-        LogInventoryState();
     }
 
-    [ServerRpc]
-    private void UseCurrentItemServerRpc()
+    private void HandleWeaponAttack()
+    {
+        if (currentSlotIndex.Value == -1) return;
+
+        var currentSlot = inventorySlots[currentSlotIndex.Value];
+        if (currentSlot.isEmpty) return;
+
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
+        {
+            Weapon weapon = itemNetObject.GetComponent<Weapon>();
+            if (weapon != null)
+            {
+                // Call the non-RPC attack method
+                weapon.Attack();
+            }
+        }
+    }
+
+    private void HandleItemUse()
     {
         if (currentSlotIndex.Value == -1) return;
 
@@ -301,15 +304,13 @@ public class InventorySystem : NetworkBehaviour
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
             if (item != null)
             {
-                Debug.Log($"Used item: {item.ItemName}");
+                item.Use(OwnerClientId);
             }
         }
     }
 
     private void OnInventoryChanged(NetworkListEvent<InventorySlot> changeEvent)
     {
-        Debug.Log($"Inventory changed: Slot {changeEvent.Index} - {inventorySlots[changeEvent.Index].itemName}");
-
         if (IsOwner)
         {
             UpdateHeldItemVisuals();
@@ -318,8 +319,6 @@ public class InventorySystem : NetworkBehaviour
 
     private void OnCurrentSlotChanged(int oldValue, int newValue)
     {
-        Debug.Log($"Current slot changed from {oldValue} to {newValue}");
-
         if (IsOwner)
         {
             UpdateHeldItemVisuals();
@@ -328,90 +327,44 @@ public class InventorySystem : NetworkBehaviour
 
     private void UpdateHeldItemVisuals()
     {
-        Debug.Log("Updating held item visuals...");
-
-        // Remove current held item
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
-            Debug.Log("Destroyed previous held item");
         }
 
-        // Check if we have a valid slot and item
         if (currentSlotIndex.Value != -1 && !inventorySlots[currentSlotIndex.Value].isEmpty)
         {
             var currentSlot = inventorySlots[currentSlotIndex.Value];
-            Debug.Log($"Trying to display item from slot {currentSlotIndex.Value}: {currentSlot.itemName}");
 
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
             {
                 PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
                 if (item != null && item.HeldPrefab != null)
                 {
-                    // Instantiate the held prefab
                     currentHeldItem = Instantiate(item.HeldPrefab, itemHoldPoint);
                     currentHeldItem.transform.localPosition = Vector3.zero;
                     currentHeldItem.transform.localRotation = Quaternion.identity;
 
-                    // Force enable all renderers
+                    // Enable renderers
                     Renderer[] allRenderers = currentHeldItem.GetComponentsInChildren<Renderer>(true);
                     foreach (Renderer renderer in allRenderers)
                     {
                         renderer.enabled = true;
                     }
 
-                    // Ensure the item is active
                     currentHeldItem.SetActive(true);
-
-                    Debug.Log($"Successfully instantiated held item: {item.ItemName} in slot {currentSlotIndex.Value}");
-
-                    // Call configuration if available
                     item.ConfigureHeldItem(currentHeldItem);
+
+                    // Notify weapon it's equipped
+                    Weapon weapon = itemNetObject.GetComponent<Weapon>();
+                    if (weapon != null)
+                    {
+                        weapon.OnEquipped();
+                    }
                 }
-                else
-                {
-                    Debug.LogWarning($"Item or held prefab is null - Item: {item != null}, HeldPrefab: {item?.HeldPrefab != null}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"Could not find network object for item ID {currentSlot.itemNetworkId}");
             }
         }
-        else
-        {
-            Debug.Log("No item to display - slot is empty or invalid");
-        }
-
-        LogInventoryState();
-    }
-
-    private void LogInventoryState()
-    {
-        Debug.Log("=== CURRENT INVENTORY STATE ===");
-        for (int i = 0; i < inventorySlots.Count; i++)
-        {
-            var slot = inventorySlots[i];
-            string slotInfo = $"Slot {i}: ";
-
-            if (slot.isEmpty)
-            {
-                slotInfo += "Empty";
-            }
-            else
-            {
-                slotInfo += $"{slot.itemName} (ID: {slot.itemNetworkId})";
-            }
-
-            if (i == currentSlotIndex.Value)
-            {
-                slotInfo += " [CURRENTLY EQUIPPED]";
-            }
-
-            Debug.Log(slotInfo);
-        }
-        Debug.Log("===============================");
     }
 
     private bool HasEmptySlots()

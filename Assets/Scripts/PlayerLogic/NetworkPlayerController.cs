@@ -70,7 +70,6 @@ public class NetworkPlayerController : NetworkBehaviour
         HandleMouseLook();
         HandleSprint();
         HandleMovement();
-       
 
         // Update movement state
         wasMoving = IsMoving();
@@ -88,8 +87,6 @@ public class NetworkPlayerController : NetworkBehaviour
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
     }
-
-   
 
     private void HandleSprint()
     {
@@ -116,7 +113,17 @@ public class NetworkPlayerController : NetworkBehaviour
                 if (staminaAccumulator >= 1f)
                 {
                     int staminaToConsume = Mathf.FloorToInt(staminaAccumulator);
-                    playerHealth.ConsumeStaminaServerRpc(staminaToConsume);
+
+                    // Use ServerRpc to consume stamina on the server
+                    if (IsServer)
+                    {
+                        playerHealth.ConsumeStamina(staminaToConsume);
+                    }
+                    else
+                    {
+                        RequestStaminaConsumptionServerRpc(staminaToConsume);
+                    }
+
                     staminaAccumulator -= staminaToConsume;
                 }
             }
@@ -160,7 +167,14 @@ public class NetworkPlayerController : NetworkBehaviour
         rb.linearVelocity = moveVelocity;
     }
 
-    
+    [ServerRpc]
+    private void RequestStaminaConsumptionServerRpc(float staminaCost)
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.ConsumeStamina(staminaCost);
+        }
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
