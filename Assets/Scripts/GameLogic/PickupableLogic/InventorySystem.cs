@@ -57,7 +57,6 @@ public class InventorySystem : NetworkBehaviour
         {
             playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
         }
-
     }
 
     public override void OnNetworkSpawn()
@@ -93,39 +92,13 @@ public class InventorySystem : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        CheckForPickupItems();
         HandleInput();
-    }
 
-    private void CheckForPickupItems()
-    {
-        Ray ray = new Ray(transform.position + Vector3.up * 0.5f, transform.forward);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, 3f))
+        // Check if the current itemInRange is still valid and pickupable
+        if (itemInRange != null && (!itemInRange.CanBePickedUp || itemInRange.IsPickedUp))
         {
-            PickupableItem newItem = hit.collider.GetComponent<PickupableItem>();
-            if (newItem != itemInRange)
-            {
-                itemInRange = newItem;
-
-                if (itemInRange != null && itemInRange.CanBePickedUp && HasEmptySlots())
-                {
-                    GameHUDManager.Instance?.ShowInteractionPrompt($"Press {pickupKey} to pickup {itemInRange.ItemName}");
-                }
-                else if (itemInRange != null && !HasEmptySlots())
-                {
-                    GameHUDManager.Instance?.ShowInteractionPrompt("Inventory full!");
-                }
-            }
-        }
-        else
-        {
-            if (itemInRange != null)
-            {
-                itemInRange = null;
-                GameHUDManager.Instance?.HideInteractionPrompt();
-            }
+            itemInRange = null;
+            GameHUDManager.Instance?.HideInteractionPrompt();
         }
     }
 
@@ -183,6 +156,50 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Collision-based detection for items
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsOwner) return;
+
+        PickupableItem item = other.GetComponent<PickupableItem>();
+        if (item != null && item.CanBePickedUp)
+        {
+            itemInRange = item;
+            UpdateInteractionPrompt();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!IsOwner) return;
+
+        PickupableItem item = other.GetComponent<PickupableItem>();
+        if (item != null && item == itemInRange)
+        {
+            itemInRange = null;
+            GameHUDManager.Instance?.HideInteractionPrompt();
+        }
+    }
+
+    private void UpdateInteractionPrompt()
+    {
+        if (itemInRange != null && itemInRange.CanBePickedUp)
+        {
+            if (HasEmptySlots())
+            {
+                GameHUDManager.Instance?.ShowInteractionPrompt($"Press {pickupKey} to pickup {itemInRange.ItemName}");
+            }
+            else
+            {
+                GameHUDManager.Instance?.ShowInteractionPrompt("Inventory full!");
+            }
+        }
+        else
+        {
+            GameHUDManager.Instance?.HideInteractionPrompt();
+        }
+    }
+
     [ServerRpc]
     private void SwitchToSlotServerRpc(int slotIndex)
     {
@@ -193,7 +210,6 @@ public class InventorySystem : NetworkBehaviour
     }
 
     [ServerRpc]
-
     private void PickupItemServerRpc(ulong itemId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId)) return;
@@ -238,12 +254,17 @@ public class InventorySystem : NetworkBehaviour
             }
         }
     }
+
     [ClientRpc]
     private void UpdateHeldItemVisualsClientRpc()
     {
         if (IsOwner)
         {
             UpdateHeldItemVisuals();
+
+            // Update the interaction prompt after picking up an item
+            // This will show "Inventory full!" if we just filled the last slot
+            UpdateInteractionPrompt();
         }
     }
 
@@ -314,6 +335,7 @@ public class InventorySystem : NetworkBehaviour
         if (IsOwner)
         {
             UpdateHeldItemVisuals();
+            UpdateInteractionPrompt(); // Update prompt when inventory changes
         }
     }
 
