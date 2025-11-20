@@ -9,14 +9,14 @@ public class PlayerHealth : NetworkBehaviour
     public float maxStamina = 100f;
     public float staminaRegenRate = 10f;
 
-    // Network-synced health variable - only server can write, all clients can read
+    // Network-synced health variable with faster updates
     public NetworkVariable<float> currentHealth = new NetworkVariable<float>(
         100f,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    // Network-synced stamina variable
+    // Network-synced stamina variable with faster updates
     public NetworkVariable<float> currentStamina = new NetworkVariable<float>(
         100f,
         NetworkVariableReadPermission.Everyone,
@@ -25,6 +25,11 @@ public class PlayerHealth : NetworkBehaviour
 
     private GameHUDManager hudManager;
     private NetworkPlayerController playerController;
+
+    // Client-side prediction for immediate feedback
+    private float localHealth;
+    private float localStamina;
+    private bool initialized = false;
 
     // Events for health changes
     public System.Action<float, float> OnHealthChanged;
@@ -40,6 +45,10 @@ public class PlayerHealth : NetworkBehaviour
             currentStamina.Value = maxStamina;
         }
 
+        // Initialize local values
+        localHealth = currentHealth.Value;
+        localStamina = currentStamina.Value;
+
         // All clients subscribe to changes
         currentHealth.OnValueChanged += OnHealthChangedCallback;
         currentStamina.OnValueChanged += OnStaminaChangedCallback;
@@ -50,24 +59,36 @@ public class PlayerHealth : NetworkBehaviour
             hudManager = GameHUDManager.Instance;
             playerController = GetComponent<NetworkPlayerController>();
 
-            // Update HUD with initial values
+            // Update HUD with initial values immediately
             if (hudManager != null)
             {
-                hudManager.UpdateHealth(currentHealth.Value, maxHealth);
-                hudManager.UpdateStamina(currentStamina.Value, maxStamina);
+                hudManager.UpdateHealth(localHealth, maxHealth);
+                hudManager.UpdateStamina(localStamina, maxStamina);
             }
+
+            initialized = true;
         }
     }
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!IsOwner || !initialized) return;
 
-        // Regenerate stamina when not sprinting
-        if (currentStamina.Value < maxStamina && (!playerController.IsSprinting() || playerController == null))
+        // Regenerate stamina when not sprinting - immediate local update
+        if (localStamina < maxStamina && (!playerController.IsSprinting() || playerController == null))
         {
-            // Request stamina regen from server
-            RequestStaminaRegenServerRpc();
+            float newStamina = Mathf.Min(maxStamina, localStamina + staminaRegenRate * Time.deltaTime);
+            if (newStamina != localStamina)
+            {
+                localStamina = newStamina;
+                hudManager?.UpdateStamina(localStamina, maxStamina);
+
+                // Sync with server periodically or on significant changes
+                if (Mathf.Abs(localStamina - currentStamina.Value) > 5f)
+                {
+                    RequestStaminaRegenServerRpc();
+                }
+            }
         }
     }
 
@@ -83,10 +104,13 @@ public class PlayerHealth : NetworkBehaviour
 
     private void OnHealthChangedCallback(float oldHealth, float newHealth)
     {
-        // Update HUD for local player
+        // Update local health immediately
+        localHealth = newHealth;
+
+        // Update HUD for local player immediately
         if (IsOwner && hudManager != null)
         {
-            hudManager.UpdateHealth(newHealth, maxHealth);
+            hudManager.UpdateHealth(localHealth, maxHealth);
         }
 
         // Invoke events for other systems
@@ -108,10 +132,13 @@ public class PlayerHealth : NetworkBehaviour
 
     private void OnStaminaChangedCallback(float oldStamina, float newStamina)
     {
-        // Update HUD for local player
+        // Update local stamina immediately
+        localStamina = newStamina;
+
+        // Update HUD for local player immediately
         if (IsOwner && hudManager != null)
         {
-            hudManager.UpdateStamina(newStamina, maxStamina);
+            hudManager.UpdateStamina(localStamina, maxStamina);
         }
     }
 
@@ -125,7 +152,6 @@ public class PlayerHealth : NetworkBehaviour
             // Add screen shake, blood effects, etc.
         }
     }
-
 
     // Server-only damage method
     public void TakeDamage(float damage, ulong damagerId = 0)
@@ -196,19 +222,17 @@ public class PlayerHealth : NetworkBehaviour
                 // playerController.enabled = false;
             }
         }
-
-       
     }
 
     // Public getters for client-side checks
     public float GetHealth()
     {
-        return currentHealth.Value;
+        return IsOwner ? localHealth : currentHealth.Value;
     }
 
     public float GetStamina()
     {
-        return currentStamina.Value;
+        return IsOwner ? localStamina : currentStamina.Value;
     }
 
     public bool IsAlive()

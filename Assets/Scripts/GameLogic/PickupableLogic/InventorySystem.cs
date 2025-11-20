@@ -471,6 +471,51 @@ public class InventorySystem : NetworkBehaviour
         return false;
     }
 
+    // NEW METHOD: Remove item from inventory by network ID (for consumables)
+    public void ForceRemoveItem(ulong itemId)
+    {
+        if (!IsOwner) return;
+
+        for (int i = 0; i < inventorySlots.Count; i++)
+        {
+            if (inventorySlots[i].itemNetworkId == itemId)
+            {
+                // Clear the slot
+                if (IsServer)
+                {
+                    inventorySlots[i] = new InventorySlot
+                    {
+                        itemNetworkId = 0,
+                        isEmpty = true,
+                        itemName = "Empty"
+                    };
+                }
+                else
+                {
+                    RemoveItemServerRpc(i);
+                }
+
+                // Update visuals
+                UpdateHeldItemVisuals();
+                break;
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void RemoveItemServerRpc(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
+        {
+            inventorySlots[slotIndex] = new InventorySlot
+            {
+                itemNetworkId = 0,
+                isEmpty = true,
+                itemName = "Empty"
+            };
+        }
+    }
+
     public override void OnNetworkDespawn()
     {
         inventorySlots.OnListChanged -= OnInventoryChanged;

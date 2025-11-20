@@ -16,12 +16,25 @@ public class Weapon : NetworkBehaviour
     protected ulong ownerId;
     protected PlayerHitboxDamage playerHitbox;
 
+    // Timer-based attack system (no coroutines)
+    protected float attackEndTime = 0f;
+    protected bool isAttackActive = false;
+
     // Updated Initialize method with hitbox parameter
     public virtual void Initialize(ulong ownerClientId, PlayerHealth health, PlayerHitboxDamage hitbox)
     {
         ownerId = ownerClientId;
         ownerHealth = health;
         playerHitbox = hitbox;
+    }
+
+    protected virtual void Update()
+    {
+        // Handle attack duration without coroutines
+        if (isAttackActive && Time.time >= attackEndTime)
+        {
+            DeactivateAttack();
+        }
     }
 
     public virtual bool CanAttack()
@@ -86,13 +99,15 @@ public class Weapon : NetworkBehaviour
     protected virtual void PerformAttack()
     {
         lastAttackTime = Time.time;
+        attackEndTime = Time.time + attackDuration;
+        isAttackActive = true;
+
         ConsumeStamina();
 
         // Activate player's hitbox
         if (playerHitbox != null)
         {
             playerHitbox.SetActive(true, damage, ownerId);
-            StartCoroutine(DeactivateHitboxAfterDelay(attackDuration));
             Debug.Log($"Hitbox activated for player {ownerId} with damage {damage}");
         }
         else
@@ -104,6 +119,16 @@ public class Weapon : NetworkBehaviour
         PlayAttackEffectsClientRpc();
 
         Debug.Log($"Player {ownerId} performed attack with {weaponName}");
+    }
+
+    protected virtual void DeactivateAttack()
+    {
+        isAttackActive = false;
+        if (playerHitbox != null)
+        {
+            playerHitbox.SetActive(false);
+            Debug.Log("Hitbox deactivated");
+        }
     }
 
     [ClientRpc]
@@ -118,15 +143,6 @@ public class Weapon : NetworkBehaviour
         {
             Debug.Log("Playing remote attack effects");
             // Add particle effects, sounds, etc. for other players' attacks
-        }
-    }
-
-    private IEnumerator DeactivateHitboxAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (playerHitbox != null)
-        {
-            playerHitbox.SetActive(false);
         }
     }
 
@@ -166,6 +182,21 @@ public class Weapon : NetworkBehaviour
 
     public virtual void OnUnequipped()
     {
+        // Ensure attack is deactivated when unequipped
+        if (isAttackActive)
+        {
+            DeactivateAttack();
+        }
         Debug.Log($"{weaponName} unequipped");
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        // Clean up any active attacks
+        if (isAttackActive)
+        {
+            DeactivateAttack();
+        }
+        base.OnNetworkDespawn();
     }
 }

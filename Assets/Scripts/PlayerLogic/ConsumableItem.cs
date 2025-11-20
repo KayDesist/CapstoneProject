@@ -31,6 +31,8 @@ public class ConsumableItem : PickupableItem
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(userClientId, out var client))
         {
             PlayerHealth health = client.PlayerObject.GetComponent<PlayerHealth>();
+            InventorySystem inventory = client.PlayerObject.GetComponent<InventorySystem>();
+
             if (health != null)
             {
                 Debug.Log($"Found PlayerHealth for client {userClientId}. Current health: {health.GetHealth()}, stamina: {health.GetStamina()}");
@@ -55,6 +57,12 @@ public class ConsumableItem : PickupableItem
 
                 if (wasUsed)
                 {
+                    // Remove from inventory first
+                    if (inventory != null)
+                    {
+                        RemoveFromInventoryClientRpc(userClientId, NetworkObjectId);
+                    }
+
                     // Destroy the consumable after use
                     if (NetworkObject != null)
                     {
@@ -75,6 +83,20 @@ public class ConsumableItem : PickupableItem
         else
         {
             Debug.LogError($"Client {userClientId} not found in connected clients");
+        }
+    }
+
+    [ClientRpc]
+    private void RemoveFromInventoryClientRpc(ulong clientId, ulong itemId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == clientId)
+        {
+            InventorySystem inventory = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<InventorySystem>();
+            if (inventory != null)
+            {
+                // This will trigger the inventory to remove the item
+                inventory.ForceRemoveItem(itemId);
+            }
         }
     }
 }
