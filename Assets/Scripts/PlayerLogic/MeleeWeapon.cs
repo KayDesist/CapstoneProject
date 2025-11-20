@@ -5,64 +5,38 @@ using System.Collections;
 public class MeleeWeapon : Weapon
 {
     [Header("Melee Settings")]
-    public float meleeAttackDuration = 0.3f; // Renamed from attackDuration
+    public float meleeAttackDuration = 0.3f;
 
-    private bool isMeleeAttacking = false; // Renamed from isAttacking
-    private float meleeAttackEndTime = 0f; // Renamed from attackEndTime
-
-    // Override Initialize to match base class signature
     public override void Initialize(ulong ownerClientId, PlayerHealth health, PlayerHitboxDamage hitbox)
     {
         base.Initialize(ownerClientId, health, hitbox);
+        // Use the melee duration for this weapon type
+        baseAttackDuration = meleeAttackDuration;
         Debug.Log($"MeleeWeapon initialized for player {ownerId}");
     }
 
-    private void Update()
-    {
-        // Handle hitbox deactivation without coroutine
-        if (isMeleeAttacking && Time.time >= meleeAttackEndTime)
-        {
-            if (playerHitbox != null)
-            {
-                playerHitbox.SetActive(false);
-            }
-            isMeleeAttacking = false;
-        }
-    }
-
-    // Override PerformAttack for melee-specific logic
     protected override void PerformAttack()
     {
-        lastAttackTime = Time.time;
-        ConsumeStamina();
-        isMeleeAttacking = true;
-        meleeAttackEndTime = Time.time + meleeAttackDuration;
+        // Let base class handle timing and hitbox activation
+        base.PerformAttack();
 
-        // Activate player's hitbox
-        if (playerHitbox != null)
-        {
-            playerHitbox.SetActive(true, damage, ownerId);
-        }
-
-        // Visual feedback
+        // Melee-specific visual feedback
         PlayAttackAnimationClientRpc();
-
-        Debug.Log($"Player {ownerId} attacked with {weaponName}");
+        Debug.Log($"Player {ownerId} performed melee attack with {weaponName}");
     }
 
     [ClientRpc]
     private void PlayAttackAnimationClientRpc()
     {
-        // Play attack animation or effects on all clients
+        // Play melee-specific attack effects on all clients
         if (IsOwner)
         {
-            Debug.Log("Playing local attack animation");
+            Debug.Log("Playing local melee attack animation");
         }
-    }
-
-    public override void Use(ulong userClientId)
-    {
-        Attack();
+        else
+        {
+            Debug.Log("Playing remote melee attack animation");
+        }
     }
 
     public override void OnEquipped()
@@ -71,19 +45,9 @@ public class MeleeWeapon : Weapon
         Debug.Log($"Melee weapon {weaponName} equipped");
     }
 
-    public bool IsAttacking()
-    {
-        return isMeleeAttacking;
-    }
-
     public override void OnUnequipped()
     {
-        // Ensure hitbox is deactivated when weapon is unequipped
-        if (isMeleeAttacking && playerHitbox != null)
-        {
-            playerHitbox.SetActive(false);
-        }
-        isMeleeAttacking = false;
+        // Base class already handles deactivation
         base.OnUnequipped();
     }
 }

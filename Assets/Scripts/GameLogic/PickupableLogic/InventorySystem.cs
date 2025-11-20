@@ -66,6 +66,20 @@ public class InventorySystem : NetworkBehaviour
             InitializeEmptySlots();
         }
 
+        // Ensure hitbox reference is set
+        if (playerHitbox == null)
+        {
+            playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
+            if (playerHitbox == null)
+            {
+                Debug.LogError("PlayerHitboxDamage not found on player!");
+            }
+            else
+            {
+                Debug.Log($"Hitbox found and assigned: {playerHitbox.gameObject.name}");
+            }
+        }
+
         inventorySlots.OnListChanged += OnInventoryChanged;
         currentSlotIndex.OnValueChanged += OnCurrentSlotChanged;
 
@@ -142,7 +156,6 @@ public class InventorySystem : NetworkBehaviour
             attackInput = true;
         }
 
-      
         if (Input.GetMouseButtonDown(1))
         {
             useInput = true;
@@ -312,22 +325,37 @@ public class InventorySystem : NetworkBehaviour
 
     private void HandleWeaponAttack()
     {
-        if (currentSlotIndex.Value == -1) return;
+        if (currentSlotIndex.Value == -1)
+        {
+            Debug.Log("No slot selected");
+            return;
+        }
 
         var currentSlot = inventorySlots[currentSlotIndex.Value];
-        if (currentSlot.isEmpty) return;
+        if (currentSlot.isEmpty)
+        {
+            Debug.Log("Current slot is empty");
+            return;
+        }
 
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
         {
             Weapon weapon = itemNetObject.GetComponent<Weapon>();
             if (weapon != null)
             {
-                // Call the non-RPC attack method
+                Debug.Log($"Attempting attack with {weapon.weaponName}");
                 weapon.Attack();
             }
+            else
+            {
+                Debug.Log("Item in slot is not a weapon");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Could not find network object with ID: {currentSlot.itemNetworkId}");
         }
     }
-
 
     private void OnInventoryChanged(NetworkListEvent<InventorySlot> changeEvent)
     {
@@ -451,7 +479,6 @@ public class InventorySystem : NetworkBehaviour
         }
         return false;
     }
-
 
     public override void OnNetworkDespawn()
     {

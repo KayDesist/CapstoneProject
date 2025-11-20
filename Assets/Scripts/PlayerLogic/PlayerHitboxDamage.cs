@@ -93,7 +93,15 @@ public class PlayerHitboxDamage : NetworkBehaviour
     {
         // Play hit effects on all clients (blood, sound, etc.)
         Debug.Log("Playing hit effect at: " + hitPosition);
+    }
 
+    private void OnDrawGizmos()
+    {
+        if (!isActive) return;
 
+        Gizmos.color = Color.red;
+        Vector3 center = transform.position + transform.forward * (attackRange / 2f);
+        Vector3 size = new Vector3(attackWidth, 1f, attackRange);
+        Gizmos.DrawWireCube(center, size);
     }
 }

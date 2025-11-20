@@ -9,15 +9,15 @@ public class Weapon : NetworkBehaviour
     public float damage = 25f;
     public float attackCooldown = 1f;
     public float staminaCost = 10f;
-    public float baseAttackDuration = 0.3f; // Renamed from attackDuration
+    public float baseAttackDuration = 0.3f;
 
     protected float lastAttackTime;
     protected PlayerHealth ownerHealth;
     protected ulong ownerId;
     protected PlayerHitboxDamage playerHitbox;
 
-    // Timer-based attack system (no coroutines)
-    protected float weaponAttackEndTime = 0f; // Renamed from attackEndTime
+    // Timer-based attack system
+    protected float weaponAttackEndTime = 0f;
     protected bool isAttackActive = false;
 
     // Updated Initialize method with hitbox parameter
@@ -54,9 +54,10 @@ public class Weapon : NetworkBehaviour
 
     public virtual void Attack()
     {
-        if (!CanAttack())
+        // Only do minimal local checks for immediate feedback
+        if (Time.time < lastAttackTime + attackCooldown)
         {
-            Debug.Log("Attack rejected locally - CanAttack returned false");
+            Debug.Log("Weapon on cooldown - rejected locally");
             return;
         }
 
@@ -68,12 +69,11 @@ public class Weapon : NetworkBehaviour
         }
         else
         {
-            // FIXED: Remove ServerRpcParams since we don't need them
             RequestAttackServerRpc();
         }
     }
 
-    [ServerRpc(RequireOwnership = false)] // FIXED: Allow non-owners to call this
+    [ServerRpc(RequireOwnership = false)]
     private void RequestAttackServerRpc(ServerRpcParams rpcParams = default)
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
@@ -85,15 +85,21 @@ public class Weapon : NetworkBehaviour
             return;
         }
 
-        if (CanAttack())
+        // Server-side validation
+        if (Time.time < lastAttackTime + attackCooldown)
         {
-            PerformAttack();
-            Debug.Log($"Server approved attack from client {senderClientId}");
+            Debug.Log($"Server rejected attack - on cooldown");
+            return;
         }
-        else
+
+        if (ownerHealth != null && ownerHealth.GetStamina() < staminaCost)
         {
-            Debug.Log($"Server rejected attack from client {senderClientId} - CanAttack returned false");
+            Debug.Log($"Server rejected attack - not enough stamina");
+            return;
         }
+
+        PerformAttack();
+        Debug.Log($"Server approved attack from client {senderClientId}");
     }
 
     protected virtual void PerformAttack()
@@ -161,7 +167,7 @@ public class Weapon : NetworkBehaviour
         }
     }
 
-    [ServerRpc(RequireOwnership = false)] // FIXED: Allow non-owners to call this
+    [ServerRpc(RequireOwnership = false)]
     private void RequestStaminaConsumptionServerRpc(float cost)
     {
         if (ownerHealth != null)
