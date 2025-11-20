@@ -5,10 +5,10 @@ using System.Collections;
 public class MeleeWeapon : Weapon
 {
     [Header("Melee Settings")]
-    public float attackDuration = 0.3f;
+    public float meleeAttackDuration = 0.3f; // Renamed from attackDuration
 
-    private bool isAttacking = false;
-    private float attackEndTime = 0f;
+    private bool isMeleeAttacking = false; // Renamed from isAttacking
+    private float meleeAttackEndTime = 0f; // Renamed from attackEndTime
 
     // Override Initialize to match base class signature
     public override void Initialize(ulong ownerClientId, PlayerHealth health, PlayerHitboxDamage hitbox)
@@ -20,13 +20,13 @@ public class MeleeWeapon : Weapon
     private void Update()
     {
         // Handle hitbox deactivation without coroutine
-        if (isAttacking && Time.time >= attackEndTime)
+        if (isMeleeAttacking && Time.time >= meleeAttackEndTime)
         {
             if (playerHitbox != null)
             {
                 playerHitbox.SetActive(false);
             }
-            isAttacking = false;
+            isMeleeAttacking = false;
         }
     }
 
@@ -35,8 +35,8 @@ public class MeleeWeapon : Weapon
     {
         lastAttackTime = Time.time;
         ConsumeStamina();
-        isAttacking = true;
-        attackEndTime = Time.time + attackDuration;
+        isMeleeAttacking = true;
+        meleeAttackEndTime = Time.time + meleeAttackDuration;
 
         // Activate player's hitbox
         if (playerHitbox != null)
@@ -73,17 +73,17 @@ public class MeleeWeapon : Weapon
 
     public bool IsAttacking()
     {
-        return isAttacking;
+        return isMeleeAttacking;
     }
 
     public override void OnUnequipped()
     {
         // Ensure hitbox is deactivated when weapon is unequipped
-        if (isAttacking && playerHitbox != null)
+        if (isMeleeAttacking && playerHitbox != null)
         {
             playerHitbox.SetActive(false);
         }
-        isAttacking = false;
+        isMeleeAttacking = false;
         base.OnUnequipped();
     }
 }

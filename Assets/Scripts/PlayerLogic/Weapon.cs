@@ -9,7 +9,7 @@ public class Weapon : NetworkBehaviour
     public float damage = 25f;
     public float attackCooldown = 1f;
     public float staminaCost = 10f;
-    public float attackDuration = 0.3f;
+    public float baseAttackDuration = 0.3f; // Renamed from attackDuration
 
     protected float lastAttackTime;
     protected PlayerHealth ownerHealth;
@@ -17,7 +17,7 @@ public class Weapon : NetworkBehaviour
     protected PlayerHitboxDamage playerHitbox;
 
     // Timer-based attack system (no coroutines)
-    protected float attackEndTime = 0f;
+    protected float weaponAttackEndTime = 0f; // Renamed from attackEndTime
     protected bool isAttackActive = false;
 
     // Updated Initialize method with hitbox parameter
@@ -31,7 +31,7 @@ public class Weapon : NetworkBehaviour
     protected virtual void Update()
     {
         // Handle attack duration without coroutines
-        if (isAttackActive && Time.time >= attackEndTime)
+        if (isAttackActive && Time.time >= weaponAttackEndTime)
         {
             DeactivateAttack();
         }
@@ -99,7 +99,7 @@ public class Weapon : NetworkBehaviour
     protected virtual void PerformAttack()
     {
         lastAttackTime = Time.time;
-        attackEndTime = Time.time + attackDuration;
+        weaponAttackEndTime = Time.time + baseAttackDuration;
         isAttackActive = true;
 
         ConsumeStamina();
