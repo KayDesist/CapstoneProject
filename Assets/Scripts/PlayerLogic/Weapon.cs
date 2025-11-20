@@ -55,16 +55,17 @@ public class Weapon : NetworkBehaviour
         }
         else
         {
+            // FIXED: Remove ServerRpcParams since we don't need them
             RequestAttackServerRpc();
         }
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)] // FIXED: Allow non-owners to call this
     private void RequestAttackServerRpc(ServerRpcParams rpcParams = default)
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        // Verify the sender owns this weapon
+        // Verify the sender is the owner of this weapon
         if (senderClientId != ownerId)
         {
             Debug.LogWarning($"Client {senderClientId} attempted to attack with weapon owned by {ownerId}");
@@ -144,7 +145,7 @@ public class Weapon : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)] // FIXED: Allow non-owners to call this
     private void RequestStaminaConsumptionServerRpc(float cost)
     {
         if (ownerHealth != null)

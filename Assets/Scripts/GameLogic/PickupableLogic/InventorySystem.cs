@@ -104,12 +104,22 @@ public class InventorySystem : NetworkBehaviour
 
     private void HandleInput()
     {
-        // Slot switching
+        // Slot switching - FIXED: Handle locally for immediate response
         for (int i = 0; i < 3; i++)
         {
             if (Input.GetKeyDown(KeyCode.Alpha1 + i) && i < inventorySlots.Count)
             {
-                SwitchToSlotServerRpc(i);
+                // Switch locally first for immediate visual feedback
+                int newSlotIndex = i;
+
+                // Update visuals immediately
+                if (newSlotIndex >= 0 && newSlotIndex < inventorySlots.Count)
+                {
+                    UpdateHeldItemVisualsForSlot(newSlotIndex);
+                }
+
+                // Then sync with server
+                SwitchToSlotServerRpc(newSlotIndex);
             }
         }
 
@@ -119,7 +129,7 @@ public class InventorySystem : NetworkBehaviour
             PickupItemServerRpc(itemInRange.NetworkObjectId);
         }
 
-        // Drop current item - FIXED: Now sends both parameters
+        // Drop current item
         if (Input.GetKeyDown(dropKey) && currentSlotIndex.Value != -1)
         {
             // Send both position and forward direction
@@ -206,6 +216,7 @@ public class InventorySystem : NetworkBehaviour
         if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
         {
             currentSlotIndex.Value = slotIndex;
+            Debug.Log($"Server updated current slot to {slotIndex}");
         }
     }
 
@@ -332,9 +343,6 @@ public class InventorySystem : NetworkBehaviour
             {
                 Debug.Log($"Attempting to use item: {item.ItemName}");
                 item.Use(OwnerClientId);
-
-                // If it's a consumable, it will be destroyed on server
-                // The inventory update will happen when the network variable updates
             }
         }
     }
@@ -352,7 +360,57 @@ public class InventorySystem : NetworkBehaviour
     {
         if (IsOwner)
         {
+            Debug.Log($"Slot changed from {oldValue} to {newValue}");
             UpdateHeldItemVisuals();
+        }
+    }
+
+    // NEW METHOD: Immediate visual update for slot switching
+    private void UpdateHeldItemVisualsForSlot(int slotIndex)
+    {
+        if (currentHeldItem != null)
+        {
+            Destroy(currentHeldItem);
+            currentHeldItem = null;
+        }
+
+        if (slotIndex != -1 && !inventorySlots[slotIndex].isEmpty)
+        {
+            var targetSlot = inventorySlots[slotIndex];
+
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetSlot.itemNetworkId, out NetworkObject itemNetObject))
+            {
+                PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
+                if (item != null && item.HeldPrefab != null)
+                {
+                    currentHeldItem = Instantiate(item.HeldPrefab, itemHoldPoint);
+                    currentHeldItem.transform.localPosition = Vector3.zero;
+                    currentHeldItem.transform.localRotation = Quaternion.identity;
+
+                    // Enable renderers
+                    Renderer[] allRenderers = currentHeldItem.GetComponentsInChildren<Renderer>(true);
+                    foreach (Renderer renderer in allRenderers)
+                    {
+                        renderer.enabled = true;
+                    }
+
+                    currentHeldItem.SetActive(true);
+                    item.ConfigureHeldItem(currentHeldItem);
+
+                    // Notify weapon it's equipped
+                    Weapon weapon = itemNetObject.GetComponent<Weapon>();
+                    if (weapon != null)
+                    {
+                        weapon.OnEquipped();
+                    }
+
+                    Debug.Log($"Immediately updated visuals for slot {slotIndex}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log($"Slot {slotIndex} is empty - no item to show");
         }
     }
 
@@ -393,8 +451,14 @@ public class InventorySystem : NetworkBehaviour
                     {
                         weapon.OnEquipped();
                     }
+
+                    Debug.Log($"Updated held item visuals for slot {currentSlotIndex.Value}");
                 }
             }
+        }
+        else
+        {
+            Debug.Log($"Current slot {currentSlotIndex.Value} is empty - no item to show");
         }
     }
 
