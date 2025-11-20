@@ -1806,33 +1806,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1178385762}
   m_CullTransparentMesh: 1
---- !u!1 &1189160786 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8401936255121134553, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-  m_PrefabInstance: {fileID: 6919930715358974639}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1189160793
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1189160786}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b9c8e4e275627042880a87544ffe204, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  itemName: Medkit
-  itemType: 1
-  heldPrefab: {fileID: 1189160786}
-  worldModel: {fileID: 1189160786}
-  heldPositionOffset: {x: 0, y: 0, z: 0}
-  heldRotationOffset: {x: 0, y: 0, z: 0}
-  heldScale: 1
-  healthRestore: 25
-  staminaRestore: 30
 --- !u!1 &1213972945
 GameObject:
   m_ObjectHideFlags: 0
@@ -2632,30 +2605,6 @@ MonoBehaviour:
   interactionProgressBar: {fileID: 2045081504}
   survivorIcon: {fileID: 21300000, guid: 3f9c1bc0f0aab8e47841aff8a459bd75, type: 3}
   cultistIcon: {fileID: 21300000, guid: 2a795aba9d423814eb88a0b70c29fa03, type: 3}
---- !u!1 &1672622394 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3316186052169032855, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
-  m_PrefabInstance: {fileID: 6465490515151151139}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1672622401
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1672622394}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe43c91d5353a2241801157a41313d0e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  weaponName: Knife
-  damage: 25
-  attackCooldown: 1
-  staminaCost: 10
-  attackDuration: 0.3
-  attackDuration: 0.3
 --- !u!1 &1674406810
 GameObject:
   m_ObjectHideFlags: 0
@@ -3599,94 +3548,11 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 3285879890
       objectReference: {fileID: 0}
-    - target: {fileID: 6315812975728474340, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
-      propertyPath: InScenePlacedSourceGlobalObjectIdHash
-      value: 1042520636
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3316186052169032855, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1672622401}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
---- !u!1001 &6919930715358974639
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1300625719488973251, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: itemName
-      value: Medkit
-      objectReference: {fileID: 0}
-    - target: {fileID: 1300625719488973251, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: itemType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.03
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 10.93
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1375506005680399243, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3712554878517586686, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: GlobalObjectIdHash
-      value: 1300825580
-      objectReference: {fileID: 0}
-    - target: {fileID: 3712554878517586686, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: InScenePlacedSourceGlobalObjectIdHash
-      value: 267311495
-      objectReference: {fileID: 0}
-    - target: {fileID: 8401936255121134553, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      propertyPath: m_Name
-      value: Medkit
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8401936255121134553, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1189160793}
-  m_SourcePrefab: {fileID: 100100000, guid: e3c7b62baca701844b3b96f75d6ab19c, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3698,8 +3564,7 @@ SceneRoots:
   - {fileID: 1307630060}
   - {fileID: 1968953600}
   - {fileID: 1660504280}
+  - {fileID: 874382290}
   - {fileID: 5415606069010518380}
   - {fileID: 1407705973}
-  - {fileID: 874382290}
-  - {fileID: 6919930715358974639}
   - {fileID: 6465490515151151139}

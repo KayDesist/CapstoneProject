@@ -179,20 +179,7 @@ public class PlayerHealth : NetworkBehaviour
         }
     }
 
-    // Server-only heal method
-    public void Heal(float healAmount)
-    {
-        if (!IsServer)
-        {
-            Debug.LogWarning("Heal called on client! This should only be called on server.");
-            return;
-        }
-
-        float newHealth = Mathf.Min(maxHealth, currentHealth.Value + healAmount);
-        currentHealth.Value = newHealth;
-
-        Debug.Log($"Player {OwnerClientId} healed for {healAmount}. Health: {newHealth}");
-    }
+    
 
     // Server-only stamina methods
     public void ConsumeStamina(float staminaCost)

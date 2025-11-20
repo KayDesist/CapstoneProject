@@ -7,11 +7,11 @@ public class PickupableItem : NetworkBehaviour
     public enum ItemType
     {
         Generic,
-        Consumable,
         Weapon,
         Tool,
         Evidence
     }
+   
 
     [Header("Item Settings")]
     [SerializeField] private string itemName = "Item";
