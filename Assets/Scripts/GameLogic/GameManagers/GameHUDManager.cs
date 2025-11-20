@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -35,6 +35,8 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private Sprite survivorIcon;
     [SerializeField] private Sprite cultistIcon;
 
+    private List<string> survivorTaskList = new List<string>();
+    private List<string> cultistTaskList = new List<string>();
     private List<string> currentTasks = new List<string>();
     private RoleManager.PlayerRole currentRole;
 
@@ -172,53 +174,56 @@ public class GameHUDManager : MonoBehaviour
 
     private void SetupSurvivorTasks()
     {
-        currentTasks.Clear();
+        survivorTaskList.Clear();
 
         if (TaskManager.Instance != null)
         {
             var tasks = TaskManager.Instance.GetSurvivorTasksForUI();
-            currentTasks.AddRange(tasks);
-            UpdateTotalTasksText(0, tasks.Count);
+            survivorTaskList.AddRange(tasks);
+            currentTasks = new List<string>(survivorTaskList);
+            UpdateTotalTasksText(0, currentTasks.Count);
         }
         else
         {
             // Fallback tasks
-            currentTasks.AddRange(new string[] {
-                "Repair Generator (0/3)",
-                "Collect Firewood (0/5)",
-                "Find Car Keys (0/1)",
-                "Fix Radio Tower (0/2)",
-                "Gather Supplies (0/4)"
+            survivorTaskList.AddRange(new string[] {
+                "- Repair Generator (0/3)",
+                "- Collect Firewood (0/5)",
+                "- Find Car Keys (0/1)"
             });
+            currentTasks = new List<string>(survivorTaskList);
             UpdateTotalTasksText(0, currentTasks.Count);
         }
 
         UpdateTasksText();
+        Debug.Log($"Setup {survivorTaskList.Count} survivor tasks");
     }
 
     private void SetupCultistTasks()
     {
-        currentTasks.Clear();
+        cultistTaskList.Clear();
 
         if (TaskManager.Instance != null)
         {
             var tasks = TaskManager.Instance.GetCultistTasksForUI();
-            currentTasks.AddRange(tasks);
-            UpdateTotalTasksText(0, tasks.Count);
+            cultistTaskList.AddRange(tasks);
+            currentTasks = new List<string>(cultistTaskList);
+            UpdateTotalTasksText(0, currentTasks.Count);
         }
         else
         {
             // Fallback tasks
-            currentTasks.AddRange(new string[] {
-                "Place Ritual Candles (0/3)",
-                "Collect Sacrificial Items (0/2)",
-                "Activate Altars (0/2)",
-                "Eliminate Survivors (0/0)"
+            cultistTaskList.AddRange(new string[] {
+                "- Place Ritual Candles (0/3)",
+                "- Collect Sacrificial Items (0/2)",
+                "- Activate Altars (0/2)"
             });
+            currentTasks = new List<string>(cultistTaskList);
             UpdateTotalTasksText(0, currentTasks.Count);
         }
 
         UpdateTasksText();
+        Debug.Log($"Setup {cultistTaskList.Count} cultist tasks");
     }
 
     private void UpdateTasksText()
@@ -257,14 +262,47 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // CORRECTED METHOD - Only 2 parameters now
     public void UpdateTaskProgress(int taskIndex, string newStatus)
     {
-        if (taskIndex >= 0 && taskIndex < currentTasks.Count)
+        Debug.Log($"Updating task {taskIndex}, status: {newStatus}");
+
+        // Update the appropriate task list based on current role
+        if (currentRole == RoleManager.PlayerRole.Survivor)
         {
-            currentTasks[taskIndex] = newStatus;
-            UpdateTasksText();
-            UpdateTotalTasksCompleted();
+            if (taskIndex >= 0 && taskIndex < survivorTaskList.Count)
+            {
+                survivorTaskList[taskIndex] = newStatus;
+                currentTasks = new List<string>(survivorTaskList);
+                Debug.Log($"Updated survivor task {taskIndex}");
+            }
+            else
+            {
+                Debug.LogWarning($"Invalid survivor task index: {taskIndex}");
+            }
         }
+        else if (currentRole == RoleManager.PlayerRole.Cultist)
+        {
+            if (taskIndex >= 0 && taskIndex < cultistTaskList.Count)
+            {
+                cultistTaskList[taskIndex] = newStatus;
+                currentTasks = new List<string>(cultistTaskList);
+                Debug.Log($"Updated cultist task {taskIndex}");
+            }
+            else
+            {
+                Debug.LogWarning($"Invalid cultist task index: {taskIndex}");
+            }
+        }
+        else
+        {
+            Debug.Log($"Skipping task update - Role: {currentRole}");
+            return;
+        }
+
+        UpdateTasksText();
+        UpdateTotalTasksCompleted();
+        Debug.Log($"Task {taskIndex} updated successfully");
     }
 
     private void UpdateTotalTasksCompleted()
@@ -272,7 +310,7 @@ public class GameHUDManager : MonoBehaviour
         int completed = 0;
         foreach (var task in currentTasks)
         {
-            if (task.Contains("?"))
+            if (task.Contains("✓"))
             {
                 completed++;
             }
@@ -363,7 +401,7 @@ public class GameHUDManager : MonoBehaviour
     {
         if (currentTasks.Count > 0)
         {
-            currentTasks[0] = "Repair Generator ?";
+            currentTasks[0] = "- Repair Generator ✓";
             UpdateTasksText();
             UpdateTotalTasksText(1, currentTasks.Count);
         }
@@ -385,5 +423,15 @@ public class GameHUDManager : MonoBehaviour
     private void TestShowPersistentHUD()
     {
         ShowPersistentHUD();
+    }
+
+    [ContextMenu("Debug Current Tasks")]
+    private void DebugCurrentTasks()
+    {
+        Debug.Log("=== CURRENT TASKS ===");
+        for (int i = 0; i < currentTasks.Count; i++)
+        {
+            Debug.Log($"Task {i}: {currentTasks[i]}");
+        }
     }
 }

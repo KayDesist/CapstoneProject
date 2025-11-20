@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -45,21 +45,21 @@ public class TaskManager : NetworkBehaviour
         // Initialize survivor tasks
         survivorTasks.Add(new TaskData
         {
-            description = "Repair Generator",
+            baseDescription = "Repair Generator",
             currentProgress = 0,
             requiredProgress = 3,
             isCompleted = false
         });
         survivorTasks.Add(new TaskData
         {
-            description = "Collect Firewood",
+            baseDescription = "Collect Firewood",
             currentProgress = 0,
             requiredProgress = 5,
             isCompleted = false
         });
         survivorTasks.Add(new TaskData
         {
-            description = "Find Car Keys",
+            baseDescription = "Find Car Keys",
             currentProgress = 0,
             requiredProgress = 1,
             isCompleted = false
@@ -68,21 +68,21 @@ public class TaskManager : NetworkBehaviour
         // Initialize cultist tasks
         cultistTasks.Add(new TaskData
         {
-            description = "Place Ritual Candles",
+            baseDescription = "Place Ritual Candles",
             currentProgress = 0,
             requiredProgress = 3,
             isCompleted = false
         });
         cultistTasks.Add(new TaskData
         {
-            description = "Collect Sacrificial Items",
+            baseDescription = "Collect Sacrificial Items",
             currentProgress = 0,
             requiredProgress = 2,
             isCompleted = false
         });
         cultistTasks.Add(new TaskData
         {
-            description = "Activate Altars",
+            baseDescription = "Activate Altars",
             currentProgress = 0,
             requiredProgress = 2,
             isCompleted = false
@@ -90,41 +90,87 @@ public class TaskManager : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void UpdateTaskProgressServerRpc(int taskIndex, bool isSurvivorTask, int progress)
+    public void UpdateTaskProgressServerRpc(int taskIndex, bool isSurvivorTask, int progressToAdd)
     {
+        Debug.Log($"ServerRpc: Updating task {taskIndex}, isSurvivor: {isSurvivorTask}, progressToAdd: {progressToAdd}");
+
         if (isSurvivorTask && taskIndex >= 0 && taskIndex < survivorTasks.Count)
         {
             TaskData task = survivorTasks[taskIndex];
-            task.currentProgress = progress;
+
+            // Accumulate progress instead of setting it
+            task.currentProgress = Mathf.Min(task.currentProgress + progressToAdd, task.requiredProgress);
             task.isCompleted = (task.currentProgress >= task.requiredProgress);
 
-            string status = task.isCompleted ? " ?" : $" ({task.currentProgress}/{task.requiredProgress})";
-            task.description = $"{task.description.ToString().Split('(')[0].Trim()}{status}";
-
             survivorTasks[taskIndex] = task;
-            UpdateTaskClientRpc(taskIndex, isSurvivorTask, task.description.ToString());
+
+            // Notify all clients about this survivor task update
+            UpdateTaskClientRpc(taskIndex, true, task.currentProgress, task.requiredProgress, task.isCompleted);
+
+            Debug.Log($"Updated survivor task {taskIndex}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress}, Completed: {task.isCompleted}");
         }
         else if (!isSurvivorTask && taskIndex >= 0 && taskIndex < cultistTasks.Count)
         {
             TaskData task = cultistTasks[taskIndex];
-            task.currentProgress = progress;
+
+            // Accumulate progress instead of setting it
+            task.currentProgress = Mathf.Min(task.currentProgress + progressToAdd, task.requiredProgress);
             task.isCompleted = (task.currentProgress >= task.requiredProgress);
 
-            string status = task.isCompleted ? " ?" : $" ({task.currentProgress}/{task.requiredProgress})";
-            task.description = $"{task.description.ToString().Split('(')[0].Trim()}{status}";
-
             cultistTasks[taskIndex] = task;
-            UpdateTaskClientRpc(taskIndex, isSurvivorTask, task.description.ToString());
+
+            // Notify all clients about this cultist task update
+            UpdateTaskClientRpc(taskIndex, false, task.currentProgress, task.requiredProgress, task.isCompleted);
+
+            Debug.Log($"Updated cultist task {taskIndex}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress}, Completed: {task.isCompleted}");
+        }
+        else
+        {
+            Debug.LogWarning($"Invalid task update - Index: {taskIndex}, IsSurvivor: {isSurvivorTask}");
         }
     }
 
     [ClientRpc]
-    private void UpdateTaskClientRpc(int taskIndex, bool isSurvivorTask, string taskDescription)
+    private void UpdateTaskClientRpc(int taskIndex, bool isSurvivorTask, int currentProgress, int requiredProgress, bool isCompleted)
     {
+        Debug.Log($"ClientRpc: Task {taskIndex}, isSurvivor: {isSurvivorTask}, progress: {currentProgress}/{requiredProgress}, completed: {isCompleted}");
+
         if (hudManager != null)
         {
-            hudManager.UpdateTaskProgress(taskIndex, taskDescription);
+            // Only update if this client's role matches the task type
+            if (RoleManager.Instance != null)
+            {
+                var localPlayerRole = RoleManager.Instance.GetLocalPlayerRole();
+
+                if ((isSurvivorTask && localPlayerRole == RoleManager.PlayerRole.Survivor) ||
+                    (!isSurvivorTask && localPlayerRole == RoleManager.PlayerRole.Cultist))
+                {
+                    string status = isCompleted ? " ✓" : $" ({currentProgress}/{requiredProgress})";
+                    string taskDescription = $"- {GetBaseDescriptionForTask(taskIndex, isSurvivorTask)}{status}";
+
+                    
+                    hudManager.UpdateTaskProgress(taskIndex, taskDescription);
+                    Debug.Log($"Updating HUD for local player - Task: {taskDescription}");
+                }
+                else
+                {
+                    Debug.Log($"Skipping HUD update - Local role {localPlayerRole} doesn't match task type {isSurvivorTask}");
+                }
+            }
         }
+    }
+
+    private string GetBaseDescriptionForTask(int taskIndex, bool isSurvivorTask)
+    {
+        if (isSurvivorTask && taskIndex < survivorTasks.Count)
+        {
+            return survivorTasks[taskIndex].baseDescription.ToString();
+        }
+        else if (!isSurvivorTask && taskIndex < cultistTasks.Count)
+        {
+            return cultistTasks[taskIndex].baseDescription.ToString();
+        }
+        return "Unknown Task";
     }
 
     public List<string> GetSurvivorTasksForUI()
@@ -132,8 +178,8 @@ public class TaskManager : NetworkBehaviour
         List<string> tasks = new List<string>();
         foreach (var task in survivorTasks)
         {
-            string status = task.isCompleted ? " ?" : $" ({task.currentProgress}/{task.requiredProgress})";
-            tasks.Add($"- {task.description.ToString().Split('(')[0].Trim()}{status}");
+            string status = task.isCompleted ? " ✓" : $" ({task.currentProgress}/{task.requiredProgress})";
+            tasks.Add($"- {task.baseDescription.ToString()}{status}");
         }
         return tasks;
     }
@@ -143,19 +189,46 @@ public class TaskManager : NetworkBehaviour
         List<string> tasks = new List<string>();
         foreach (var task in cultistTasks)
         {
-            string status = task.isCompleted ? " ?" : $" ({task.currentProgress}/{task.requiredProgress})";
-            tasks.Add($"- {task.description.ToString().Split('(')[0].Trim()}{status}");
+            string status = task.isCompleted ? " ✓" : $" ({task.currentProgress}/{task.requiredProgress})";
+            tasks.Add($"- {task.baseDescription.ToString()}{status}");
         }
         return tasks;
     }
 
     // Test method to simulate task completion
-    [ContextMenu("Test Complete First Task")]
-    public void TestCompleteFirstTask()
+    [ContextMenu("Test Complete First Survivor Task")]
+    public void TestCompleteFirstSurvivorTask()
     {
         if (IsServer)
         {
             UpdateTaskProgressServerRpc(0, true, 3); // Complete first survivor task
+        }
+    }
+
+    [ContextMenu("Test Complete First Cultist Task")]
+    public void TestCompleteFirstCultistTask()
+    {
+        if (IsServer)
+        {
+            UpdateTaskProgressServerRpc(0, false, 3); // Complete first cultist task
+        }
+    }
+
+    [ContextMenu("Debug Task States")]
+    public void DebugTaskStates()
+    {
+        Debug.Log("=== SURVIVOR TASKS ===");
+        for (int i = 0; i < survivorTasks.Count; i++)
+        {
+            var task = survivorTasks[i];
+            Debug.Log($"Task {i}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress} - Completed: {task.isCompleted}");
+        }
+
+        Debug.Log("=== CULTIST TASKS ===");
+        for (int i = 0; i < cultistTasks.Count; i++)
+        {
+            var task = cultistTasks[i];
+            Debug.Log($"Task {i}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress} - Completed: {task.isCompleted}");
         }
     }
 
@@ -169,14 +242,14 @@ public class TaskManager : NetworkBehaviour
 [System.Serializable]
 public struct TaskData : INetworkSerializable, IEquatable<TaskData>
 {
-    public FixedString32Bytes description;
+    public FixedString32Bytes baseDescription; // Store only base description without progress
     public int currentProgress;
     public int requiredProgress;
     public bool isCompleted;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
-        serializer.SerializeValue(ref description);
+        serializer.SerializeValue(ref baseDescription);
         serializer.SerializeValue(ref currentProgress);
         serializer.SerializeValue(ref requiredProgress);
         serializer.SerializeValue(ref isCompleted);
@@ -184,7 +257,7 @@ public struct TaskData : INetworkSerializable, IEquatable<TaskData>
 
     public bool Equals(TaskData other)
     {
-        return description.Equals(other.description) &&
+        return baseDescription.Equals(other.baseDescription) &&
                currentProgress == other.currentProgress &&
                requiredProgress == other.requiredProgress &&
                isCompleted == other.isCompleted;
@@ -197,6 +270,6 @@ public struct TaskData : INetworkSerializable, IEquatable<TaskData>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(description, currentProgress, requiredProgress, isCompleted);
+        return HashCode.Combine(baseDescription, currentProgress, requiredProgress, isCompleted);
     }
 }
