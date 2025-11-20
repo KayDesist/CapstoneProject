@@ -102,6 +102,9 @@ public class RoleManager : NetworkBehaviour
 
         Debug.Log($"Roles assigned! Cultist: {cultistId}, Total players: {connectedClients.Count}");
 
+        // Notify EndGameManager about all players
+        NotifyEndGameManager();
+
         // Notify all clients about their roles
         NotifyClientsOfRolesClientRpc();
     }
@@ -150,7 +153,6 @@ public class RoleManager : NetworkBehaviour
         }
     }
 
-
     private void ApplyRoleToPlayer(PlayerRole role)
     {
         // Find the local player and apply role settings
@@ -190,6 +192,23 @@ public class RoleManager : NetworkBehaviour
     public bool IsCultist(ulong clientId)
     {
         return GetPlayerRole(clientId) == PlayerRole.Cultist;
+    }
+
+    // Add this method to notify EndGameManager about players
+    private void NotifyEndGameManager()
+    {
+        if (EndGameManager.Instance != null && IsServer)
+        {
+            foreach (var clientId in playerRoles.Keys)
+            {
+                EndGameManager.Instance.RegisterPlayer(clientId, playerRoles[clientId]);
+            }
+            Debug.Log("Notified EndGameManager about all players");
+        }
+        else
+        {
+            Debug.LogWarning("EndGameManager instance not found or not server");
+        }
     }
 
     public override void OnNetworkDespawn()

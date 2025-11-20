@@ -9,6 +9,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameObject roleManagerPrefab;
     [SerializeField] private GameObject taskManagerPrefab;
+    [SerializeField] private GameObject endGameManagerPrefab;
 
     private void OnEnable()
     {
@@ -29,6 +30,14 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log("GameScene loaded, initializing game...");
 
+        // Spawn managers with proper order
+        StartCoroutine(InitializeManagers());
+    }
+
+    private IEnumerator InitializeManagers()
+    {
+        yield return new WaitForSeconds(0.5f);
+
         // Spawn RoleManager if it doesn't exist
         if (RoleManager.Instance == null && roleManagerPrefab != null)
         {
@@ -36,10 +45,8 @@ public class GameManager : NetworkBehaviour
             roleManager.GetComponent<NetworkObject>().Spawn();
             Debug.Log("Spawned RoleManager");
         }
-        else
-        {
-            Debug.Log("RoleManager already exists or prefab is null");
-        }
+
+        yield return new WaitForSeconds(0.2f);
 
         // Spawn TaskManager if it doesn't exist
         if (TaskManager.Instance == null && taskManagerPrefab != null)
@@ -48,18 +55,25 @@ public class GameManager : NetworkBehaviour
             taskManager.GetComponent<NetworkObject>().Spawn();
             Debug.Log("Spawned TaskManager");
         }
-        else
+
+        yield return new WaitForSeconds(0.2f);
+
+        // Spawn EndGameManager if it doesn't exist
+        if (EndGameManager.Instance == null && endGameManagerPrefab != null)
         {
-            Debug.Log("TaskManager already exists or prefab is null");
+            GameObject endGameManager = Instantiate(endGameManagerPrefab);
+            endGameManager.GetComponent<NetworkObject>().Spawn();
+            Debug.Log("Spawned EndGameManager");
         }
 
-        // Wait a frame to ensure all network objects are ready
+        yield return new WaitForSeconds(0.2f);
+
+        // Spawn players
         StartCoroutine(SpawnPlayersWithDelay());
     }
 
     private IEnumerator SpawnPlayersWithDelay()
     {
-        // Wait for network objects to be fully spawned and initialized
         yield return new WaitForSeconds(0.5f);
 
         Debug.Log($"Spawning players for {NetworkManager.Singleton.ConnectedClientsIds.Count} clients");
@@ -67,7 +81,7 @@ public class GameManager : NetworkBehaviour
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             SpawnPlayerForClient(clientId);
-            yield return new WaitForSeconds(0.1f); // Small delay between spawns
+            yield return new WaitForSeconds(0.1f);
         }
 
         Debug.Log("Finished spawning all players");

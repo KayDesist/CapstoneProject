@@ -490,4 +490,28 @@ public class InventorySystem : NetworkBehaviour
             Destroy(currentHeldItem);
         }
     }
+
+   
+    [ContextMenu("Debug Weapon Initialization")]
+    private void DebugWeaponInitialization()
+    {
+        Debug.Log("=== WEAPON INITIALIZATION DEBUG ===");
+        Debug.Log($"PlayerHitbox reference: {playerHitbox != null}");
+        Debug.Log($"PlayerHealth reference: {GetComponent<PlayerHealth>() != null}");
+
+        if (currentSlotIndex.Value != -1 && !inventorySlots[currentSlotIndex.Value].isEmpty)
+        {
+            var currentSlot = inventorySlots[currentSlotIndex.Value];
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
+            {
+                Weapon weapon = itemNetObject.GetComponent<Weapon>();
+                if (weapon != null)
+                {
+                    Debug.Log($"Current weapon: {weapon.weaponName}");
+                    Debug.Log($"Weapon owner ID: {weapon.ownerId}");
+                    Debug.Log($"Weapon hitbox reference: {weapon.playerHitbox != null}");
+                }
+            }
+        }
+    }
 }

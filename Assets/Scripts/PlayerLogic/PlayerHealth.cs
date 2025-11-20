@@ -30,6 +30,7 @@ public class PlayerHealth : NetworkBehaviour
     private float localHealth;
     private float localStamina;
     private bool initialized = false;
+    private bool isDead = false;
 
     // Events for health changes
     public System.Action<float, float> OnHealthChanged;
@@ -43,6 +44,7 @@ public class PlayerHealth : NetworkBehaviour
         {
             currentHealth.Value = maxHealth;
             currentStamina.Value = maxStamina;
+            isDead = false;
         }
 
         // Initialize local values
@@ -72,7 +74,7 @@ public class PlayerHealth : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner || !initialized) return;
+        if (!IsOwner || !initialized || isDead) return;
 
         // Regenerate stamina when not sprinting - immediate local update
         if (localStamina < maxStamina && (!playerController.IsSprinting() || playerController == null))
@@ -162,7 +164,11 @@ public class PlayerHealth : NetworkBehaviour
             return;
         }
 
-        if (currentHealth.Value <= 0) return; // Already dead
+        if (currentHealth.Value <= 0 || isDead)
+        {
+            Debug.Log($"Player {OwnerClientId} is already dead, ignoring damage");
+            return;
+        }
 
         float newHealth = Mathf.Max(0, currentHealth.Value - damage);
         currentHealth.Value = newHealth;
@@ -178,8 +184,6 @@ public class PlayerHealth : NetworkBehaviour
             HandleDeath();
         }
     }
-
-    
 
     // Server-only stamina methods
     public void ConsumeStamina(float staminaCost)
@@ -198,7 +202,23 @@ public class PlayerHealth : NetworkBehaviour
 
     private void HandleDeath()
     {
+        if (isDead) return;
+
+        isDead = true;
         Debug.Log($"Player {OwnerClientId} has died!");
+
+        // Notify EndGameManager about this death
+        if (EndGameManager.Instance != null && RoleManager.Instance != null)
+        {
+            var role = RoleManager.Instance.GetPlayerRole(OwnerClientId);
+            Debug.Log($"Notifying EndGameManager about death - Player {OwnerClientId}, Role: {role}");
+            EndGameManager.Instance.OnPlayerDied(OwnerClientId, role);
+        }
+        else
+        {
+            Debug.LogError($"Cannot notify EndGameManager - Instance: {EndGameManager.Instance != null}, RoleManager: {RoleManager.Instance != null}");
+        }
+
         OnDeath?.Invoke();
 
         if (IsOwner)
@@ -206,8 +226,20 @@ public class PlayerHealth : NetworkBehaviour
             // Show death screen or disable controls
             if (playerController != null)
             {
-                // playerController.enabled = false;
+                playerController.enabled = false;
             }
+
+            // Hide HUD for dead player
+            if (GameHUDManager.Instance != null)
+            {
+                GameHUDManager.Instance.gameObject.SetActive(false);
+            }
+
+            // Unlock cursor
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            Debug.Log("Local player died - controls disabled");
         }
     }
 
@@ -224,7 +256,7 @@ public class PlayerHealth : NetworkBehaviour
 
     public bool IsAlive()
     {
-        return currentHealth.Value > 0;
+        return currentHealth.Value > 0 && !isDead;
     }
 
     public override void OnNetworkDespawn()

@@ -9,12 +9,12 @@ public class Weapon : NetworkBehaviour
     public float damage = 25f;
     public float attackCooldown = 1f;
     public float staminaCost = 10f;
-    public float baseAttackDuration = 0.3f;
+    public float baseAttackDuration = 0.5f; // Increased for better testing
 
     protected float lastAttackTime;
     protected PlayerHealth ownerHealth;
-    protected ulong ownerId;
-    protected PlayerHitboxDamage playerHitbox;
+    public ulong ownerId;
+    public PlayerHitboxDamage playerHitbox;
 
     // Timer-based attack system
     protected float weaponAttackEndTime = 0f;
@@ -26,6 +26,8 @@ public class Weapon : NetworkBehaviour
         ownerId = ownerClientId;
         ownerHealth = health;
         playerHitbox = hitbox;
+
+        Debug.Log($"Weapon {weaponName} initialized for player {ownerId}. Hitbox: {playerHitbox != null}");
     }
 
     protected virtual void Update()
@@ -33,6 +35,7 @@ public class Weapon : NetworkBehaviour
         // Handle attack duration without coroutines
         if (isAttackActive && Time.time >= weaponAttackEndTime)
         {
+            Debug.Log("Weapon: Attack duration ended, deactivating");
             DeactivateAttack();
         }
     }
@@ -54,14 +57,14 @@ public class Weapon : NetworkBehaviour
 
     public virtual void Attack()
     {
+        Debug.Log($"Weapon: Local attack initiated by client {ownerId}");
+
         // Only do minimal local checks for immediate feedback
         if (Time.time < lastAttackTime + attackCooldown)
         {
             Debug.Log("Weapon on cooldown - rejected locally");
             return;
         }
-
-        Debug.Log($"Local attack initiated by client {ownerId}");
 
         if (IsServer)
         {
@@ -84,6 +87,8 @@ public class Weapon : NetworkBehaviour
             Debug.LogWarning($"Client {senderClientId} attempted to attack with weapon owned by {ownerId}");
             return;
         }
+
+        Debug.Log($"Weapon: Server received attack request from {senderClientId}");
 
         // Server-side validation
         if (Time.time < lastAttackTime + attackCooldown)
@@ -108,6 +113,8 @@ public class Weapon : NetworkBehaviour
         weaponAttackEndTime = Time.time + baseAttackDuration;
         isAttackActive = true;
 
+        Debug.Log($"Weapon: PerformAttack called. Active until: {weaponAttackEndTime}");
+
         ConsumeStamina();
 
         // Activate player's hitbox
@@ -118,7 +125,7 @@ public class Weapon : NetworkBehaviour
         }
         else
         {
-            Debug.LogError("playerHitbox is null in PerformAttack!");
+            Debug.LogError("playerHitbox is null in PerformAttack! Weapon may not be properly initialized.");
         }
 
         // Visual feedback on all clients
@@ -129,11 +136,16 @@ public class Weapon : NetworkBehaviour
 
     protected virtual void DeactivateAttack()
     {
-        isAttackActive = false;
-        if (playerHitbox != null)
+        if (isAttackActive)
         {
-            playerHitbox.SetActive(false);
-            Debug.Log("Hitbox deactivated");
+            Debug.Log("Weapon: Deactivating attack");
+            isAttackActive = false;
+
+            if (playerHitbox != null)
+            {
+                playerHitbox.SetActive(false);
+                Debug.Log("Hitbox deactivated");
+            }
         }
     }
 
@@ -156,6 +168,7 @@ public class Weapon : NetworkBehaviour
     {
         if (ownerHealth != null && staminaCost > 0)
         {
+            Debug.Log($"Consuming {staminaCost} stamina");
             if (IsServer)
             {
                 ownerHealth.ConsumeStamina(staminaCost);
@@ -191,6 +204,7 @@ public class Weapon : NetworkBehaviour
         // Ensure attack is deactivated when unequipped
         if (isAttackActive)
         {
+            Debug.Log("Weapon unequipped during active attack - deactivating");
             DeactivateAttack();
         }
         Debug.Log($"{weaponName} unequipped");
@@ -201,8 +215,23 @@ public class Weapon : NetworkBehaviour
         // Clean up any active attacks
         if (isAttackActive)
         {
+            Debug.Log("Weapon network despawn - deactivating attack");
             DeactivateAttack();
         }
         base.OnNetworkDespawn();
+    }
+
+    // Debug method to test weapon directly
+    [ContextMenu("Test Attack")]
+    private void TestAttack()
+    {
+        if (IsOwner)
+        {
+            Attack();
+        }
+        else
+        {
+            Debug.Log("Cannot test attack - not owner");
+        }
     }
 }
