@@ -149,6 +149,7 @@ public class EndGameUI : MonoBehaviour
 
         // The automatic return will happen via EndGameManager after the delay
         // This button is just for players who don't want to wait
+        // We could add a manual return option here if needed
     }
 
     // Method to hide the UI (useful for testing)

@@ -71,12 +71,7 @@ public class EndGameManager : NetworkBehaviour
         // Only check win conditions on server and if game hasn't ended
         if (!IsServer || isGameEnded.Value) return;
 
-        // Check win conditions every second
-        if (Time.time - lastCheckTime >= checkInterval)
-        {
-            lastCheckTime = Time.time;
-            CheckWinConditions();
-        }
+        CheckWinConditions();
     }
 
     private void InitializeGameState()
@@ -265,8 +260,8 @@ public class EndGameManager : NetworkBehaviour
         // Notify all clients
         EndGameClientRpc(result);
 
-        // Return to lobby after delay
-        Invoke(nameof(ReturnToLobby), endGameDelay);
+        // Return to main menu after delay
+        Invoke(nameof(ReturnToMainMenu), endGameDelay);
     }
 
     [ClientRpc]
@@ -285,13 +280,13 @@ public class EndGameManager : NetworkBehaviour
         }
     }
 
-    private void ReturnToLobby()
+    private void ReturnToMainMenu()
     {
         if (IsServer)
         {
-            Debug.Log("Returning to lobby scene...");
-            // Load lobby scene - CHANGED FROM "LobbyScene" TO "Lobby"
-            NetworkManager.Singleton.SceneManager.LoadScene("Lobby", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            Debug.Log("Returning to main menu...");
+            // Load main menu scene
+            NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
     }
 
