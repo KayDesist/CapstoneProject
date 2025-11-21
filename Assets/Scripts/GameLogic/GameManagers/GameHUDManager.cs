@@ -40,6 +40,9 @@ public class GameHUDManager : MonoBehaviour
     private List<string> currentTasks = new List<string>();
     private RoleManager.PlayerRole currentRole;
 
+    // FIXED: Track if we're in game scene
+    private bool isInGameScene = false;
+
     private void Awake()
     {
         if (Instance == null)
@@ -70,19 +73,55 @@ public class GameHUDManager : MonoBehaviour
         UpdateHealth(100, 100);
         UpdateStamina(100, 100);
 
+        // Subscribe to scene changes
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+
         // Start checking for role assignment
         StartCoroutine(InitializeWithDelay());
+    }
+
+    // FIXED: Handle scene changes to clean up UI
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        Debug.Log($"Scene loaded: {scene.name}");
+
+        isInGameScene = scene.name == "GameScene";
+
+        if (!isInGameScene)
+        {
+            // We're not in game scene, hide all UI
+            HideAllUI();
+        }
+        else
+        {
+            // We're in game scene, check for role assignment again
+            StartCoroutine(InitializeWithDelay());
+        }
+    }
+
+    private void HideAllUI()
+    {
+        if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
+        if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
+        if (taskPanel != null) taskPanel.SetActive(false);
+        if (interactionPanel != null) interactionPanel.SetActive(false);
+        if (interactionProgressBar != null) interactionProgressBar.gameObject.SetActive(false);
+
+        Debug.Log("GameHUDManager: Hidden all UI for non-game scene");
     }
 
     private IEnumerator InitializeWithDelay()
     {
         yield return new WaitForSeconds(1f);
 
+        // Only initialize if we're in the game scene
+        if (!isInGameScene) yield break;
+
         // Check if we already have a role
         if (RoleManager.Instance != null)
         {
             currentRole = RoleManager.Instance.GetLocalPlayerRole();
-            if (currentRole != RoleManager.PlayerRole.Survivor || RoleManager.Instance.IsCultist(NetworkManager.Singleton.LocalClientId))
+            if (currentRole != RoleManager.PlayerRole.Survivor || (RoleManager.Instance.IsCultist(NetworkManager.Singleton.LocalClientId)))
             {
                 Debug.Log($"Found existing role: {currentRole}");
                 OnRoleAssigned(currentRole);
@@ -92,6 +131,9 @@ public class GameHUDManager : MonoBehaviour
 
     public void OnRoleAssigned(RoleManager.PlayerRole role)
     {
+        // FIXED: Only process if we're in game scene
+        if (!isInGameScene) return;
+
         Debug.Log($"GameHUDManager: Role assigned - {role}");
 
         currentRole = role;
@@ -101,6 +143,9 @@ public class GameHUDManager : MonoBehaviour
 
     private void SetupRoleSpecificHUD()
     {
+        // FIXED: Only setup if we're in game scene
+        if (!isInGameScene) return;
+
         Debug.Log($"Setting up HUD for role: {currentRole}");
 
         Sprite roleIcon = null;
@@ -128,6 +173,9 @@ public class GameHUDManager : MonoBehaviour
 
     private void ShowTemporaryRoleDisplay()
     {
+        // FIXED: Only show if we're in game scene
+        if (!isInGameScene) return;
+
         // Show the temporary role display using RoleDisplayUI
         if (RoleDisplayUI.Instance != null)
         {
@@ -152,6 +200,9 @@ public class GameHUDManager : MonoBehaviour
 
     private void ShowPersistentHUD()
     {
+        // FIXED: Only show if we're in game scene
+        if (!isInGameScene) return;
+
         // Show all persistent HUD elements
         if (persistentRoleDisplay != null)
         {
@@ -172,6 +223,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // ============ TASK MANAGEMENT METHODS ============
     private void SetupSurvivorTasks()
     {
         survivorTaskList.Clear();
@@ -377,7 +429,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // For testing in editor
+    // ============ TESTING AND DEBUG METHODS ============
     [ContextMenu("Test Role Assignment - Survivor")]
     private void TestSurvivorRole()
     {
@@ -433,5 +485,11 @@ public class GameHUDManager : MonoBehaviour
         {
             Debug.Log($"Task {i}: {currentTasks[i]}");
         }
+    }
+
+    // FIXED: Clean up when destroyed
+    private void OnDestroy()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

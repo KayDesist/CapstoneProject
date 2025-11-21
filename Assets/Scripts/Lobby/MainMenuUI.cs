@@ -115,4 +115,40 @@ public class MainMenuUI : MonoBehaviour
         hostButton.SetActive(true);
         joinButton.SetActive(true);
     }
+
+    public void CleanupGameHUD()
+    {
+        // Clean up GameHUDManager if it exists
+        GameHUDManager[] hudManagers = FindObjectsOfType<GameHUDManager>();
+        foreach (GameHUDManager hud in hudManagers)
+        {
+            if (hud != null && hud.gameObject != null)
+            {
+                Debug.Log($"Destroying GameHUDManager: {hud.gameObject.name}");
+                Destroy(hud.gameObject);
+            }
+        }
+
+        // Clean up RoleDisplayUI if it exists
+        RoleDisplayUI[] roleDisplays = FindObjectsOfType<RoleDisplayUI>();
+        foreach (RoleDisplayUI roleDisplay in roleDisplays)
+        {
+            if (roleDisplay != null && roleDisplay.gameObject != null)
+            {
+                Debug.Log($"Destroying RoleDisplayUI: {roleDisplay.gameObject.name}");
+                Destroy(roleDisplay.gameObject);
+            }
+        }
+
+        // Clean up any remaining UI elements
+        EndGameUI[] endGameUIs = FindObjectsOfType<EndGameUI>();
+        foreach (EndGameUI endGameUI in endGameUIs)
+        {
+            if (endGameUI != null && endGameUI.gameObject != null)
+            {
+                Debug.Log($"Destroying EndGameUI: {endGameUI.gameObject.name}");
+                Destroy(endGameUI.gameObject);
+            }
+        }
+    }
 }
