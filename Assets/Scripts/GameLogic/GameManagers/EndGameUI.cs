@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Netcode;
 
 public class EndGameUI : MonoBehaviour
 {
@@ -21,6 +22,8 @@ public class EndGameUI : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            // Comment out DontDestroyOnLoad to avoid persistence issues
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -138,7 +141,7 @@ public class EndGameUI : MonoBehaviour
 
     private void OnReturnButtonClicked()
     {
-        Debug.Log("Return to lobby button clicked");
+        Debug.Log("Return to main menu button clicked");
 
         // Show immediate feedback that button was clicked
         if (returnButton != null)
@@ -147,9 +150,48 @@ public class EndGameUI : MonoBehaviour
             returnButton.GetComponentInChildren<TMP_Text>().text = "Returning...";
         }
 
-        // The automatic return will happen via EndGameManager after the delay
-        // This button is just for players who don't want to wait
-        // We could add a manual return option here if needed
+        // If we're the server, trigger immediate return
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            if (EndGameManager.Instance != null)
+            {
+                EndGameManager.Instance.ReturnToMainMenuImmediately();
+            }
+            else
+            {
+                Debug.LogError("EndGameManager.Instance is null!");
+                FallbackReturnToMainMenu();
+            }
+        }
+        else
+        {
+            // If we're a client, request the server to return
+            RequestReturnToMainMenuServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestReturnToMainMenuServerRpc()
+    {
+        if (EndGameManager.Instance != null)
+        {
+            EndGameManager.Instance.ReturnToMainMenuImmediately();
+        }
+        else
+        {
+            Debug.LogError("EndGameManager.Instance is null on server!");
+        }
+    }
+
+    private void FallbackReturnToMainMenu()
+    {
+        Debug.Log("Using fallback method to return to main menu");
+
+        // Clean up cross-scene data
+        CrossSceneData.Reset();
+
+        // Load main menu directly
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 
     // Method to hide the UI (useful for testing)
@@ -161,5 +203,20 @@ public class EndGameUI : MonoBehaviour
         // Re-enable cursor just in case
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    // Debug method to check UI state
+    [ContextMenu("Debug UI State")]
+    public void DebugUIState()
+    {
+        Debug.Log($"EndGamePanel active: {endGamePanel != null && endGamePanel.activeInHierarchy}");
+        Debug.Log($"Return button interactable: {returnButton != null && returnButton.interactable}");
+        Debug.Log($"Cursor lock state: {Cursor.lockState}, visible: {Cursor.visible}");
+        Debug.Log($"NetworkManager exists: {NetworkManager.Singleton != null}");
+        if (NetworkManager.Singleton != null)
+        {
+            Debug.Log($"IsServer: {NetworkManager.Singleton.IsServer}");
+            Debug.Log($"IsClient: {NetworkManager.Singleton.IsClient}");
+        }
     }
 }

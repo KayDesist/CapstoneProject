@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class EndGameManager : NetworkBehaviour
 {
@@ -40,7 +41,8 @@ public class EndGameManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // Comment out DontDestroyOnLoad to avoid persistence issues
+            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -71,7 +73,12 @@ public class EndGameManager : NetworkBehaviour
         // Only check win conditions on server and if game hasn't ended
         if (!IsServer || isGameEnded.Value) return;
 
-        CheckWinConditions();
+        // Check win conditions periodically
+        if (Time.time - lastCheckTime >= checkInterval)
+        {
+            CheckWinConditions();
+            lastCheckTime = Time.time;
+        }
     }
 
     private void InitializeGameState()
@@ -215,21 +222,7 @@ public class EndGameManager : NetworkBehaviour
         Debug.Log($"Tasks - Survivor: {survivorTasksComplete.Value}, Cultist: {cultistTasksComplete.Value}");
         Debug.Log($"Deaths - Survivors: {survivorDeaths.Value}, Cultists: {cultistDeaths.Value}");
 
-        // Survivor win conditions
-        if (survivorTasksComplete.Value)
-        {
-            Debug.Log("WIN CONDITION: Survivors win by tasks!");
-            EndGame(GameResult.SurvivorsWinByTasks);
-            return;
-        }
-
-        // Check if all cultists are dead
-        if (aliveCultists == 0 && totalCultists > 0)
-        {
-            Debug.Log("WIN CONDITION: Survivors win by killing all cultists!");
-            EndGame(GameResult.SurvivorsWinByKill);
-            return;
-        }
+        // FIXED WIN CONDITION ORDER - Check cultist win conditions FIRST
 
         // Cultist win conditions
         if (cultistTasksComplete.Value && survivorDeaths.Value >= 1)
@@ -246,6 +239,24 @@ public class EndGameManager : NetworkBehaviour
             EndGame(GameResult.CultistsWinByElimination);
             return;
         }
+
+        // Survivor win conditions (only checked if cultists didn't win)
+        if (survivorTasksComplete.Value)
+        {
+            Debug.Log("WIN CONDITION: Survivors win by tasks!");
+            EndGame(GameResult.SurvivorsWinByTasks);
+            return;
+        }
+
+        // Check if all cultists are dead
+        if (aliveCultists == 0 && totalCultists > 0)
+        {
+            Debug.Log("WIN CONDITION: Survivors win by killing all cultists!");
+            EndGame(GameResult.SurvivorsWinByKill);
+            return;
+        }
+
+        Debug.Log("No win conditions met - game continues");
     }
 
     private void EndGame(GameResult result)
@@ -280,14 +291,37 @@ public class EndGameManager : NetworkBehaviour
         }
     }
 
+    public void ReturnToMainMenuImmediately()
+    {
+        if (!IsServer) return;
+
+        Debug.Log("Manual return to main menu requested");
+
+        // Cancel any pending automatic return
+        CancelInvoke(nameof(ReturnToMainMenu));
+
+        // Return immediately
+        ReturnToMainMenu();
+    }
+
     private void ReturnToMainMenu()
     {
-        if (IsServer)
+        if (!IsServer) return;
+
+        Debug.Log("Returning to main menu...");
+
+        // Clean up cross-scene data
+        CrossSceneData.Reset();
+
+        // Clean up network state
+        if (NetworkManager.Singleton != null)
         {
-            Debug.Log("Returning to main menu...");
-            // Load main menu scene
-            NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            // Shutdown network manager to clean up connections
+            NetworkManager.Singleton.Shutdown();
         }
+
+        // Load main menu scene
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
     // NetworkVariable change handlers for debugging
@@ -364,6 +398,17 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
+    // Debug method to check scene state
+    [ContextMenu("Debug Scene Check")]
+    public void DebugSceneCheck()
+    {
+        Debug.Log($"Current scene: {SceneManager.GetActiveScene().name}");
+        Debug.Log($"IsServer: {IsServer}");
+        Debug.Log($"NetworkManager exists: {NetworkManager.Singleton != null}");
+        Debug.Log($"EndGameUI exists: {EndGameUI.Instance != null}");
+        Debug.Log($"GameHUDManager exists: {GameHUDManager.Instance != null}");
+    }
+
     // Test methods for development
     [ContextMenu("Test Survivor Win By Tasks")]
     private void TestSurvivorWinTasks()
@@ -421,6 +466,45 @@ public class EndGameManager : NetworkBehaviour
                 }
             }
             CheckWinConditions();
+        }
+    }
+
+    // NEW: Test method to simulate cultist killing survivor
+    [ContextMenu("Test Cultist Kills Survivor")]
+    private void TestCultistKillsSurvivor()
+    {
+        if (IsServer)
+        {
+            Debug.Log("TEST: Simulating cultist killing survivor");
+
+            // Find one survivor and one cultist
+            ulong survivorId = 0;
+            ulong cultistId = 0;
+
+            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                if (playerRoles.ContainsKey(clientId))
+                {
+                    if (playerRoles[clientId] == RoleManager.PlayerRole.Survivor && survivorId == 0)
+                    {
+                        survivorId = clientId;
+                    }
+                    else if (playerRoles[clientId] == RoleManager.PlayerRole.Cultist && cultistId == 0)
+                    {
+                        cultistId = clientId;
+                    }
+                }
+            }
+
+            if (survivorId != 0)
+            {
+                OnPlayerDied(survivorId, RoleManager.PlayerRole.Survivor);
+                Debug.Log($"Killed survivor {survivorId}");
+            }
+            else
+            {
+                Debug.LogWarning("No survivor found to kill");
+            }
         }
     }
 }
