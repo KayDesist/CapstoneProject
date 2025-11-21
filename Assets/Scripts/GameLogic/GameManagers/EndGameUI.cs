@@ -22,8 +22,6 @@ public class EndGameUI : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Comment out DontDestroyOnLoad to avoid persistence issues
-            // DontDestroyOnLoad(gameObject);
         }
         else
         {

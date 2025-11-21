@@ -27,6 +27,9 @@ public class EndGameManager : NetworkBehaviour
     private float lastCheckTime = 0f;
     private float checkInterval = 1f; // Check every second
 
+    // FIXED: Added game end event
+    public event System.Action OnGameEnded;
+
     public enum GameResult
     {
         None,
@@ -41,8 +44,6 @@ public class EndGameManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Comment out DontDestroyOnLoad to avoid persistence issues
-            // DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -270,7 +271,7 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
-   
+
     private void EndGame(GameResult result)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -279,6 +280,9 @@ public class EndGameManager : NetworkBehaviour
         gameResult.Value = result;
 
         Debug.Log($"🎮 GAME ENDED: {result} 🎮");
+
+        // FIXED: Trigger game end event
+        OnGameEnded?.Invoke();
 
         // Notify all clients
         EndGameClientRpc(result);

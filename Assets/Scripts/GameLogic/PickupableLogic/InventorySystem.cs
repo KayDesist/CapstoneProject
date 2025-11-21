@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections.Generic;
 using System;
@@ -27,6 +27,9 @@ public class InventorySystem : NetworkBehaviour
     // Input handling
     private bool attackInput = false;
     private bool useInput = false;
+
+    // FIXED: Track if game has ended to prevent network object access errors
+    private bool gameEnded = false;
 
     public struct InventorySlot : INetworkSerializable, IEquatable<InventorySlot>
     {
@@ -83,6 +86,12 @@ public class InventorySystem : NetworkBehaviour
         inventorySlots.OnListChanged += OnInventoryChanged;
         currentSlotIndex.OnValueChanged += OnCurrentSlotChanged;
 
+        // FIXED: Subscribe to game end events
+        if (EndGameManager.Instance != null)
+        {
+            EndGameManager.Instance.OnGameEnded += HandleGameEnded;
+        }
+
         if (IsOwner)
         {
             Invoke(nameof(UpdateHeldItemVisuals), 0.5f);
@@ -104,7 +113,8 @@ public class InventorySystem : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        // FIXED: Don't process input if game has ended
+        if (!IsOwner || gameEnded) return;
 
         HandleInput();
 
@@ -118,6 +128,9 @@ public class InventorySystem : NetworkBehaviour
 
     private void HandleInput()
     {
+        // FIXED: Don't process input if game has ended
+        if (gameEnded) return;
+
         // Slot switching - FIXED: Handle locally for immediate response
         for (int i = 0; i < 3; i++)
         {
@@ -164,6 +177,9 @@ public class InventorySystem : NetworkBehaviour
 
     private void FixedUpdate()
     {
+        // FIXED: Don't process input if game has ended
+        if (gameEnded) return;
+
         // Handle attack input in FixedUpdate for consistent physics
         if (attackInput)
         {
@@ -181,7 +197,7 @@ public class InventorySystem : NetworkBehaviour
     // Collision-based detection for items
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || gameEnded) return;
 
         PickupableItem item = other.GetComponent<PickupableItem>();
         if (item != null && item.CanBePickedUp)
@@ -193,7 +209,7 @@ public class InventorySystem : NetworkBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (!IsOwner) return;
+        if (!IsOwner || gameEnded) return;
 
         PickupableItem item = other.GetComponent<PickupableItem>();
         if (item != null && item == itemInRange)
@@ -235,7 +251,12 @@ public class InventorySystem : NetworkBehaviour
     [ServerRpc]
     private void PickupItemServerRpc(ulong itemId)
     {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId)) return;
+        // FIXED: Check if network object still exists
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
+        {
+            Debug.LogWarning($"Cannot pickup item - network object {itemId} not found");
+            return;
+        }
 
         NetworkObject itemNetObject = NetworkManager.Singleton.SpawnManager.SpawnedObjects[itemId];
         PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
@@ -304,6 +325,7 @@ public class InventorySystem : NetworkBehaviour
         var currentSlot = inventorySlots[currentSlotIndex.Value];
         if (currentSlot.isEmpty) return;
 
+        // FIXED: Check if network object still exists before dropping
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
         {
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
@@ -311,6 +333,10 @@ public class InventorySystem : NetworkBehaviour
             {
                 item.DropItem(dropPosition, forwardDirection);
             }
+        }
+        else
+        {
+            Debug.LogWarning($"Cannot drop item - network object {currentSlot.itemNetworkId} not found");
         }
 
         inventorySlots[currentSlotIndex.Value] = new InventorySlot
@@ -338,6 +364,25 @@ public class InventorySystem : NetworkBehaviour
             return;
         }
 
+        // FIXED: Add comprehensive network object validation
+        if (NetworkManager.Singleton == null ||
+            NetworkManager.Singleton.SpawnManager == null ||
+            !NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(currentSlot.itemNetworkId))
+        {
+            Debug.LogWarning($"Cannot attack - network object {currentSlot.itemNetworkId} not found or network manager unavailable");
+
+            // Clear the invalid slot
+            if (IsServer)
+            {
+                ClearInvalidSlot(currentSlotIndex.Value);
+            }
+            else
+            {
+                ClearInvalidSlotServerRpc(currentSlotIndex.Value);
+            }
+            return;
+        }
+
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
         {
             Weapon weapon = itemNetObject.GetComponent<Weapon>();
@@ -353,7 +398,37 @@ public class InventorySystem : NetworkBehaviour
         }
         else
         {
-            Debug.LogError($"Could not find network object with ID: {currentSlot.itemNetworkId}");
+            Debug.LogWarning($"Could not find network object with ID: {currentSlot.itemNetworkId}");
+
+            // Clear the invalid slot
+            if (IsServer)
+            {
+                ClearInvalidSlot(currentSlotIndex.Value);
+            }
+            else
+            {
+                ClearInvalidSlotServerRpc(currentSlotIndex.Value);
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void ClearInvalidSlotServerRpc(int slotIndex)
+    {
+        ClearInvalidSlot(slotIndex);
+    }
+
+    private void ClearInvalidSlot(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
+        {
+            inventorySlots[slotIndex] = new InventorySlot
+            {
+                itemNetworkId = 0,
+                isEmpty = true,
+                itemName = "Empty"
+            };
+            Debug.Log($"Cleared invalid slot {slotIndex}");
         }
     }
 
@@ -387,7 +462,10 @@ public class InventorySystem : NetworkBehaviour
         {
             var targetSlot = inventorySlots[slotIndex];
 
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetSlot.itemNetworkId, out NetworkObject itemNetObject))
+            // FIXED: Check if network object exists before using it
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.SpawnManager != null &&
+                NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetSlot.itemNetworkId, out NetworkObject itemNetObject))
             {
                 PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
                 if (item != null && item.HeldPrefab != null)
@@ -416,6 +494,10 @@ public class InventorySystem : NetworkBehaviour
                     Debug.Log($"Immediately updated visuals for slot {slotIndex}");
                 }
             }
+            else
+            {
+                Debug.LogWarning($"Cannot update visuals - network object {targetSlot.itemNetworkId} not found");
+            }
         }
         else
         {
@@ -435,7 +517,10 @@ public class InventorySystem : NetworkBehaviour
         {
             var currentSlot = inventorySlots[currentSlotIndex.Value];
 
-            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
+            // FIXED: Check if network object exists before using it
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.SpawnManager != null &&
+                NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
             {
                 PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
                 if (item != null && item.HeldPrefab != null)
@@ -464,6 +549,10 @@ public class InventorySystem : NetworkBehaviour
                     Debug.Log($"Updated held item visuals for slot {currentSlotIndex.Value}");
                 }
             }
+            else
+            {
+                Debug.LogWarning($"Cannot update held item - network object {currentSlot.itemNetworkId} not found");
+            }
         }
         else
         {
@@ -480,10 +569,34 @@ public class InventorySystem : NetworkBehaviour
         return false;
     }
 
+    // FIXED: Handle game end to prevent network object access errors
+    private void HandleGameEnded()
+    {
+        gameEnded = true;
+
+        // Clear held item visuals
+        if (currentHeldItem != null)
+        {
+            Destroy(currentHeldItem);
+            currentHeldItem = null;
+        }
+
+        // Hide interaction prompts
+        GameHUDManager.Instance?.HideInteractionPrompt();
+
+        Debug.Log("InventorySystem: Game ended - disabled input and cleared visuals");
+    }
+
     public override void OnNetworkDespawn()
     {
         inventorySlots.OnListChanged -= OnInventoryChanged;
         currentSlotIndex.OnValueChanged -= OnCurrentSlotChanged;
+
+        // FIXED: Unsubscribe from game end events
+        if (EndGameManager.Instance != null)
+        {
+            EndGameManager.Instance.OnGameEnded -= HandleGameEnded;
+        }
 
         if (currentHeldItem != null)
         {
@@ -491,7 +604,6 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
-   
     [ContextMenu("Debug Weapon Initialization")]
     private void DebugWeaponInitialization()
     {
