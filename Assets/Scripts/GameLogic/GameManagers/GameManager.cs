@@ -14,13 +14,19 @@ public class GameManager : NetworkBehaviour
     private void OnEnable()
     {
         if (NetworkManager.Singleton != null)
+        {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
     }
 
     private void OnDisable()
     {
         if (NetworkManager.Singleton != null)
+        {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
     }
 
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
@@ -32,6 +38,28 @@ public class GameManager : NetworkBehaviour
 
         // Spawn managers with proper order
         StartCoroutine(InitializeManagers());
+    }
+
+    // FIXED: Handle client disconnections gracefully
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (!IsServer) return;
+
+        Debug.Log($"Client {clientId} disconnected from game");
+
+        // Notify EndGameManager about the disconnection
+        if (EndGameManager.Instance != null)
+        {
+            EndGameManager.Instance.OnClientDisconnected(clientId);
+        }
+
+        // Check if we should end the game (e.g., if host disconnects)
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            Debug.Log("Host disconnected - ending game for everyone");
+            // Host disconnected - return all clients to main menu
+            NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        }
     }
 
     private IEnumerator InitializeManagers()

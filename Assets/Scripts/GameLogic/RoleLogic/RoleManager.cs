@@ -88,7 +88,7 @@ public class RoleManager : NetworkBehaviour
         int randomIndex = Random.Range(0, connectedClients.Count);
         ulong cultistId = connectedClients[randomIndex];
 
-        // Assign roles to all connected clients
+        // FIXED: Correct role assignment - cultist gets Cultist role, others get Survivor
         foreach (ulong clientId in connectedClients)
         {
             PlayerRole role = (clientId == cultistId) ? PlayerRole.Cultist : PlayerRole.Survivor;
@@ -126,6 +126,8 @@ public class RoleManager : NetworkBehaviour
 
         // Update local player's role knowledge
         ulong localClientId = NetworkManager.Singleton.LocalClientId;
+
+        // FIXED: Correct role assignment logic
         PlayerRole localRole = (localClientId == (ulong)newCultistId) ? PlayerRole.Cultist : PlayerRole.Survivor;
 
         playerRoles[localClientId] = localRole;
@@ -186,6 +188,13 @@ public class RoleManager : NetworkBehaviour
         {
             return playerRoles[clientId];
         }
+
+        // FIXED: Better fallback logic
+        if (cultistPlayerId.Value != -1 && clientId == (ulong)cultistPlayerId.Value)
+        {
+            return PlayerRole.Cultist;
+        }
+
         return PlayerRole.Survivor;
     }
 
@@ -216,5 +225,17 @@ public class RoleManager : NetworkBehaviour
         cultistPlayerId.OnValueChanged -= OnCultistAssigned;
         playerRoles.Clear();
         rolesAssigned = false;
+    }
+
+    // Debug method to check all roles
+    [ContextMenu("Debug All Roles")]
+    public void DebugAllRoles()
+    {
+        Debug.Log("=== ALL PLAYER ROLES ===");
+        foreach (var kvp in playerRoles)
+        {
+            Debug.Log($"Player {kvp.Key}: {kvp.Value}");
+        }
+        Debug.Log($"Cultist Player ID: {cultistPlayerId.Value}");
     }
 }

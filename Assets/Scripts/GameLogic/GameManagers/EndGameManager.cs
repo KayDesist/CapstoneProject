@@ -73,11 +73,97 @@ public class EndGameManager : NetworkBehaviour
         // Only check win conditions on server and if game hasn't ended
         if (!IsServer || isGameEnded.Value) return;
 
-        // Check win conditions periodically
+        // Check win conditions EVERY FRAME for immediate response
+        CheckWinConditions();
+
+        // Optional: Keep the periodic check for debugging
         if (Time.time - lastCheckTime >= checkInterval)
         {
-            CheckWinConditions();
+            Debug.Log("Periodic win condition check");
             lastCheckTime = Time.time;
+        }
+    }
+
+    private void CheckWinConditions()
+    {
+        if (isGameEnded.Value)
+        {
+            return;
+        }
+
+        Debug.Log("=== REAL-TIME WIN CONDITION CHECK ===");
+
+        int totalSurvivors = 0;
+        int totalCultists = 0;
+        int aliveSurvivors = 0;
+        int aliveCultists = 0;
+
+        // Count players and their status - REAL-TIME role checking
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            // ALWAYS get role from RoleManager to ensure accuracy
+            RoleManager.PlayerRole role = RoleManager.PlayerRole.Survivor; // Default
+
+            if (RoleManager.Instance != null)
+            {
+                role = RoleManager.Instance.GetPlayerRole(clientId);
+            }
+            else
+            {
+                Debug.LogWarning("RoleManager.Instance is null during win condition check!");
+            }
+
+            bool isDead = playerDeathStates.ContainsKey(clientId) && playerDeathStates[clientId];
+
+            if (role == RoleManager.PlayerRole.Survivor)
+            {
+                totalSurvivors++;
+                if (!isDead) aliveSurvivors++;
+            }
+            else if (role == RoleManager.PlayerRole.Cultist)
+            {
+                totalCultists++;
+                if (!isDead) aliveCultists++;
+            }
+
+            Debug.Log($"Player {clientId}: {role}, Dead: {isDead}");
+        }
+
+        Debug.Log($"REAL-TIME STATUS - Survivors: {aliveSurvivors}/{totalSurvivors} alive, Cultists: {aliveCultists}/{totalCultists} alive");
+        Debug.Log($"Tasks - Survivor: {survivorTasksComplete.Value}, Cultist: {cultistTasksComplete.Value}");
+
+        // IMMEDIATE WIN CONDITION CHECKS
+
+        // 1. All survivors dead (cultists win by elimination)
+        if (aliveSurvivors == 0 && totalSurvivors > 0)
+        {
+            Debug.Log("🎯 WIN CONDITION: Cultists win by eliminating all survivors!");
+            EndGame(GameResult.CultistsWinByElimination);
+            return;
+        }
+
+        // 2. All cultists dead (survivors win by kill)
+        if (aliveCultists == 0 && totalCultists > 0)
+        {
+            Debug.Log("🎯 WIN CONDITION: Survivors win by killing all cultists!");
+            EndGame(GameResult.SurvivorsWinByKill);
+            return;
+        }
+
+        // 3. Survivor tasks complete
+        if (survivorTasksComplete.Value)
+        {
+            Debug.Log("🎯 WIN CONDITION: Survivors win by tasks!");
+            EndGame(GameResult.SurvivorsWinByTasks);
+            return;
+        }
+
+        // 4. Cultist tasks complete (with at least one kill)
+        if (cultistTasksComplete.Value && survivorDeaths.Value >= 1)
+        {
+            Debug.Log("🎯 WIN CONDITION: Cultists win by tasks and at least one kill!");
+            EndGame(GameResult.CultistsWinByTasksAndKill);
+            return;
         }
     }
 
@@ -96,22 +182,26 @@ public class EndGameManager : NetworkBehaviour
         playerDeathStates.Clear();
         playerRoles.Clear();
 
-        // Initialize player tracking
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        // Initialize player tracking - FIXED: Get roles from RoleManager directly
+        if (RoleManager.Instance != null)
         {
-            playerDeathStates[clientId] = false;
-
-            // Get role from RoleManager with null check
-            if (RoleManager.Instance != null)
+            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
             {
                 var role = RoleManager.Instance.GetPlayerRole(clientId);
                 playerRoles[clientId] = role;
+                playerDeathStates[clientId] = false;
                 Debug.Log($"Initialized player {clientId} with role: {role}");
             }
-            else
+        }
+        else
+        {
+            Debug.LogError("RoleManager.Instance is null! Cannot initialize player roles.");
+            // Fallback: initialize with default roles
+            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
             {
-                Debug.LogWarning($"RoleManager.Instance is null! Defaulting to Survivor for client {clientId}");
                 playerRoles[clientId] = RoleManager.PlayerRole.Survivor;
+                playerDeathStates[clientId] = false;
+                Debug.LogWarning($"Fallback: Initialized player {clientId} as Survivor (RoleManager missing)");
             }
         }
 
@@ -132,7 +222,7 @@ public class EndGameManager : NetworkBehaviour
         if (playerDeathStates.ContainsKey(clientId))
         {
             playerDeathStates[clientId] = true;
-            playerRoles[clientId] = role; // Update role
+            // Don't update role here - keep the original role
 
             if (role == RoleManager.PlayerRole.Survivor)
             {
@@ -180,85 +270,7 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
-    private void CheckWinConditions()
-    {
-        if (isGameEnded.Value)
-        {
-            return;
-        }
-
-        Debug.Log("=== CHECKING WIN CONDITIONS ===");
-
-        int totalSurvivors = 0;
-        int totalCultists = 0;
-        int aliveSurvivors = 0;
-        int aliveCultists = 0;
-
-        // Count players and their status
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-            if (playerRoles.TryGetValue(clientId, out RoleManager.PlayerRole role))
-            {
-                bool isDead = playerDeathStates.ContainsKey(clientId) && playerDeathStates[clientId];
-
-                if (role == RoleManager.PlayerRole.Survivor)
-                {
-                    totalSurvivors++;
-                    if (!isDead) aliveSurvivors++;
-                }
-                else if (role == RoleManager.PlayerRole.Cultist)
-                {
-                    totalCultists++;
-                    if (!isDead) aliveCultists++;
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"Player {clientId} not found in roles dictionary");
-            }
-        }
-
-        Debug.Log($"Player Status - Survivors: {aliveSurvivors}/{totalSurvivors} alive, Cultists: {aliveCultists}/{totalCultists} alive");
-        Debug.Log($"Tasks - Survivor: {survivorTasksComplete.Value}, Cultist: {cultistTasksComplete.Value}");
-        Debug.Log($"Deaths - Survivors: {survivorDeaths.Value}, Cultists: {cultistDeaths.Value}");
-
-        // FIXED WIN CONDITION ORDER - Check cultist win conditions FIRST
-
-        // Cultist win conditions
-        if (cultistTasksComplete.Value && survivorDeaths.Value >= 1)
-        {
-            Debug.Log("WIN CONDITION: Cultists win by tasks and at least one kill!");
-            EndGame(GameResult.CultistsWinByTasksAndKill);
-            return;
-        }
-
-        // Check if all survivors are dead
-        if (aliveSurvivors == 0 && totalSurvivors > 0)
-        {
-            Debug.Log("WIN CONDITION: Cultists win by eliminating all survivors!");
-            EndGame(GameResult.CultistsWinByElimination);
-            return;
-        }
-
-        // Survivor win conditions (only checked if cultists didn't win)
-        if (survivorTasksComplete.Value)
-        {
-            Debug.Log("WIN CONDITION: Survivors win by tasks!");
-            EndGame(GameResult.SurvivorsWinByTasks);
-            return;
-        }
-
-        // Check if all cultists are dead
-        if (aliveCultists == 0 && totalCultists > 0)
-        {
-            Debug.Log("WIN CONDITION: Survivors win by killing all cultists!");
-            EndGame(GameResult.SurvivorsWinByKill);
-            return;
-        }
-
-        Debug.Log("No win conditions met - game continues");
-    }
-
+   
     private void EndGame(GameResult result)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -313,15 +325,33 @@ public class EndGameManager : NetworkBehaviour
         // Clean up cross-scene data
         CrossSceneData.Reset();
 
-        // Clean up network state
-        if (NetworkManager.Singleton != null)
+        // FIXED: Use NetworkManager's SceneManager to load scene for all clients
+        NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+    }
+
+    // Handle client disconnection gracefully
+    public void OnClientDisconnected(ulong clientId)
+    {
+        if (!IsServer || isGameEnded.Value) return;
+
+        Debug.Log($"Client {clientId} disconnected - checking if game should end");
+
+        // Remove the disconnected player from tracking
+        if (playerRoles.ContainsKey(clientId))
         {
-            // Shutdown network manager to clean up connections
-            NetworkManager.Singleton.Shutdown();
+            var role = playerRoles[clientId];
+            if (role == RoleManager.PlayerRole.Cultist)
+            {
+                Debug.Log($"Cultist {clientId} disconnected - cultists can no longer win by tasks");
+                // If cultist disconnects, they can't complete tasks, but survivors can still win
+            }
+
+            playerRoles.Remove(clientId);
+            playerDeathStates.Remove(clientId);
         }
 
-        // Load main menu scene
-        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        // Check if game should continue or end
+        CheckWinConditions();
     }
 
     // NetworkVariable change handlers for debugging
@@ -375,10 +405,10 @@ public class EndGameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        if (!playerDeathStates.ContainsKey(clientId))
+        if (!playerRoles.ContainsKey(clientId))
         {
-            playerDeathStates[clientId] = false;
             playerRoles[clientId] = role;
+            playerDeathStates[clientId] = false;
             Debug.Log($"Registered player {clientId} with role {role}");
         }
     }
@@ -407,6 +437,14 @@ public class EndGameManager : NetworkBehaviour
         Debug.Log($"NetworkManager exists: {NetworkManager.Singleton != null}");
         Debug.Log($"EndGameUI exists: {EndGameUI.Instance != null}");
         Debug.Log($"GameHUDManager exists: {GameHUDManager.Instance != null}");
+
+        // Debug player roles
+        Debug.Log("=== PLAYER ROLES ===");
+        foreach (var kvp in playerRoles)
+        {
+            bool isDead = playerDeathStates.ContainsKey(kvp.Key) && playerDeathStates[kvp.Key];
+            Debug.Log($"Player {kvp.Key}: {kvp.Value} (Dead: {isDead})");
+        }
     }
 
     // Test methods for development
