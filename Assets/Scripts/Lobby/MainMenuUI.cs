@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
-using Unity.Netcode;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -18,9 +17,6 @@ public class MainMenuUI : MonoBehaviour
 
     private void Start()
     {
-        // FIXED: Clean up NetworkManager and services when returning to main menu
-        CleanupNetworkManager();
-
         joinPanel.SetActive(false);
 
         // Button events
@@ -28,54 +24,6 @@ public class MainMenuUI : MonoBehaviour
         joinButton.GetComponent<Button>().onClick.AddListener(OnJoinClicked);
         confirmJoinButton.onClick.AddListener(OnConfirmJoinClicked);
         cancelJoinButton.onClick.AddListener(OnCancelJoinClicked);
-    }
-
-    private void CleanupNetworkManager()
-    {
-        Debug.Log("Cleaning up NetworkManager for new session...");
-
-        // Shutdown NetworkManager if it exists and is running
-        if (NetworkManager.Singleton != null)
-        {
-            if (NetworkManager.Singleton.IsListening)
-            {
-                Debug.Log("Shutting down existing NetworkManager...");
-                NetworkManager.Singleton.Shutdown();
-            }
-
-            // FIXED: Important - Destroy the NetworkManager to allow fresh start
-            Destroy(NetworkManager.Singleton.gameObject);
-        }
-
-        // Find and destroy any remaining NetworkManager instances
-        NetworkManager[] networkManagers = FindObjectsOfType<NetworkManager>();
-        foreach (NetworkManager nm in networkManagers)
-        {
-            if (nm != null && nm.gameObject != null)
-            {
-                Debug.Log($"Destroying NetworkManager: {nm.gameObject.name}");
-                Destroy(nm.gameObject);
-            }
-        }
-
-        // Clean up any remaining network objects
-        NetworkObject[] networkObjects = FindObjectsOfType<NetworkObject>();
-        foreach (NetworkObject no in networkObjects)
-        {
-            if (no != null && no.IsSpawned)
-            {
-                Debug.Log($"Destroying spawned NetworkObject: {no.name}");
-                if (no.gameObject != null)
-                {
-                    Destroy(no.gameObject);
-                }
-            }
-        }
-
-        // Reset cross-scene data
-        CrossSceneData.Reset();
-
-        Debug.Log("Network cleanup completed");
     }
 
     private void OnHostClicked()

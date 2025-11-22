@@ -56,11 +56,7 @@ public class LobbyManager : NetworkBehaviour
     {
         try
         {
-            // FIXED: Better service initialization with error handling
-            if (UnityServices.State != ServicesInitializationState.Initialized)
-            {
-                await UnityServices.InitializeAsync();
-            }
+            await UnityServices.InitializeAsync();
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
@@ -71,7 +67,6 @@ public class LobbyManager : NetworkBehaviour
         catch (System.Exception e)
         {
             Debug.LogError($"Services initialization failed: {e.Message}");
-            // Don't return to main menu immediately, let the user retry
         }
     }
 
@@ -79,33 +74,25 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log("Starting as host...");
 
-        try
+        // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
+        string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
+
+        if (string.IsNullOrEmpty(joinCode))
         {
-            // FIXED: Added retry logic and better error handling
-            string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
-
-            if (string.IsNullOrEmpty(joinCode))
-            {
-                Debug.LogError("Failed to create lobby - join code was empty!");
-                ShowConnectionError("Failed to create lobby. Please check your internet connection and try again.");
-                return;
-            }
-
-            currentJoinCode = joinCode;
-
-            // Update UI with join code
-            if (lobbyUIManager != null)
-            {
-                lobbyUIManager.UpdateLobbyCodeDisplay(joinCode);
-            }
-
-            Debug.Log($"[LobbyManager] Lobby created with code {joinCode}");
+            Debug.LogError("Failed to create lobby!");
+            ReturnToMainMenu();
+            return;
         }
-        catch (System.Exception e)
+
+        currentJoinCode = joinCode;
+
+        // Update UI with join code
+        if (lobbyUIManager != null)
         {
-            Debug.LogError($"Host creation failed: {e.Message}");
-            ShowConnectionError($"Failed to create lobby: {e.Message}");
+            lobbyUIManager.UpdateLobbyCodeDisplay(joinCode);
         }
+
+        Debug.Log($"[LobbyManager] Lobby created with code {joinCode}");
     }
 
     private async Task StartClient()
@@ -113,47 +100,31 @@ public class LobbyManager : NetworkBehaviour
         if (string.IsNullOrEmpty(CrossSceneData.JoinCode))
         {
             Debug.LogError("No join code provided!");
-            ShowConnectionError("No join code provided!");
             ReturnToMainMenu();
             return;
         }
 
         Debug.Log("Starting as client...");
 
-        try
+        // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
+        bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
+
+        if (!success)
         {
-            bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
-
-            if (!success)
-            {
-                Debug.LogError("Failed to join lobby!");
-                ShowConnectionError("Failed to join lobby. Please check the join code and try again.");
-                return;
-            }
-
-            currentJoinCode = CrossSceneData.JoinCode;
-
-            // Update UI with join code
-            if (lobbyUIManager != null)
-            {
-                lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
-            }
-
-            Debug.Log("[LobbyManager] Successfully joined relay session");
+            Debug.LogError("Failed to join lobby!");
+            ReturnToMainMenu();
+            return;
         }
-        catch (System.Exception e)
+
+        currentJoinCode = CrossSceneData.JoinCode;
+
+        // Update UI with join code
+        if (lobbyUIManager != null)
         {
-            Debug.LogError($"Client join failed: {e.Message}");
-            ShowConnectionError($"Failed to join lobby: {e.Message}");
+            lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
         }
-    }
 
-    private void ShowConnectionError(string message)
-    {
-        Debug.LogError($"Connection Error: {message}");
-
-        // You could show this in UI - for now just log and return to main menu after delay
-        Invoke(nameof(ReturnToMainMenu), 3f);
+        Debug.Log("[LobbyManager] Successfully joined relay session");
     }
 
     public override void OnNetworkSpawn()
@@ -254,8 +225,6 @@ public class LobbyManager : NetworkBehaviour
     // Simple leave / shutdown
     public void LeaveLobby()
     {
-        Debug.Log("Leaving lobby and cleaning up...");
-
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
@@ -266,8 +235,6 @@ public class LobbyManager : NetworkBehaviour
 
     private void ReturnToMainMenu()
     {
-        Debug.Log("Returning to main menu...");
-
         // Clear cross-scene data
         CrossSceneData.Reset();
 
