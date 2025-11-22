@@ -22,7 +22,6 @@ public class GameManager : NetworkBehaviour
 
     private void OnDisable()
     {
-        // FIXED: Added null checks for NetworkManager
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
@@ -41,26 +40,21 @@ public class GameManager : NetworkBehaviour
         StartCoroutine(InitializeManagers());
     }
 
-    // FIXED: Handle client disconnections gracefully with null checks
+    // FIXED: Handle client disconnections gracefully
     private void OnClientDisconnected(ulong clientId)
     {
         if (!IsServer) return;
 
         Debug.Log($"Client {clientId} disconnected from game");
 
-        // FIXED: Added null check for EndGameManager.Instance
+        // Notify EndGameManager about the disconnection
         if (EndGameManager.Instance != null)
         {
             EndGameManager.Instance.OnClientDisconnected(clientId);
         }
-        else
-        {
-            Debug.LogWarning("EndGameManager.Instance is null during client disconnect");
-        }
 
         // Check if we should end the game (e.g., if host disconnects)
-        // FIXED: Added null check for NetworkManager.Singleton
-        if (NetworkManager.Singleton != null && clientId == NetworkManager.Singleton.LocalClientId)
+        if (clientId == NetworkManager.Singleton.LocalClientId)
         {
             Debug.Log("Host disconnected - ending game for everyone");
             // Host disconnected - return all clients to main menu
@@ -109,9 +103,6 @@ public class GameManager : NetworkBehaviour
     private IEnumerator SpawnPlayersWithDelay()
     {
         yield return new WaitForSeconds(0.5f);
-
-        // FIXED: Added null check for NetworkManager.Singleton
-        if (NetworkManager.Singleton == null) yield break;
 
         Debug.Log($"Spawning players for {NetworkManager.Singleton.ConnectedClientsIds.Count} clients");
 
