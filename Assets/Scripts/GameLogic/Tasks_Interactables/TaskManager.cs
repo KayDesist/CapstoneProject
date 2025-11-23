@@ -256,6 +256,17 @@ public class TaskManager : NetworkBehaviour
         return tasks;
     }
 
+    // NEW: Reset static instance
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
+            Debug.Log("TaskManager instance reset");
+        }
+    }
+
     // Test method to simulate task completion
     [ContextMenu("Test Complete First Survivor Task")]
     public void TestCompleteFirstSurvivorTask()

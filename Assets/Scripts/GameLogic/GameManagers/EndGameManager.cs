@@ -329,8 +329,33 @@ public class EndGameManager : NetworkBehaviour
         // Clean up cross-scene data
         CrossSceneData.Reset();
 
+        // Reset all static instances
+        ResetAllManagers();
+
         // FIXED: Use NetworkManager's SceneManager to load scene for all clients
         NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+    }
+
+    // NEW: Reset all manager instances
+    private void ResetAllManagers()
+    {
+        RoleManager.ResetInstance();
+        TaskManager.ResetInstance();
+        GameHUDManager.ResetInstance();
+        ResetInstance(); // Reset self
+
+        Debug.Log("All manager instances reset for new game session");
+    }
+
+    // NEW: Reset static instance
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
+            Debug.Log("EndGameManager instance reset");
+        }
     }
 
     // Handle client disconnection gracefully

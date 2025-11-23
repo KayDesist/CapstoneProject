@@ -33,8 +33,8 @@ public class LobbyManager : NetworkBehaviour
         if (lobbyUIManager == null)
             lobbyUIManager = FindObjectOfType<LobbyUIManager>();
 
-        // Ensure Unity Services are initialized
-        await InitializeUnityServices();
+        // Ensure NetworkManager is in a clean state
+        await EnsureCleanNetworkState();
 
         // Based on how we entered the lobby, start as host or client
         if (CrossSceneData.LobbyMode == "Host")
@@ -50,6 +50,32 @@ public class LobbyManager : NetworkBehaviour
             Debug.LogError("Unknown lobby mode!");
             ReturnToMainMenu();
         }
+    }
+
+    // NEW: Ensure NetworkManager is in clean state
+    private async Task EnsureCleanNetworkState()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            Debug.Log("NetworkManager was still listening - shutting down");
+            NetworkManager.Singleton.Shutdown();
+            // Wait a moment for shutdown to complete
+            await Task.Delay(100);
+        }
+
+        // Clean up any leftover manager instances
+        CleanupLeftoverManagers();
+    }
+
+    // NEW: Clean up leftover manager instances
+    private void CleanupLeftoverManagers()
+    {
+        RoleManager.ResetInstance();
+        TaskManager.ResetInstance();
+        GameHUDManager.ResetInstance();
+        EndGameManager.ResetInstance();
+
+        Debug.Log("Cleaned up leftover manager instances");
     }
 
     private async Task InitializeUnityServices()
@@ -74,25 +100,35 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log("Starting as host...");
 
-        // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
-        string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
-
-        if (string.IsNullOrEmpty(joinCode))
+        try
         {
-            Debug.LogError("Failed to create lobby!");
+            // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
+            string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
+
+            if (string.IsNullOrEmpty(joinCode))
+            {
+                Debug.LogError("Failed to create lobby! Relay returned null join code.");
+                ShowErrorToUser("Failed to create lobby. Please check your internet connection and try again.");
+                ReturnToMainMenu();
+                return;
+            }
+
+            currentJoinCode = joinCode;
+
+            // Update UI with join code
+            if (lobbyUIManager != null)
+            {
+                lobbyUIManager.UpdateLobbyCodeDisplay(joinCode);
+            }
+
+            Debug.Log($"[LobbyManager] Lobby created with code {joinCode}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception while starting host: {e.Message}");
+            ShowErrorToUser($"Failed to create lobby: {e.Message}");
             ReturnToMainMenu();
-            return;
         }
-
-        currentJoinCode = joinCode;
-
-        // Update UI with join code
-        if (lobbyUIManager != null)
-        {
-            lobbyUIManager.UpdateLobbyCodeDisplay(joinCode);
-        }
-
-        Debug.Log($"[LobbyManager] Lobby created with code {joinCode}");
     }
 
     private async Task StartClient()
@@ -100,31 +136,52 @@ public class LobbyManager : NetworkBehaviour
         if (string.IsNullOrEmpty(CrossSceneData.JoinCode))
         {
             Debug.LogError("No join code provided!");
+            ShowErrorToUser("No join code provided!");
             ReturnToMainMenu();
             return;
         }
 
         Debug.Log("Starting as client...");
 
-        // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
-        bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
-
-        if (!success)
+        try
         {
-            Debug.LogError("Failed to join lobby!");
+            // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
+            bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
+
+            if (!success)
+            {
+                Debug.LogError("Failed to join lobby!");
+                ShowErrorToUser("Failed to join lobby! Please check the join code and try again.");
+                ReturnToMainMenu();
+                return;
+            }
+
+            currentJoinCode = CrossSceneData.JoinCode;
+
+            // Update UI with join code
+            if (lobbyUIManager != null)
+            {
+                lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
+            }
+
+            Debug.Log("[LobbyManager] Successfully joined relay session");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception while starting client: {e.Message}");
+            ShowErrorToUser($"Failed to join lobby: {e.Message}");
             ReturnToMainMenu();
-            return;
         }
+    }
 
-        currentJoinCode = CrossSceneData.JoinCode;
-
-        // Update UI with join code
-        if (lobbyUIManager != null)
-        {
-            lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
-        }
-
-        Debug.Log("[LobbyManager] Successfully joined relay session");
+    // NEW: Show error messages to user
+    private void ShowErrorToUser(string message)
+    {
+        Debug.LogError($"USER ERROR: {message}");
+        // You can implement this to show error messages in UI
+        // Example: if you have an error text UI element
+        // errorText.text = message;
+        // errorPanel.SetActive(true);
     }
 
     public override void OnNetworkSpawn()

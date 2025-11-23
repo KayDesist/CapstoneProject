@@ -377,6 +377,17 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // NEW: Reset static instance
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
+            Debug.Log("GameHUDManager instance reset");
+        }
+    }
+
     // For testing in editor
     [ContextMenu("Test Role Assignment - Survivor")]
     private void TestSurvivorRole()

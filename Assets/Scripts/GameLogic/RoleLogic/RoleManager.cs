@@ -127,7 +127,7 @@ public class RoleManager : NetworkBehaviour
         // Update local player's role knowledge
         ulong localClientId = NetworkManager.Singleton.LocalClientId;
 
-        // FIXED: Correct role assignment logic
+        // FIXED: Changed from PlayerManager.PlayerRole to RoleManager.PlayerRole
         PlayerRole localRole = (localClientId == (ulong)newCultistId) ? PlayerRole.Cultist : PlayerRole.Survivor;
 
         playerRoles[localClientId] = localRole;
@@ -225,6 +225,17 @@ public class RoleManager : NetworkBehaviour
         cultistPlayerId.OnValueChanged -= OnCultistAssigned;
         playerRoles.Clear();
         rolesAssigned = false;
+    }
+
+    // NEW: Reset static instance
+    public static void ResetInstance()
+    {
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);
+            Instance = null;
+            Debug.Log("RoleManager instance reset");
+        }
     }
 
     // Debug method to check all roles
