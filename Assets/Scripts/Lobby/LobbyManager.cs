@@ -102,6 +102,9 @@ public class LobbyManager : NetworkBehaviour
 
         try
         {
+            // FIXED: Initialize Unity Services first
+            await InitializeUnityServices();
+
             // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
             string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
 
@@ -145,6 +148,9 @@ public class LobbyManager : NetworkBehaviour
 
         try
         {
+            // FIXED: Initialize Unity Services first
+            await InitializeUnityServices();
+
             // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
             bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
 
@@ -298,7 +304,7 @@ public class LobbyManager : NetworkBehaviour
         SceneManager.LoadScene("MainMenu");
     }
 
-    // Host-only StartGame
+    // Host-only StartGame - UPDATED for better scene loading
     public void StartGame()
     {
         if (!IsHost)
@@ -313,8 +319,17 @@ public class LobbyManager : NetworkBehaviour
             return;
         }
 
-        Debug.Log("[LobbyManager] Starting GameScene for everyone...");
+        Debug.Log($"[LobbyManager] Starting GameScene for {lobbyPlayers.Count} players...");
+
+        // Ensure all clients are synchronized before loading scene
         NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+
+        // Log for debugging
+        Debug.Log($"Current connected clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}");
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            Debug.Log($" - Client {clientId}");
+        }
     }
 
     // Network callbacks
