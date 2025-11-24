@@ -207,6 +207,12 @@ public class PlayerHealth : NetworkBehaviour
         isDead = true;
         Debug.Log($"Player {OwnerClientId} has died!");
 
+        PlayerSpectator spectator = GetComponent<PlayerSpectator>();
+        if (spectator != null && IsOwner)
+        {
+            spectator.HandlePlayerDeath();
+        }
+
         // Notify EndGameManager about this death
         if (EndGameManager.Instance != null && RoleManager.Instance != null)
         {
@@ -241,6 +247,8 @@ public class PlayerHealth : NetworkBehaviour
 
             Debug.Log("Local player died - controls disabled");
         }
+
+
     }
 
     // Public getters for client-side checks
