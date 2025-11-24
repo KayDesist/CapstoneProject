@@ -15,27 +15,63 @@ public class RelayConnector : MonoBehaviour
     /// </summary>
     public async Task<string> StartHostWithRelay(int maxConnections, string connectionType = "wss")
     {
-        await UnityServices.InitializeAsync();
-
-        if (!AuthenticationService.Instance.IsSignedIn)
+        try
         {
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            Debug.Log("Initializing Unity Services for Relay...");
+
+            // Initialize Unity Services and sign in anonymously
+            if (UnityServices.State != ServicesInitializationState.Initialized)
+            {
+                await UnityServices.InitializeAsync();
+            }
+
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("Signed in anonymously to Authentication Service");
+            }
+
+            Debug.Log("Creating Relay allocation...");
+
+            // Create a Relay allocation
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
+
+            // Configure the network transport to connect to the Relay server
+            UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            // *** FIXED LINE: Use AllocationUtils.ToRelayServerData ***
+            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, connectionType));
+
+            // Additional setting required for WebSocket (WSS) connections
+            if (connectionType == "wss")
+            {
+                transport.UseWebSockets = true;
+            }
+
+            // Get the join code for the allocation
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log($"Relay host started. Join code: {joinCode}");
+
+            // Start the host
+            bool hostStarted = NetworkManager.Singleton.StartHost();
+
+            if (hostStarted)
+            {
+                Debug.Log("Host started successfully via Relay");
+                return joinCode;
+            }
+            else
+            {
+                Debug.LogError("Failed to start host after Relay allocation");
+                return null;
+            }
         }
-
-        //Create an allocation for the host
-        var allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
-
-        //Configure transport with Relay server data (FIXED: using wss for WebSockets)
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, connectionType));
-
-        // Get join code for clients
-        var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-        Debug.Log($"Relay host started. Join code: {joinCode}");
-
-        //Start host
-        return NetworkManager.Singleton.StartHost() ? joinCode : null;
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception in StartHostWithRelay: {e.Message}");
+            Debug.LogError($"Stack trace: {e.StackTrace}");
+            return null;
+        }
     }
 
     /// <summary>
@@ -43,23 +79,58 @@ public class RelayConnector : MonoBehaviour
     /// </summary>
     public async Task<bool> StartClientWithRelay(string joinCode, string connectionType = "wss")
     {
-        await UnityServices.InitializeAsync();
-
-        if (!AuthenticationService.Instance.IsSignedIn)
+        try
         {
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            Debug.Log($"Joining Relay with code: {joinCode}");
+
+            // Initialize Unity Services and sign in anonymously
+            if (UnityServices.State != ServicesInitializationState.Initialized)
+            {
+                await UnityServices.InitializeAsync();
+            }
+
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("Signed in anonymously to Authentication Service");
+            }
+
+            // Join an existing Relay allocation using the join code
+            JoinAllocation allocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+
+            // Configure the network transport to connect to the Relay server
+            UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            // *** FIXED LINE: Use AllocationUtils.ToRelayServerData ***
+            transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, connectionType));
+
+            // Additional setting required for WebSocket (WSS) connections
+            if (connectionType == "wss")
+            {
+                transport.UseWebSockets = true;
+            }
+
+            Debug.Log("Relay client configured successfully. Starting client...");
+
+            // Start the client
+            bool clientStarted = NetworkManager.Singleton.StartClient();
+
+            if (clientStarted)
+            {
+                Debug.Log("Client started successfully via Relay");
+                return true;
+            }
+            else
+            {
+                Debug.LogError("Failed to start client after Relay join");
+                return false;
+            }
         }
-
-        //Join an existing Relay allocation using join code
-        var allocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-
-        //Configure transport (FIXED: using wss for WebSockets)
-        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, connectionType));
-
-        Debug.Log("Relay client joined successfully.");
-
-        //Start client
-        return NetworkManager.Singleton.StartClient();
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception in StartClientWithRelay: {e.Message}");
+            Debug.LogError($"Stack trace: {e.StackTrace}");
+            return false;
+        }
     }
 }

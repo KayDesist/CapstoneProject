@@ -105,12 +105,12 @@ public class LobbyManager : NetworkBehaviour
             // FIXED: Initialize Unity Services first
             await InitializeUnityServices();
 
-            // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
-            string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
+            // FIXED: Add timeout and retry logic
+            string joinCode = await StartRelayWithRetry(3); // 3 retries
 
             if (string.IsNullOrEmpty(joinCode))
             {
-                Debug.LogError("Failed to create lobby! Relay returned null join code.");
+                Debug.LogError("Failed to create lobby after retries! Relay returned null join code.");
                 ShowErrorToUser("Failed to create lobby. Please check your internet connection and try again.");
                 ReturnToMainMenu();
                 return;
@@ -134,6 +134,36 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
+    // NEW: Add retry logic for Relay connection
+    private async Task<string> StartRelayWithRetry(int maxRetries)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                Debug.Log($"Relay connection attempt {attempt}/{maxRetries}");
+                string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
+
+                if (!string.IsNullOrEmpty(joinCode))
+                {
+                    return joinCode;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Relay attempt {attempt} failed: {e.Message}");
+
+                if (attempt < maxRetries)
+                {
+                    Debug.Log($"Retrying in {attempt * 2} seconds...");
+                    await Task.Delay(attempt * 2000); // Exponential backoff
+                }
+            }
+        }
+
+        return null;
+    }
+
     private async Task StartClient()
     {
         if (string.IsNullOrEmpty(CrossSceneData.JoinCode))
@@ -151,12 +181,12 @@ public class LobbyManager : NetworkBehaviour
             // FIXED: Initialize Unity Services first
             await InitializeUnityServices();
 
-            // FIXED: Changed from "dtls" to "wss" for WebSockets compatibility
-            bool success = await relayConnector.StartClientWithRelay(CrossSceneData.JoinCode, "wss");
+            // FIXED: Add retry logic for client connection
+            bool success = await JoinRelayWithRetry(CrossSceneData.JoinCode, 3);
 
             if (!success)
             {
-                Debug.LogError("Failed to join lobby!");
+                Debug.LogError("Failed to join lobby after retries!");
                 ShowErrorToUser("Failed to join lobby! Please check the join code and try again.");
                 ReturnToMainMenu();
                 return;
@@ -178,6 +208,36 @@ public class LobbyManager : NetworkBehaviour
             ShowErrorToUser($"Failed to join lobby: {e.Message}");
             ReturnToMainMenu();
         }
+    }
+
+    // NEW: Add retry logic for client Relay connection
+    private async Task<bool> JoinRelayWithRetry(string joinCode, int maxRetries)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                Debug.Log($"Client Relay connection attempt {attempt}/{maxRetries}");
+                bool success = await relayConnector.StartClientWithRelay(joinCode, "wss");
+
+                if (success)
+                {
+                    return true;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Client Relay attempt {attempt} failed: {e.Message}");
+
+                if (attempt < maxRetries)
+                {
+                    Debug.Log($"Retrying in {attempt * 2} seconds...");
+                    await Task.Delay(attempt * 2000); // Exponential backoff
+                }
+            }
+        }
+
+        return false;
     }
 
     // NEW: Show error messages to user
@@ -369,6 +429,35 @@ public class LobbyManager : NetworkBehaviour
         }
 
         lobbyPlayers.OnListChanged -= OnLobbyPlayersChanged;
+    }
+
+    // Debug methods
+    [ContextMenu("Debug Lobby State")]
+    public void DebugLobbyState()
+    {
+        Debug.Log("=== LOBBY STATE ===");
+        Debug.Log($"Players: {lobbyPlayers.Count}");
+        Debug.Log($"Join Code: {currentJoinCode}");
+        Debug.Log($"Is Host: {IsHost}");
+        Debug.Log($"Is Server: {IsServer}");
+
+        foreach (var player in lobbyPlayers)
+        {
+            Debug.Log($"- Player {player.ClientId}: {player.PlayerName} (Ready: {player.IsReady})");
+        }
+    }
+
+    [ContextMenu("Force Start Game")]
+    public void ForceStartGame()
+    {
+        if (IsHost)
+        {
+            StartGame();
+        }
+        else
+        {
+            Debug.LogWarning("Only host can force start game");
+        }
     }
 }
 

@@ -179,6 +179,65 @@ public class PlayerSpectator : NetworkBehaviour
         ShowSpectateHint();
     }
 
+    private void UpdateSpectatablePlayers()
+    {
+        spectatablePlayers.Clear();
+
+        // Only server can access other players' objects directly
+        if (!IsServer)
+        {
+            // For clients, use a scene-based approach
+            FindPlayersInScene();
+            return;
+        }
+
+        // Server can use the direct method
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            // Skip ourselves
+            if (clientId == OwnerClientId) continue;
+
+            NetworkObject playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+            if (playerObj != null)
+            {
+                PlayerHealth health = playerObj.GetComponent<PlayerHealth>();
+                if (health != null && health.IsAlive())
+                {
+                    spectatablePlayers.Add(clientId);
+                }
+            }
+        }
+
+        Debug.Log($"Server updated spectatable players: {spectatablePlayers.Count} players available");
+    }
+
+    // Client-side method to find players
+    private void FindPlayersInScene()
+    {
+        spectatablePlayers.Clear();
+
+        Debug.Log("Client searching for players in scene...");
+
+        // Find all NetworkPlayerController objects in the scene
+        NetworkPlayerController[] allPlayers = FindObjectsOfType<NetworkPlayerController>();
+
+        foreach (NetworkPlayerController player in allPlayers)
+        {
+            // Skip ourselves
+            if (player.IsOwner) continue;
+
+            // Check if player is alive
+            PlayerHealth health = player.GetComponent<PlayerHealth>();
+            if (health != null && health.IsAlive() && player.NetworkObject != null)
+            {
+                spectatablePlayers.Add(player.NetworkObject.OwnerClientId);
+                Debug.Log($"Found alive player: {player.NetworkObject.OwnerClientId}");
+            }
+        }
+
+        Debug.Log($"Client found {spectatablePlayers.Count} players in scene");
+    }
+
     public void StopSpectating()
     {
         if (!isSpectating) return;
@@ -230,11 +289,32 @@ public class PlayerSpectator : NetworkBehaviour
         if (index < 0 || index >= spectatablePlayers.Count) return;
 
         ulong targetPlayerId = spectatablePlayers[index];
+        Debug.Log($"Attempting to spectate player: {targetPlayerId}");
 
-        // Find the player object
-        if (NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(targetPlayerId) != null)
+        // FIXED: Use different approach for server vs client
+        NetworkObject targetPlayerObj = null;
+
+        if (IsServer)
         {
-            NetworkObject targetPlayerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(targetPlayerId);
+            // Server can use the direct method
+            targetPlayerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(targetPlayerId);
+        }
+        else
+        {
+            // Client needs to search in scene
+            NetworkPlayerController[] allPlayers = FindObjectsOfType<NetworkPlayerController>();
+            foreach (NetworkPlayerController player in allPlayers)
+            {
+                if (player.NetworkObject != null && player.NetworkObject.OwnerClientId == targetPlayerId)
+                {
+                    targetPlayerObj = player.NetworkObject;
+                    break;
+                }
+            }
+        }
+
+        if (targetPlayerObj != null)
+        {
             currentSpectatedPlayer = targetPlayerObj.GetComponent<NetworkPlayerController>();
 
             if (currentSpectatedPlayer != null)
@@ -246,11 +326,18 @@ public class PlayerSpectator : NetworkBehaviour
                 Debug.Log($"Now spectating player {targetPlayerId}");
                 UpdateSpectateHint();
             }
+            else
+            {
+                Debug.LogError($"Found player object but no NetworkPlayerController component for {targetPlayerId}");
+            }
         }
         else
         {
+            Debug.LogWarning($"Player {targetPlayerId} not found in scene, updating player list...");
+
             // Player no longer exists, update list
             UpdateSpectatablePlayers();
+
             if (spectatablePlayers.Count > 0)
             {
                 currentSpectateIndex = Mathf.Clamp(currentSpectateIndex, 0, spectatablePlayers.Count - 1);
@@ -260,34 +347,6 @@ public class PlayerSpectator : NetworkBehaviour
             {
                 StopSpectating();
             }
-        }
-    }
-
-    private void UpdateSpectatablePlayers()
-    {
-        spectatablePlayers.Clear();
-
-        // Find all alive players except ourselves
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-            // Skip ourselves
-            if (clientId == OwnerClientId) continue;
-
-            NetworkObject playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
-            if (playerObj != null)
-            {
-                PlayerHealth health = playerObj.GetComponent<PlayerHealth>();
-                if (health != null && health.IsAlive())
-                {
-                    spectatablePlayers.Add(clientId);
-                }
-            }
-        }
-
-        // If we lost our current target, reset index
-        if (currentSpectateIndex >= spectatablePlayers.Count)
-        {
-            currentSpectateIndex = spectatablePlayers.Count - 1;
         }
     }
 
@@ -355,14 +414,52 @@ public class PlayerSpectator : NetworkBehaviour
         }
     }
 
+    // Debug method to manually trigger spectating
+    [ContextMenu("Start Spectating")]
+    public void DebugStartSpectating()
+    {
+        if (IsOwner)
+        {
+            StartSpectating();
+        }
+    }
+
+    [ContextMenu("Stop Spectating")]
+    public void DebugStopSpectating()
+    {
+        if (IsOwner)
+        {
+            StopSpectating();
+        }
+    }
+
+    [ContextMenu("Debug Player List")]
+    public void DebugPlayerList()
+    {
+        Debug.Log($"=== SPECTATABLE PLAYERS ({spectatablePlayers.Count}) ===");
+        foreach (var playerId in spectatablePlayers)
+        {
+            Debug.Log($"Player ID: {playerId}");
+        }
+    }
+
     // Debug info in game view
     private void OnGUI()
     {
-        if (isSpectating && currentSpectatedPlayer != null)
+        if (isSpectating)
         {
-            GUILayout.BeginArea(new Rect(10, 10, 300, 150));
+            GUILayout.BeginArea(new Rect(10, 10, 300, 200));
             GUILayout.Label("SPECTATOR MODE");
-            GUILayout.Label($"Spectating: Player {spectatablePlayers[currentSpectateIndex]}");
+
+            if (currentSpectatedPlayer != null)
+            {
+                GUILayout.Label($"Spectating: Player {spectatablePlayers[currentSpectateIndex]}");
+            }
+            else
+            {
+                GUILayout.Label("Spectating: Free Camera");
+            }
+
             GUILayout.Label("Controls:");
             GUILayout.Label("Q - Previous Player");
             GUILayout.Label("E - Next Player");
