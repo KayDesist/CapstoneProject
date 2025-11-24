@@ -6,9 +6,9 @@ public class Weapon : NetworkBehaviour
 {
     [Header("Weapon Settings")]
     public string weaponName = "Weapon";
-    public float damage = 25f;
+    public int damage = 25; // Changed to int
     public float attackCooldown = 1f;
-    public float staminaCost = 10f;
+    public int staminaCost = 10; // Changed to int
     public float baseAttackDuration = 0.5f; // Increased for better testing
 
     protected float lastAttackTime;
@@ -120,7 +120,7 @@ public class Weapon : NetworkBehaviour
         // Activate player's hitbox
         if (playerHitbox != null)
         {
-            playerHitbox.SetActive(true, damage, ownerId);
+            playerHitbox.SetActive(true, damage, ownerId); // Now passing int
             Debug.Log($"Hitbox activated for player {ownerId} with damage {damage}");
         }
         else
@@ -171,17 +171,17 @@ public class Weapon : NetworkBehaviour
             Debug.Log($"Consuming {staminaCost} stamina");
             if (IsServer)
             {
-                ownerHealth.ConsumeStamina(staminaCost);
+                ownerHealth.ConsumeStamina(staminaCost); // Now passing int
             }
             else
             {
-                RequestStaminaConsumptionServerRpc(staminaCost);
+                RequestStaminaConsumptionServerRpc(staminaCost); // Now passing int
             }
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestStaminaConsumptionServerRpc(float cost)
+    private void RequestStaminaConsumptionServerRpc(int cost) // Changed to int
     {
         if (ownerHealth != null)
         {

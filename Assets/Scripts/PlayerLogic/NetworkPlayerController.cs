@@ -11,7 +11,7 @@ public class NetworkPlayerController : NetworkBehaviour
     public float jumpForce = 7f;
 
     [Header("Stamina Settings")]
-    public float sprintStaminaCost = 15f;
+    public int sprintStaminaCost = 15;
     private float staminaAccumulator = 0f;
 
     [Header("References")]
@@ -104,8 +104,8 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void HandleSprint()
     {
-        // Check if player is trying to sprint and has enough stamina
-        if (Input.GetKey(KeyCode.LeftShift) && playerHealth != null && playerHealth.GetStamina() > 5f)
+        // Check if player is trying to sprint and has ANY stamina left
+        if (Input.GetKey(KeyCode.LeftShift) && playerHealth != null && playerHealth.GetStamina() > 0)
         {
             // Only allow sprinting if actually moving
             float horizontal = Input.GetAxis("Horizontal");
@@ -118,6 +118,8 @@ public class NetworkPlayerController : NetworkBehaviour
                 {
                     isSprinting = true;
                     currentSpeed = sprintSpeed;
+                    // Notify PlayerHealth about sprinting state
+                    playerHealth.SetSprinting(true);
                 }
 
                 // Accumulate stamina cost and consume when it reaches at least 1
@@ -147,6 +149,8 @@ public class NetworkPlayerController : NetworkBehaviour
                 {
                     isSprinting = false;
                     currentSpeed = walkSpeed;
+                    // Notify PlayerHealth about sprinting state
+                    playerHealth.SetSprinting(false);
                 }
             }
         }
@@ -157,14 +161,18 @@ public class NetworkPlayerController : NetworkBehaviour
             {
                 isSprinting = false;
                 currentSpeed = walkSpeed;
+                // Notify PlayerHealth about sprinting state
+                playerHealth.SetSprinting(false);
             }
         }
 
-        // Force stop sprinting if stamina is too low
+        // Force stop sprinting if stamina reaches exactly 0
         if (isSprinting && playerHealth != null && playerHealth.GetStamina() <= 0)
         {
             isSprinting = false;
             currentSpeed = walkSpeed;
+            // Notify PlayerHealth about sprinting state
+            playerHealth.SetSprinting(false);
         }
     }
 
@@ -180,7 +188,7 @@ public class NetworkPlayerController : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void RequestStaminaConsumptionServerRpc(float staminaCost)
+    private void RequestStaminaConsumptionServerRpc(int staminaCost)
     {
         if (playerHealth != null)
         {

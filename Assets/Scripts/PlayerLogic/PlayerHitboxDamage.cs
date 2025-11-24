@@ -4,7 +4,7 @@ using Unity.Netcode;
 public class PlayerHitboxDamage : NetworkBehaviour
 {
     [Header("Damage Settings")]
-    public float defaultDamage = 20f;
+    public int defaultDamage = 20; // Changed to int
 
     [Header("Positioning")]
     public float attackRange = 2f;
@@ -13,7 +13,7 @@ public class PlayerHitboxDamage : NetworkBehaviour
 
     private ulong ownerId;
     private bool isActive = false;
-    private float currentDamage = 20f;
+    private int currentDamage = 20; // Changed to int
     private BoxCollider hitboxCollider;
 
     private void Awake()
@@ -31,7 +31,7 @@ public class PlayerHitboxDamage : NetworkBehaviour
         Debug.Log($"Hitbox collider initialized: {hitboxCollider != null}, isTrigger: {hitboxCollider.isTrigger}");
     }
 
-    public void SetActive(bool active, float weaponDamage = 20f, ulong attackerId = 0)
+    public void SetActive(bool active, int weaponDamage = 20, ulong attackerId = 0) // Changed to int
     {
         if (!IsServer)
         {
@@ -132,7 +132,7 @@ public class PlayerHitboxDamage : NetworkBehaviour
         if (other.TryGetComponent(out PlayerHealth health))
         {
             // Apply damage directly on the server
-            health.TakeDamage(currentDamage, ownerId);
+            health.TakeDamage(currentDamage, ownerId); // Now passing int
             Debug.Log($"Hitbox: Hit player {health.OwnerClientId} for {currentDamage} damage");
 
             // Visual/audio feedback for all clients
@@ -149,7 +149,7 @@ public class PlayerHitboxDamage : NetworkBehaviour
             health = other.GetComponentInParent<PlayerHealth>();
             if (health != null)
             {
-                health.TakeDamage(currentDamage, ownerId);
+                health.TakeDamage(currentDamage, ownerId); // Now passing int
                 Debug.Log($"Hitbox: Hit player (via parent) {health.OwnerClientId} for {currentDamage} damage");
                 PlayHitEffectClientRpc(other.transform.position);
                 SetActive(false);

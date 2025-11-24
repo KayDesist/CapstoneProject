@@ -5,36 +5,41 @@ using TMPro;
 public class PlayerHealth : NetworkBehaviour
 {
     [Header("Health Settings")]
-    public float maxHealth = 100f;
-    public float maxStamina = 100f;
-    public float staminaRegenRate = 10f;
+    public int maxHealth = 100;
+    public int maxStamina = 100;
+    public int staminaRegenRate = 15; // Increased regen rate for faster recovery
 
-    // Network-synced health variable with faster updates
-    public NetworkVariable<float> currentHealth = new NetworkVariable<float>(
-        100f,
+    // Network-synced health variable
+    public NetworkVariable<int> currentHealth = new NetworkVariable<int>(
+        100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    // Network-synced stamina variable with faster updates
-    public NetworkVariable<float> currentStamina = new NetworkVariable<float>(
-        100f,
+    // Network-synced stamina variable
+    public NetworkVariable<int> currentStamina = new NetworkVariable<int>(
+        100,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
     private GameHUDManager hudManager;
     private NetworkPlayerController playerController;
+    private bool isSprinting = false;
 
-    // Client-side prediction for immediate feedback
-    private float localHealth;
-    private float localStamina;
+    // For server-side regeneration timing
+    private float staminaRegenTimer = 0f;
+    private const float STAMINA_REGEN_INTERVAL = 0.1f; // Regenerate every 0.1 seconds
+
+    // Client-side values for immediate feedback
+    private int localHealth;
+    private int localStamina;
     private bool initialized = false;
     private bool isDead = false;
 
     // Events for health changes
-    public System.Action<float, float> OnHealthChanged;
-    public System.Action<float> OnDamageTaken;
+    public System.Action<int, int> OnHealthChanged;
+    public System.Action<int> OnDamageTaken;
     public System.Action OnDeath;
 
     public override void OnNetworkSpawn()
@@ -74,37 +79,58 @@ public class PlayerHealth : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner || !initialized || isDead) return;
-
-        // Regenerate stamina when not sprinting - immediate local update
-        if (localStamina < maxStamina && (!playerController.IsSprinting() || playerController == null))
+        // Server handles stamina regeneration
+        if (IsServer && !isDead)
         {
-            float newStamina = Mathf.Min(maxStamina, localStamina + staminaRegenRate * Time.deltaTime);
-            if (newStamina != localStamina)
-            {
-                localStamina = newStamina;
-                hudManager?.UpdateStamina(localStamina, maxStamina);
+            HandleStaminaRegeneration();
+        }
+    }
 
-                // Sync with server periodically or on significant changes
-                if (Mathf.Abs(localStamina - currentStamina.Value) > 5f)
-                {
-                    RequestStaminaRegenServerRpc();
-                }
+    private void HandleStaminaRegeneration()
+    {
+        // Only regenerate if not sprinting
+        if (!isSprinting && currentStamina.Value < maxStamina)
+        {
+            // Use timer-based regeneration for whole numbers
+            staminaRegenTimer += Time.deltaTime;
+
+            if (staminaRegenTimer >= STAMINA_REGEN_INTERVAL)
+            {
+                // Calculate how many stamina points to add
+                int pointsToAdd = Mathf.RoundToInt(staminaRegenRate * STAMINA_REGEN_INTERVAL);
+                if (pointsToAdd < 1) pointsToAdd = 1; // Ensure at least 1 point
+
+                currentStamina.Value = Mathf.Min(maxStamina, currentStamina.Value + pointsToAdd);
+                staminaRegenTimer = 0f;
             }
+        }
+        else
+        {
+            // Reset timer when sprinting or at max stamina
+            staminaRegenTimer = 0f;
+        }
+    }
+
+    // Method to update sprinting state from NetworkPlayerController
+    public void SetSprinting(bool sprinting)
+    {
+        if (IsServer)
+        {
+            isSprinting = sprinting;
+        }
+        else
+        {
+            SetSprintingServerRpc(sprinting);
         }
     }
 
     [ServerRpc]
-    private void RequestStaminaRegenServerRpc()
+    private void SetSprintingServerRpc(bool sprinting)
     {
-        if (currentStamina.Value < maxStamina)
-        {
-            float newStamina = Mathf.Min(maxStamina, currentStamina.Value + staminaRegenRate * Time.deltaTime);
-            currentStamina.Value = newStamina;
-        }
+        isSprinting = sprinting;
     }
 
-    private void OnHealthChangedCallback(float oldHealth, float newHealth)
+    private void OnHealthChangedCallback(int oldHealth, int newHealth)
     {
         // Update local health immediately
         localHealth = newHealth;
@@ -132,7 +158,7 @@ public class PlayerHealth : NetworkBehaviour
         }
     }
 
-    private void OnStaminaChangedCallback(float oldStamina, float newStamina)
+    private void OnStaminaChangedCallback(int oldStamina, int newStamina)
     {
         // Update local stamina immediately
         localStamina = newStamina;
@@ -145,7 +171,7 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void TakeDamageClientRpc(float damage, ulong damagerId)
+    private void TakeDamageClientRpc(int damage, ulong damagerId)
     {
         // Visual/audio feedback for damage on all clients
         if (IsOwner)
@@ -156,7 +182,7 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     // Server-only damage method
-    public void TakeDamage(float damage, ulong damagerId = 0)
+    public void TakeDamage(int damage, ulong damagerId = 0)
     {
         if (!IsServer)
         {
@@ -170,7 +196,7 @@ public class PlayerHealth : NetworkBehaviour
             return;
         }
 
-        float newHealth = Mathf.Max(0, currentHealth.Value - damage);
+        int newHealth = Mathf.Max(0, currentHealth.Value - damage);
         currentHealth.Value = newHealth;
 
         // Notify all clients about the damage for visual feedback
@@ -186,14 +212,16 @@ public class PlayerHealth : NetworkBehaviour
     }
 
     // Server-only stamina methods
-    public void ConsumeStamina(float staminaCost)
+    public void ConsumeStamina(int staminaCost)
     {
         if (!IsServer) return;
 
-        currentStamina.Value = Mathf.Max(0, currentStamina.Value - staminaCost);
+        // Allow stamina to go to 0 or negative, then clamp to 0
+        int newStamina = currentStamina.Value - staminaCost;
+        currentStamina.Value = Mathf.Max(0, newStamina);
     }
 
-    public void RestoreStamina(float staminaAmount)
+    public void RestoreStamina(int staminaAmount)
     {
         if (!IsServer) return;
 
@@ -247,17 +275,15 @@ public class PlayerHealth : NetworkBehaviour
 
             Debug.Log("Local player died - controls disabled");
         }
-
-
     }
 
     // Public getters for client-side checks
-    public float GetHealth()
+    public int GetHealth()
     {
         return IsOwner ? localHealth : currentHealth.Value;
     }
 
-    public float GetStamina()
+    public int GetStamina()
     {
         return IsOwner ? localStamina : currentStamina.Value;
     }
