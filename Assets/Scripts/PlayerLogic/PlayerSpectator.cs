@@ -21,6 +21,10 @@ public class PlayerSpectator : NetworkBehaviour
     public float minVerticalAngle = -30f;
     public float maxVerticalAngle = 60f;
 
+    [Header("Spectator GUI Settings")]
+    public bool showSpectatorGUI = true;
+    public GUIStyle spectatorGUIStyle;
+
     private bool isSpectating = false;
     private int currentSpectateIndex = -1;
     private List<ulong> spectatablePlayers = new List<ulong>();
@@ -34,6 +38,11 @@ public class PlayerSpectator : NetworkBehaviour
     private float currentYaw = 0f;
     private float currentPitch = 15f;
     private Vector3 cameraOffset;
+
+    // GUI styles
+    private GUIStyle whiteTextStyle;
+    private GUIStyle boldWhiteTextStyle;
+    private GUIStyle yellowTextStyle;
 
     private void Start()
     {
@@ -50,6 +59,9 @@ public class PlayerSpectator : NetworkBehaviour
             spectatorCamera.gameObject.SetActive(false);
         }
 
+        // Initialize GUI styles
+        InitializeGUIStyles();
+
         // Only enable spectating for local player
         if (!IsOwner)
         {
@@ -58,6 +70,28 @@ public class PlayerSpectator : NetworkBehaviour
         }
 
         Debug.Log("PlayerSpectator initialized - Press Q/E to spectate when dead, Space to exit");
+    }
+
+    private void InitializeGUIStyles()
+    {
+        // White text style (normal)
+        whiteTextStyle = new GUIStyle();
+        whiteTextStyle.normal.textColor = Color.white;
+        whiteTextStyle.fontSize = 14;
+        whiteTextStyle.richText = true;
+
+        // Bold white text style
+        boldWhiteTextStyle = new GUIStyle();
+        boldWhiteTextStyle.normal.textColor = Color.white;
+        boldWhiteTextStyle.fontSize = 14;
+        boldWhiteTextStyle.fontStyle = FontStyle.Bold;
+        boldWhiteTextStyle.richText = true;
+
+        // Yellow text style for highlights
+        yellowTextStyle = new GUIStyle();
+        yellowTextStyle.normal.textColor = Color.yellow;
+        yellowTextStyle.fontSize = 14;
+        yellowTextStyle.richText = true;
     }
 
     private void Update()
@@ -151,12 +185,24 @@ public class PlayerSpectator : NetworkBehaviour
         if (spectatablePlayers.Count == 0)
         {
             Debug.Log("No players available to spectate");
+            // Still allow entering spectator mode even if no players
+            EnterSpectatorMode();
             return;
         }
 
         isSpectating = true;
         currentSpectateIndex = 0;
 
+        EnterSpectatorMode();
+
+        // Spectate the first player
+        SpectatePlayer(currentSpectateIndex);
+
+        Debug.Log($"Started spectating. Players available: {spectatablePlayers.Count}");
+    }
+
+    private void EnterSpectatorMode()
+    {
         // Switch cameras
         if (mainCamera != null)
             mainCamera.enabled = false;
@@ -172,11 +218,18 @@ public class PlayerSpectator : NetworkBehaviour
         currentPitch = 15f;
         cameraDistance = 3f;
 
-        // Spectate the first player
-        SpectatePlayer(currentSpectateIndex);
+        // Show spectator UI through GameHUDManager (optional)
+        if (GameHUDManager.Instance != null)
+        {
+            GameHUDManager.Instance.ShowSpectatorUI();
+            GameHUDManager.Instance.HideGameHUDForSpectator();
+        }
 
-        Debug.Log($"Started spectating. Players available: {spectatablePlayers.Count}");
-        ShowSpectateHint();
+        // Ensure cursor is unlocked for UI interaction
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Debug.Log("Entered spectator mode - GUI should be visible");
     }
 
     private void UpdateSpectatablePlayers()
@@ -255,11 +308,17 @@ public class PlayerSpectator : NetworkBehaviour
             spectatorCamera.gameObject.SetActive(false);
         }
 
+        // Hide spectator UI through GameHUDManager (optional)
+        if (GameHUDManager.Instance != null)
+        {
+            GameHUDManager.Instance.HideSpectatorUI();
+            GameHUDManager.Instance.RestoreGameHUDAfterSpectator();
+        }
+
         // Clear current spectated player
         currentSpectatedPlayer = null;
 
         Debug.Log("Stopped spectating");
-        HideSpectateHint();
     }
 
     private void SpectatePreviousPlayer()
@@ -324,7 +383,6 @@ public class PlayerSpectator : NetworkBehaviour
                 currentPitch = 15f;
 
                 Debug.Log($"Now spectating player {targetPlayerId}");
-                UpdateSpectateHint();
             }
             else
             {
@@ -345,36 +403,76 @@ public class PlayerSpectator : NetworkBehaviour
             }
             else
             {
-                StopSpectating();
+                // No players left to spectate, but stay in spectator mode
             }
         }
     }
 
-    // UI Methods
-    private void ShowSpectateHint()
+    // ============ PERMANENT SPECTATOR GUI ============
+    private void OnGUI()
     {
-        if (GameHUDManager.Instance != null)
-        {
-            GameHUDManager.Instance.ShowInteractionPrompt("Spectating - Q/Previous | E/Next | Space/Exit | Right Mouse: Look Around | Scroll: Zoom");
-        }
-    }
+        if (!isSpectating || !showSpectatorGUI || !IsOwner) return;
 
-    private void UpdateSpectateHint()
-    {
-        if (isSpectating && GameHUDManager.Instance != null)
-        {
-            string playerInfo = currentSpectatedPlayer != null ?
-                $"Player {spectatablePlayers[currentSpectateIndex]}" : "No Player";
-            GameHUDManager.Instance.ShowInteractionPrompt($"Spectating: {playerInfo} - Q/Previous | E/Next | Space/Exit");
-        }
-    }
+        // Top-left corner position
+        int xPos = 20;
+        int yPos = 20;
+        int width = 320;
+        int lineHeight = 22;
 
-    private void HideSpectateHint()
-    {
-        if (GameHUDManager.Instance != null)
+        // Calculate total height based on content
+        int totalLines = 9;
+        int totalHeight = (totalLines * lineHeight) + 20;
+
+        // Create a semi-transparent background
+        Texture2D backgroundTexture = new Texture2D(1, 1);
+        backgroundTexture.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.7f));
+        backgroundTexture.Apply();
+
+        GUIStyle backgroundStyle = new GUIStyle();
+        backgroundStyle.normal.background = backgroundTexture;
+
+        GUI.Box(new Rect(xPos - 10, yPos - 10, width + 20, totalHeight), "", backgroundStyle);
+
+        // SPECTATOR GUI CONTENT - ALL WHITE TEXT
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "SPECTATOR MODE", boldWhiteTextStyle);
+        yPos += lineHeight;
+
+        // Current player being spectated
+        string playerInfo = currentSpectatedPlayer != null ?
+            $"Player {spectatablePlayers[currentSpectateIndex]}" : "Free Camera";
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Spectating: ", whiteTextStyle);
+        GUI.Label(new Rect(xPos + 85, yPos, width, lineHeight), playerInfo, yellowTextStyle);
+        yPos += lineHeight;
+
+        // Player list info
+        if (spectatablePlayers.Count > 0)
         {
-            GameHUDManager.Instance.HideInteractionPrompt();
+            GUI.Label(new Rect(xPos, yPos, width, lineHeight), $"Players: {currentSpectateIndex + 1}/{spectatablePlayers.Count}", whiteTextStyle);
+            yPos += lineHeight;
         }
+        else
+        {
+            GUI.Label(new Rect(xPos, yPos, width, lineHeight), "No players available", whiteTextStyle);
+            yPos += lineHeight;
+        }
+
+        yPos += 10; // Spacer
+
+        // Controls
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Controls:", boldWhiteTextStyle);
+        yPos += lineHeight;
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Q - Previous Player", whiteTextStyle);
+        yPos += lineHeight;
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "E - Next Player", whiteTextStyle);
+        yPos += lineHeight;
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Right Mouse - Look Around", whiteTextStyle);
+        yPos += lineHeight;
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Mouse Wheel - Zoom", whiteTextStyle);
+        yPos += lineHeight;
+        GUI.Label(new Rect(xPos, yPos, width, lineHeight), "Space - Exit Spectator", whiteTextStyle);
+
+        // Clean up the texture to prevent memory leaks
+        DestroyImmediate(backgroundTexture);
     }
 
     // Public methods
@@ -394,6 +492,7 @@ public class PlayerSpectator : NetworkBehaviour
         // Auto-start spectating when player dies
         if (IsOwner && !isSpectating)
         {
+            Debug.Log("Player died - auto-starting spectating in 1 second");
             // Small delay to let death sequence complete
             Invoke(nameof(StartSpectating), 1f);
         }
@@ -443,30 +542,10 @@ public class PlayerSpectator : NetworkBehaviour
         }
     }
 
-    // Debug info in game view
-    private void OnGUI()
+    [ContextMenu("Toggle Spectator GUI")]
+    public void ToggleSpectatorGUI()
     {
-        if (isSpectating)
-        {
-            GUILayout.BeginArea(new Rect(10, 10, 300, 200));
-            GUILayout.Label("SPECTATOR MODE");
-
-            if (currentSpectatedPlayer != null)
-            {
-                GUILayout.Label($"Spectating: Player {spectatablePlayers[currentSpectateIndex]}");
-            }
-            else
-            {
-                GUILayout.Label("Spectating: Free Camera");
-            }
-
-            GUILayout.Label("Controls:");
-            GUILayout.Label("Q - Previous Player");
-            GUILayout.Label("E - Next Player");
-            GUILayout.Label("Right Mouse - Look Around");
-            GUILayout.Label("Mouse Wheel - Zoom");
-            GUILayout.Label("Space - Exit Spectator");
-            GUILayout.EndArea();
-        }
+        showSpectatorGUI = !showSpectatorGUI;
+        Debug.Log($"Spectator GUI: {(showSpectatorGUI ? "ON" : "OFF")}");
     }
 }

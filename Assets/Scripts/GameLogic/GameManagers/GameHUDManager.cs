@@ -31,6 +31,11 @@ public class GameHUDManager : MonoBehaviour
     [SerializeField] private TMP_Text interactionText;
     [SerializeField] private Slider interactionProgressBar;
 
+    [Header("Spectator UI")]
+    [SerializeField] private GameObject spectatorPanel;
+    [SerializeField] private TMP_Text spectatorPlayerText;
+    [SerializeField] private TMP_Text spectatorControlsText;
+
     [Header("Icons")]
     [SerializeField] private Sprite survivorIcon;
     [SerializeField] private Sprite cultistIcon;
@@ -57,10 +62,11 @@ public class GameHUDManager : MonoBehaviour
     {
         Debug.Log("GameHUDManager started");
 
-        // Initialize UI state - hide persistent HUD initially
+        // Initialize UI state - hide all panels initially
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
+        if (spectatorPanel != null) spectatorPanel.SetActive(false);
 
         // Initialize interaction UI
         if (interactionPanel != null) interactionPanel.SetActive(false);
@@ -172,6 +178,121 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // ============ SPECTATOR UI METHODS ============
+    public void ShowSpectatorUI(string currentPlayerName = "")
+    {
+        if (spectatorPanel != null)
+        {
+            spectatorPanel.SetActive(true);
+            UpdateSpectatorInfo(currentPlayerName);
+            Debug.Log($"Spectator UI shown - Panel active: {spectatorPanel.activeInHierarchy}");
+
+            // Force update the canvas to ensure it renders
+            Canvas.ForceUpdateCanvases();
+        }
+        else
+        {
+            Debug.LogError("Spectator panel reference is null in GameHUDManager!");
+        }
+    }
+
+    public void HideSpectatorUI()
+    {
+        if (spectatorPanel != null)
+        {
+            spectatorPanel.SetActive(false);
+            Debug.Log("Spectator UI hidden");
+        }
+    }
+
+    public void HideGameHUDForSpectator()
+    {
+        // Hide normal game HUD when spectating
+        if (persistentRoleDisplay != null)
+        {
+            persistentRoleDisplay.SetActive(false);
+            Debug.Log("Hidden persistent role display for spectator");
+        }
+        if (healthStaminaPanel != null)
+        {
+            healthStaminaPanel.SetActive(false);
+            Debug.Log("Hidden health/stamina panel for spectator");
+        }
+        if (taskPanel != null)
+        {
+            taskPanel.SetActive(false);
+            Debug.Log("Hidden task panel for spectator");
+        }
+        if (interactionPanel != null)
+        {
+            interactionPanel.SetActive(false);
+            Debug.Log("Hidden interaction panel for spectator");
+        }
+    }
+
+    public void RestoreGameHUDAfterSpectator()
+    {
+        // Restore normal game HUD after spectating
+        if (persistentRoleDisplay != null)
+        {
+            persistentRoleDisplay.SetActive(true);
+            Debug.Log("Restored persistent role display after spectator");
+        }
+        if (healthStaminaPanel != null)
+        {
+            healthStaminaPanel.SetActive(true);
+            Debug.Log("Restored health/stamina panel after spectator");
+        }
+        if (taskPanel != null)
+        {
+            taskPanel.SetActive(true);
+            Debug.Log("Restored task panel after spectator");
+        }
+    }
+
+    public void UpdateSpectatorInfo(string currentPlayerName = "")
+    {
+        if (spectatorPanel == null)
+        {
+            Debug.LogError("Spectator panel is null in UpdateSpectatorInfo!");
+            return;
+        }
+
+        if (!spectatorPanel.activeInHierarchy)
+        {
+            Debug.LogWarning("Spectator panel is not active when trying to update info!");
+            return;
+        }
+
+        if (spectatorPlayerText != null)
+        {
+            if (!string.IsNullOrEmpty(currentPlayerName))
+                spectatorPlayerText.text = $"Spectating: {currentPlayerName}";
+            else
+                spectatorPlayerText.text = "Spectating: Free Camera";
+
+            Debug.Log($"Updated spectator text to: {spectatorPlayerText.text}");
+        }
+        else
+        {
+            Debug.LogError("Spectator player text is null!");
+        }
+
+        if (spectatorControlsText != null)
+        {
+            spectatorControlsText.text = "Q - Previous Player\n" +
+                                        "E - Next Player\n" +
+                                        "Right Mouse - Look Around\n" +
+                                        "Mouse Wheel - Zoom\n" +
+                                        "Space - Exit Spectator";
+        }
+        else
+        {
+            Debug.LogError("Spectator controls text is null!");
+        }
+    }
+
+    // ============ TASK MANAGEMENT ============
     private void SetupSurvivorTasks()
     {
         survivorTaskList.Clear();
@@ -234,6 +355,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // ============ HEALTH & STAMINA ============
     public void UpdateHealth(float currentHealth, float maxHealth)
     {
         if (healthBar != null)
@@ -262,7 +384,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // CORRECTED METHOD - Only 2 parameters now
+    // ============ TASK PROGRESS ============
     public void UpdateTaskProgress(int taskIndex, string newStatus)
     {
         Debug.Log($"Updating task {taskIndex}, status: {newStatus}");
@@ -387,7 +509,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // For testing in editor
+    // ============ TESTING METHODS ============
     [ContextMenu("Test Role Assignment - Survivor")]
     private void TestSurvivorRole()
     {
@@ -433,6 +555,18 @@ public class GameHUDManager : MonoBehaviour
     private void TestShowPersistentHUD()
     {
         ShowPersistentHUD();
+    }
+
+    [ContextMenu("Show Spectator UI")]
+    private void TestShowSpectatorUI()
+    {
+        ShowSpectatorUI("Test Player");
+    }
+
+    [ContextMenu("Hide Spectator UI")]
+    private void TestHideSpectatorUI()
+    {
+        HideSpectatorUI();
     }
 
     [ContextMenu("Debug Current Tasks")]
