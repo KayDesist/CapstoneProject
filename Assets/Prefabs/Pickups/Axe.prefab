@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 5586955503826164555}
   - component: {fileID: 6071621980893058394}
   m_Layer: 0
-  m_Name: Knife
+  m_Name: Axe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,8 +32,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 7.27, y: 1.03, z: 10.93}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -44,7 +44,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3316186052169032855}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4898376589914736847, guid: 20fb41db2b8f2854089abb69ea2879e4, type: 3}
 --- !u!23 &900687945104591418
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 7c5f0c0b1dc9d09419a109d3aac2e790, type: 2}
+  - {fileID: 2100000, guid: d169cd415a0bb1f45b5e51796c69ba19, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -123,8 +123,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3285879890
-  InScenePlacedSourceGlobalObjectIdHash: 1042520636
+  GlobalObjectIdHash: 526890959
+  InScenePlacedSourceGlobalObjectIdHash: 526890959
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
@@ -173,5 +173,7 @@ MonoBehaviour:
   damage: 25
   attackCooldown: 1
   staminaCost: 10
-  attackDuration: 0.3
-  attackDuration: 0.3
+  baseAttackDuration: 0.5
+  ownerId: 0
+  playerHitbox: {fileID: 0}
+  meleeAttackDuration: 0.3

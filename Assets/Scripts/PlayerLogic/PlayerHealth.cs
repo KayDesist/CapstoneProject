@@ -223,13 +223,13 @@ public class PlayerHealth : NetworkBehaviour
 
         if (IsOwner)
         {
-            // Show death screen or disable controls
+            // For all dead players, disable controls and show cursor
             if (playerController != null)
             {
                 playerController.enabled = false;
             }
 
-            // Hide HUD for dead player
+            // Hide HUD for dead players
             if (GameHUDManager.Instance != null)
             {
                 GameHUDManager.Instance.gameObject.SetActive(false);

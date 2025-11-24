@@ -16,6 +16,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("References")]
     public Transform playerCamera;
+    public Transform cameraPivot;
 
     private Rigidbody rb;
     private PlayerHealth playerHealth;
@@ -33,6 +34,15 @@ public class NetworkPlayerController : NetworkBehaviour
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
 
+        // Create camera pivot if it doesn't exist
+        if (cameraPivot == null)
+        {
+            GameObject pivot = new GameObject("CameraPivot");
+            pivot.transform.SetParent(transform);
+            pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+            cameraPivot = pivot.transform;
+        }
+
         if (rb != null)
             rb.freezeRotation = true;
 
@@ -46,6 +56,27 @@ public class NetworkPlayerController : NetworkBehaviour
         }
 
         // Cursor control
+        UpdateCursorState();
+    }
+
+    private void Update()
+    {
+        if (!IsOwner) return;
+
+        // Skip controls in non-game scenes
+        if (SceneManager.GetActiveScene().name != "GameScene") return;
+
+        HandleMouseLook();
+        HandleSprint();
+        HandleMovement();
+
+        // Update movement state
+        wasMoving = IsMoving();
+        lastPosition = transform.position;
+    }
+
+    private void UpdateCursorState()
+    {
         string sceneName = SceneManager.GetActiveScene().name;
         if (sceneName == "GameScene")
         {
@@ -57,23 +88,6 @@ public class NetworkPlayerController : NetworkBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
-    }
-
-    private void Update()
-    {
-        if (!IsOwner) return;
-
-        // Skip controls in non-game scenes
-        if (SceneManager.GetActiveScene().name != "GameScene")
-            return;
-
-        HandleMouseLook();
-        HandleSprint();
-        HandleMovement();
-
-        // Update movement state
-        wasMoving = IsMoving();
-        lastPosition = transform.position;
     }
 
     private void HandleMouseLook()
@@ -102,7 +116,6 @@ public class NetworkPlayerController : NetworkBehaviour
             {
                 if (!isSprinting)
                 {
-                    Debug.Log("Started sprinting");
                     isSprinting = true;
                     currentSpeed = sprintSpeed;
                 }
@@ -142,7 +155,6 @@ public class NetworkPlayerController : NetworkBehaviour
             // Not sprinting or out of stamina
             if (isSprinting)
             {
-                Debug.Log("Stopped sprinting");
                 isSprinting = false;
                 currentSpeed = walkSpeed;
             }

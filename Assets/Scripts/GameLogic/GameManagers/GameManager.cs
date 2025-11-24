@@ -13,6 +13,7 @@ public class GameManager : NetworkBehaviour
 
     private HashSet<ulong> spawnedPlayers = new HashSet<ulong>();
     private bool sceneInitialized = false;
+    private bool isShuttingDown = false;
 
     private void OnEnable()
     {
@@ -26,7 +27,7 @@ public class GameManager : NetworkBehaviour
 
     private void OnDisable()
     {
-        if (NetworkManager.Singleton != null)
+        if (NetworkManager.Singleton != null && !isShuttingDown)
         {
             NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
@@ -47,7 +48,6 @@ public class GameManager : NetworkBehaviour
         StartCoroutine(InitializeManagers());
     }
 
-    // FIXED: Handle new clients connecting after scene is loaded
     private void OnClientConnected(ulong clientId)
     {
         if (!IsServer) return;
@@ -62,31 +62,48 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // FIXED: Handle client disconnections gracefully
+    // FIXED: More robust error handling for client disconnection
     private void OnClientDisconnected(ulong clientId)
     {
-        if (!IsServer) return;
+        if (!IsServer || isShuttingDown) return;
 
         Debug.Log($"Client {clientId} disconnected from game");
 
-        // Remove from spawned players list
-        if (spawnedPlayers.Contains(clientId))
+        try
         {
-            spawnedPlayers.Remove(clientId);
-        }
+            // Remove from spawned players list
+            if (spawnedPlayers.Contains(clientId))
+            {
+                spawnedPlayers.Remove(clientId);
+            }
 
-        // Notify EndGameManager about the disconnection
-        if (EndGameManager.Instance != null)
-        {
-            EndGameManager.Instance.OnClientDisconnected(clientId);
-        }
+            // FIX: More robust check for EndGameManager
+            if (EndGameManager.Instance != null && EndGameManager.Instance.gameObject != null)
+            {
+                EndGameManager.Instance.OnClientDisconnected(clientId);
+            }
+            else
+            {
+                Debug.LogWarning("EndGameManager.Instance is null or destroyed - game may be shutting down");
+            }
 
-        // Check if we should end the game (e.g., if host disconnects)
-        if (clientId == NetworkManager.Singleton.LocalClientId)
+            // Check if we should end the game (e.g., if host disconnects)
+            if (clientId == NetworkManager.Singleton.LocalClientId && !isShuttingDown)
+            {
+                Debug.Log("Host disconnected - ending game for everyone");
+                isShuttingDown = true;
+
+                // Only load scene if NetworkManager is still available
+                if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+                {
+                    NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+                }
+            }
+        }
+        catch (System.Exception e)
         {
-            Debug.Log("Host disconnected - ending game for everyone");
-            // Host disconnected - return all clients to main menu
-            NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+            Debug.LogWarning($"Error during client disconnection handling: {e.Message}");
+            // Don't rethrow - this is during shutdown so we want to be graceful
         }
     }
 
@@ -243,6 +260,11 @@ public class GameManager : NetworkBehaviour
         {
             StartCoroutine(SpawnPlayerWithDelay(clientId));
         }
+    }
+
+    private void OnDestroy()
+    {
+        isShuttingDown = true;
     }
 
     // Debug method to check spawned players

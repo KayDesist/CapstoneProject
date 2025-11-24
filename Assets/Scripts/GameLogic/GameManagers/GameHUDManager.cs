@@ -377,7 +377,6 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // NEW: Reset static instance
     public static void ResetInstance()
     {
         if (Instance != null)

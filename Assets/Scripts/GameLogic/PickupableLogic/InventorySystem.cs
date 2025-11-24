@@ -28,7 +28,6 @@ public class InventorySystem : NetworkBehaviour
     private bool attackInput = false;
     private bool useInput = false;
 
-    // FIXED: Track if game has ended to prevent network object access errors
     private bool gameEnded = false;
 
     public struct InventorySlot : INetworkSerializable, IEquatable<InventorySlot>
@@ -86,7 +85,6 @@ public class InventorySystem : NetworkBehaviour
         inventorySlots.OnListChanged += OnInventoryChanged;
         currentSlotIndex.OnValueChanged += OnCurrentSlotChanged;
 
-        // FIXED: Subscribe to game end events
         if (EndGameManager.Instance != null)
         {
             EndGameManager.Instance.OnGameEnded += HandleGameEnded;
@@ -113,7 +111,7 @@ public class InventorySystem : NetworkBehaviour
 
     private void Update()
     {
-        // FIXED: Don't process input if game has ended
+   
         if (!IsOwner || gameEnded) return;
 
         HandleInput();
@@ -128,7 +126,7 @@ public class InventorySystem : NetworkBehaviour
 
     private void HandleInput()
     {
-        // FIXED: Don't process input if game has ended
+     
         if (gameEnded) return;
 
         // Slot switching - FIXED: Handle locally for immediate response
@@ -177,7 +175,6 @@ public class InventorySystem : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // FIXED: Don't process input if game has ended
         if (gameEnded) return;
 
         // Handle attack input in FixedUpdate for consistent physics
@@ -251,7 +248,7 @@ public class InventorySystem : NetworkBehaviour
     [ServerRpc]
     private void PickupItemServerRpc(ulong itemId)
     {
-        // FIXED: Check if network object still exists
+    
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
         {
             Debug.LogWarning($"Cannot pickup item - network object {itemId} not found");
@@ -325,7 +322,6 @@ public class InventorySystem : NetworkBehaviour
         var currentSlot = inventorySlots[currentSlotIndex.Value];
         if (currentSlot.isEmpty) return;
 
-        // FIXED: Check if network object still exists before dropping
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
         {
             PickupableItem item = itemNetObject.GetComponent<PickupableItem>();
@@ -364,7 +360,6 @@ public class InventorySystem : NetworkBehaviour
             return;
         }
 
-        // FIXED: Add comprehensive network object validation
         if (NetworkManager.Singleton == null ||
             NetworkManager.Singleton.SpawnManager == null ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(currentSlot.itemNetworkId))
@@ -462,7 +457,7 @@ public class InventorySystem : NetworkBehaviour
         {
             var targetSlot = inventorySlots[slotIndex];
 
-            // FIXED: Check if network object exists before using it
+           
             if (NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.SpawnManager != null &&
                 NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetSlot.itemNetworkId, out NetworkObject itemNetObject))
@@ -517,7 +512,7 @@ public class InventorySystem : NetworkBehaviour
         {
             var currentSlot = inventorySlots[currentSlotIndex.Value];
 
-            // FIXED: Check if network object exists before using it
+         
             if (NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.SpawnManager != null &&
                 NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
@@ -569,7 +564,7 @@ public class InventorySystem : NetworkBehaviour
         return false;
     }
 
-    // FIXED: Handle game end to prevent network object access errors
+ 
     private void HandleGameEnded()
     {
         gameEnded = true;
@@ -592,7 +587,7 @@ public class InventorySystem : NetworkBehaviour
         inventorySlots.OnListChanged -= OnInventoryChanged;
         currentSlotIndex.OnValueChanged -= OnCurrentSlotChanged;
 
-        // FIXED: Unsubscribe from game end events
+       
         if (EndGameManager.Instance != null)
         {
             EndGameManager.Instance.OnGameEnded -= HandleGameEnded;
