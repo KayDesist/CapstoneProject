@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq;
 
 public class LobbyUIManager : MonoBehaviour
 {
@@ -12,7 +13,10 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] private Button leaveButton;
 
     [Header("Player Slots - Drag ALL player slots here")]
-    [SerializeField] private List<GameObject> playerSlots; // Drag Player_1, Player_2, etc. here
+    [SerializeField] private List<GameObject> playerSlots;
+
+    [Header("Character Sprites - Assign in order: 0=Jaxen, 1=Sam, 2=Mizuki, 3=Elijah, 4=Clint")]
+    [SerializeField] private Sprite[] characterSprites;
 
     [Header("Manager Reference")]
     [SerializeField] private LobbyManager lobbyManager;
@@ -23,21 +27,17 @@ public class LobbyUIManager : MonoBehaviour
             lobbyManager = FindObjectOfType<LobbyManager>();
 
         SetupUI();
-
-        // Initially hide all player slots
         HideAllPlayerSlots();
     }
 
     private void SetupUI()
     {
-        // Button listeners
         if (startButton != null)
             startButton.onClick.AddListener(OnStartClicked);
 
         if (leaveButton != null)
             leaveButton.onClick.AddListener(OnLeaveClicked);
 
-        // Initially hide start button
         if (startButton != null)
             startButton.gameObject.SetActive(false);
     }
@@ -78,31 +78,47 @@ public class LobbyUIManager : MonoBehaviour
         // First hide all slots
         HideAllPlayerSlots();
 
+        // Sort players by client ID for consistent order
+        var sortedPlayers = players.OrderBy(p => p.ClientId).ToList();
+
         // Then show and update slots for current players
-        for (int i = 0; i < players.Count && i < playerSlots.Count; i++)
+        for (int i = 0; i < sortedPlayers.Count && i < playerSlots.Count; i++)
         {
             if (playerSlots[i] != null)
             {
                 playerSlots[i].SetActive(true);
-                SetupPlayerSlot(playerSlots[i], players[i]);
+                SetupPlayerSlot(playerSlots[i], sortedPlayers[i]);
             }
         }
     }
 
     private void SetupPlayerSlot(GameObject playerSlot, LobbyPlayerData playerData)
     {
-        // Find the child text components and update them
+        // Find the child UI components
         TMP_Text playerNameText = playerSlot.transform.Find("Player Name")?.GetComponent<TMP_Text>();
         TMP_Text readyStateText = playerSlot.transform.Find("Ready State")?.GetComponent<TMP_Text>();
+        TMP_Text characterNameText = playerSlot.transform.Find("Character Name")?.GetComponent<TMP_Text>();
+        Image characterImage = playerSlot.transform.Find("Character Image")?.GetComponent<Image>();
+
+        // Get character info
+        string characterName = CrossSceneData.GetCharacterName(playerData.CharacterIndex);
+        Sprite characterSprite = GetCharacterSprite(playerData.CharacterIndex);
 
         if (playerNameText != null)
         {
-            playerNameText.text = playerData.PlayerName.ToString();
+            // Convert FixedString to regular string
+            string name = playerData.PlayerName.ToString();
 
-            // Add (Host) indicator if this is the host
-            if (playerData.ClientId == 0) // Host is usually client ID 0
+            // Add (Host) indicator if this is the host (clientId 0)
+            if (playerData.ClientId == 0)
             {
-                playerNameText.text += " (Host)";
+                playerNameText.text = name + " (Host)";
+                playerNameText.color = Color.yellow; // Optional: Make host name stand out
+            }
+            else
+            {
+                playerNameText.text = name;
+                playerNameText.color = Color.white;
             }
         }
 
@@ -111,6 +127,35 @@ public class LobbyUIManager : MonoBehaviour
             readyStateText.text = playerData.IsReady ? "Ready ✓" : "Not Ready";
             readyStateText.color = playerData.IsReady ? Color.green : Color.gray;
         }
+
+        // Update character name and image
+        if (characterNameText != null)
+        {
+            characterNameText.text = characterName;
+        }
+
+        if (characterImage != null)
+        {
+            if (characterSprite != null)
+            {
+                characterImage.sprite = characterSprite;
+                characterImage.color = Color.white;
+            }
+            else
+            {
+                characterImage.color = Color.clear;
+                Debug.LogWarning($"No character sprite found for index {playerData.CharacterIndex}");
+            }
+        }
+    }
+
+    private Sprite GetCharacterSprite(int characterIndex)
+    {
+        if (characterSprites != null && characterIndex >= 0 && characterIndex < characterSprites.Length)
+        {
+            return characterSprites[characterIndex];
+        }
+        return null;
     }
 
     public void SetStartButtonVisible(bool visible)
@@ -131,5 +176,20 @@ public class LobbyUIManager : MonoBehaviour
     {
         if (lobbyManager != null)
             lobbyManager.LeaveLobby();
+    }
+
+    [ContextMenu("Test UI Update")]
+    public void TestUIUpdate()
+    {
+        // Create test data
+        var testPlayers = new List<LobbyPlayerData>
+        {
+            new LobbyPlayerData(0, "Test Host", true, 2), // Mizuki
+            new LobbyPlayerData(1, "Test Player 1", true, 1), // Sam
+            new LobbyPlayerData(2, "Test Player 2", false, 3) // Elijah
+        };
+
+        UpdatePlayerList(testPlayers);
+        Debug.Log("Test UI update completed");
     }
 }

@@ -196,6 +196,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerName
       objectReference: {fileID: 0}
+    - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
+      propertyPath: m_text
+      value: 'Clint
+
+'
+      objectReference: {fileID: 0}
     - target: {fileID: 8090530010687182392, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -828,6 +834,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerName
       objectReference: {fileID: 0}
+    - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
+      propertyPath: m_text
+      value: 'Sam
+
+'
+      objectReference: {fileID: 0}
     - target: {fileID: 8090530010687182392, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1166,6 +1178,7 @@ MonoBehaviour:
   - {fileID: 771516156}
   - {fileID: 866444527}
   - {fileID: 2079028959}
+  characterSprites: []
   lobbyManager: {fileID: 201646485}
 --- !u!1 &771516156
 GameObject:
@@ -1330,6 +1343,12 @@ PrefabInstance:
     - target: {fileID: 3305980084808783360, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Name
       value: PlayerName
+      objectReference: {fileID: 0}
+    - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
+      propertyPath: m_text
+      value: 'Elijah
+
+'
       objectReference: {fileID: 0}
     - target: {fileID: 8090530010687182392, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Pivot.x
@@ -1984,6 +2003,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerName
       objectReference: {fileID: 0}
+    - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
+      propertyPath: m_text
+      value: 'Mizuki
+
+'
+      objectReference: {fileID: 0}
     - target: {fileID: 8090530010687182392, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2430,6 +2455,12 @@ PrefabInstance:
     - target: {fileID: 3305980084808783360, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Name
       value: PlayerName
+      objectReference: {fileID: 0}
+    - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
+      propertyPath: m_text
+      value: 'Mizuki
+
+'
       objectReference: {fileID: 0}
     - target: {fileID: 8090530010687182392, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_Pivot.x

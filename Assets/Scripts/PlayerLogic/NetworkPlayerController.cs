@@ -34,28 +34,92 @@ public class NetworkPlayerController : NetworkBehaviour
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
 
-        // Create camera pivot if it doesn't exist
+        Debug.Log($"PlayerController Start - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
+
+        // Find camera pivot in character hierarchy
         if (cameraPivot == null)
         {
-            GameObject pivot = new GameObject("CameraPivot");
-            pivot.transform.SetParent(transform);
-            pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-            cameraPivot = pivot.transform;
+            Transform foundPivot = transform.Find("CameraPivot");
+            if (foundPivot != null)
+            {
+                cameraPivot = foundPivot;
+                Debug.Log("Found existing CameraPivot");
+            }
+            else
+            {
+                GameObject pivot = new GameObject("CameraPivot");
+                pivot.transform.SetParent(transform);
+                pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+                cameraPivot = pivot.transform;
+                Debug.Log("Created new CameraPivot");
+            }
+        }
+
+        // Find main camera in children
+        if (playerCamera == null)
+        {
+            Camera cam = GetComponentInChildren<Camera>();
+            if (cam != null)
+            {
+                playerCamera = cam.transform;
+                Debug.Log("Found player camera in children");
+            }
+            else
+            {
+                Debug.LogError("No camera found in character prefab! Creating one...");
+
+                // Create camera as fallback
+                GameObject cameraObj = new GameObject("PlayerCamera");
+                cameraObj.transform.SetParent(cameraPivot);
+                cameraObj.transform.localPosition = Vector3.zero;
+                cameraObj.transform.localRotation = Quaternion.identity;
+
+                Camera newCam = cameraObj.AddComponent<Camera>();
+                cameraObj.AddComponent<AudioListener>(); // Add audio listener for local player
+
+                playerCamera = cameraObj.transform;
+                Debug.Log("Created fallback camera");
+            }
         }
 
         if (rb != null)
             rb.freezeRotation = true;
 
-        // Disable camera and controls for non-owners
+        // CRITICAL: Only enable camera and controls for owner
         if (!IsOwner)
         {
+            Debug.Log($"Disabling controls for non-owner client: {NetworkManager.Singleton.LocalClientId}");
+
+            // Disable camera
             if (playerCamera != null)
+            {
+                Camera cam = playerCamera.GetComponent<Camera>();
+                if (cam != null) cam.enabled = false;
+
+                AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
+                if (audioListener != null) audioListener.enabled = false;
+
                 playerCamera.gameObject.SetActive(false);
+            }
+
+            // Disable this script
             enabled = false;
             return;
         }
 
-        // Cursor control
+        // Enable camera and controls for owner
+        Debug.Log($"Enabling controls for owner client: {NetworkManager.Singleton.LocalClientId}");
+
+        if (playerCamera != null)
+        {
+            playerCamera.gameObject.SetActive(true);
+            Camera cam = playerCamera.GetComponent<Camera>();
+            if (cam != null) cam.enabled = true;
+
+            AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
+            if (audioListener != null) audioListener.enabled = true;
+        }
+
         UpdateCursorState();
     }
 
@@ -82,6 +146,7 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            Debug.Log("Cursor locked for gameplay");
         }
         else
         {
@@ -119,7 +184,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = true;
                     currentSpeed = sprintSpeed;
                     // Notify PlayerHealth about sprinting state
-                    playerHealth.SetSprinting(true);
+                    if (playerHealth != null) playerHealth.SetSprinting(true);
                 }
 
                 // Accumulate stamina cost and consume when it reaches at least 1
@@ -132,7 +197,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     // Use ServerRpc to consume stamina on the server
                     if (IsServer)
                     {
-                        playerHealth.ConsumeStamina(staminaToConsume);
+                        if (playerHealth != null) playerHealth.ConsumeStamina(staminaToConsume);
                     }
                     else
                     {
@@ -150,7 +215,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = false;
                     currentSpeed = walkSpeed;
                     // Notify PlayerHealth about sprinting state
-                    playerHealth.SetSprinting(false);
+                    if (playerHealth != null) playerHealth.SetSprinting(false);
                 }
             }
         }
@@ -162,7 +227,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 isSprinting = false;
                 currentSpeed = walkSpeed;
                 // Notify PlayerHealth about sprinting state
-                playerHealth.SetSprinting(false);
+                if (playerHealth != null) playerHealth.SetSprinting(false);
             }
         }
 
@@ -172,7 +237,7 @@ public class NetworkPlayerController : NetworkBehaviour
             isSprinting = false;
             currentSpeed = walkSpeed;
             // Notify PlayerHealth about sprinting state
-            playerHealth.SetSprinting(false);
+            if (playerHealth != null) playerHealth.SetSprinting(false);
         }
     }
 
@@ -235,5 +300,20 @@ public class NetworkPlayerController : NetworkBehaviour
 
         currentSpeed = walkSpeed;
         Debug.Log($"Role settings applied - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
+    }
+
+    // Debug method to check camera status
+    [ContextMenu("Debug Camera Status")]
+    public void DebugCameraStatus()
+    {
+        Debug.Log($"=== CAMERA STATUS ===");
+        Debug.Log($"IsOwner: {IsOwner}");
+        Debug.Log($"PlayerCamera: {playerCamera}");
+        if (playerCamera != null)
+        {
+            Debug.Log($"Camera active: {playerCamera.gameObject.activeInHierarchy}");
+            Camera cam = playerCamera.GetComponent<Camera>();
+            if (cam != null) Debug.Log($"Camera enabled: {cam.enabled}");
+        }
     }
 }

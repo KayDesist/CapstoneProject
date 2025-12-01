@@ -411,6 +411,14 @@ public class PlayerSpectator : NetworkBehaviour
     // ============ PERMANENT SPECTATOR GUI ============
     private void OnGUI()
     {
+        // Don't draw spectator GUI if end game UI is active
+        // FIXED: Use public field check
+        if (EndGameUI.Instance != null && EndGameUI.Instance.endGamePanel != null &&
+            EndGameUI.Instance.endGamePanel.activeInHierarchy)
+        {
+            return;
+        }
+
         if (!isSpectating || !showSpectatorGUI || !IsOwner) return;
 
         // Top-left corner position
@@ -473,6 +481,23 @@ public class PlayerSpectator : NetworkBehaviour
 
         // Clean up the texture to prevent memory leaks
         DestroyImmediate(backgroundTexture);
+    }
+
+    // NEW: Method to toggle spectator GUI
+    public void ToggleSpectatorGUI(bool show)
+    {
+        showSpectatorGUI = show;
+
+        // Also hide the GameHUDManager spectator UI if it exists
+        if (GameHUDManager.Instance != null)
+        {
+            if (!show)
+            {
+                GameHUDManager.Instance.HideSpectatorUI();
+            }
+        }
+
+        Debug.Log($"Spectator GUI {(show ? "shown" : "hidden")}");
     }
 
     // Public methods

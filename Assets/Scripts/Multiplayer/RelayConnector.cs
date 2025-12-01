@@ -17,7 +17,7 @@ public class RelayConnector : MonoBehaviour
     {
         try
         {
-            Debug.Log("Initializing Unity Services for Relay...");
+            Debug.Log("Initializing Unity Services for Relay HOST...");
 
             // Initialize Unity Services and sign in anonymously
             if (UnityServices.State != ServicesInitializationState.Initialized)
@@ -50,19 +50,19 @@ public class RelayConnector : MonoBehaviour
 
             // Get the join code for the allocation
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            Debug.Log($"Relay host started. Join code: {joinCode}");
+            Debug.Log($"Relay HOST started. Join code: {joinCode}");
 
             // Start the host
             bool hostStarted = NetworkManager.Singleton.StartHost();
 
             if (hostStarted)
             {
-                Debug.Log("Host started successfully via Relay");
+                Debug.Log("HOST started successfully via Relay");
                 return joinCode;
             }
             else
             {
-                Debug.LogError("Failed to start host after Relay allocation");
+                Debug.LogError("Failed to start HOST after Relay allocation");
                 return null;
             }
         }
@@ -81,7 +81,7 @@ public class RelayConnector : MonoBehaviour
     {
         try
         {
-            Debug.Log($"Joining Relay with code: {joinCode}");
+            Debug.Log($"CLIENT joining Relay with code: {joinCode}");
 
             // Initialize Unity Services and sign in anonymously
             if (UnityServices.State != ServicesInitializationState.Initialized)
@@ -101,7 +101,7 @@ public class RelayConnector : MonoBehaviour
             // Configure the network transport to connect to the Relay server
             UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
 
-            // *** FIXED LINE: Use AllocationUtils.ToRelayServerData ***
+            
             transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, connectionType));
 
             // Additional setting required for WebSocket (WSS) connections
@@ -110,19 +110,19 @@ public class RelayConnector : MonoBehaviour
                 transport.UseWebSockets = true;
             }
 
-            Debug.Log("Relay client configured successfully. Starting client...");
+            Debug.Log("Relay CLIENT configured successfully. Starting client...");
 
             // Start the client
             bool clientStarted = NetworkManager.Singleton.StartClient();
 
             if (clientStarted)
             {
-                Debug.Log("Client started successfully via Relay");
+                Debug.Log("CLIENT started successfully via Relay");
                 return true;
             }
             else
             {
-                Debug.LogError("Failed to start client after Relay join");
+                Debug.LogError("Failed to start CLIENT after Relay join");
                 return false;
             }
         }

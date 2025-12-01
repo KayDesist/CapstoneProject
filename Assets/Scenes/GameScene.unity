@@ -2983,7 +2983,7 @@ Transform:
   m_GameObject: {fileID: 921711464}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -65.13, y: 6.277516, z: 71.3}
+  m_LocalPosition: {x: -41.45, y: 6.277516, z: 71.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3347,19 +3347,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.76
+      value: 5.57
       objectReference: {fileID: 0}
     - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3397,6 +3397,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 674111836486314196, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 900687945104591418, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -3420,6 +3424,10 @@ PrefabInstance:
     - target: {fileID: 6315812975728474340, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3579880726
+      objectReference: {fileID: 0}
+    - target: {fileID: 7412848755885310132, guid: ceb16ee445878fd4f8529bf883cff7ab, type: 3}
+      propertyPath: m_Radius
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4833,7 +4841,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  playerPrefab: {fileID: 4530808608629349183, guid: 7da5254e997d3f24f80480a60e0ff330, type: 3}
+  characterPrefabs:
+  - {fileID: 6439609074301724967, guid: a60c1e8cab7f4964cb6f042099888ef1, type: 3}
+  - {fileID: 3647581499883217187, guid: 8169b2bfff46d3f439bf25799582c3fc, type: 3}
+  - {fileID: 6323901835925246842, guid: 5c485bf0139f629499c363720b7944e4, type: 3}
+  - {fileID: 6396157932874996999, guid: 5575745b44696f741944c4edca33f0cc, type: 3}
+  - {fileID: 1262997115708581226, guid: 19a054514436fa3418efe1692e1f5e2b, type: 3}
   roleManagerPrefab: {fileID: 4537833269111929824, guid: 7d405643a9596854ea431c84f1828f7d, type: 3}
   taskManagerPrefab: {fileID: 1902803486705307694, guid: e645a6954fd287441ac96c2741264e3a, type: 3}
   endGameManagerPrefab: {fileID: 6157652006208198683, guid: 9eda7d5fab6d1f64bb6d015229b2915e, type: 3}

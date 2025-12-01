@@ -8,7 +8,7 @@ public class EndGameUI : MonoBehaviour
     public static EndGameUI Instance;
 
     [Header("UI References")]
-    [SerializeField] private GameObject endGamePanel;
+    [SerializeField] public GameObject endGamePanel; // Changed to public
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Button returnButton;
@@ -50,6 +50,9 @@ public class EndGameUI : MonoBehaviour
             return;
         }
 
+        // CRITICAL: Hide ALL game UI before showing end game UI
+        HideAllGameUI();
+
         endGamePanel.SetActive(true);
 
         // Set content based on game result
@@ -79,7 +82,67 @@ public class EndGameUI : MonoBehaviour
         // Disable player controls and enable mouse interaction
         DisablePlayerControls();
 
+        // Make sure end game UI is on top
+        BringUIToFront();
+
         Debug.Log($"End game UI shown for result: {result}");
+    }
+
+    // NEW: Hide ALL game UI
+    private void HideAllGameUI()
+    {
+        // Hide all spectator GUIs
+        PlayerSpectator[] spectators = FindObjectsOfType<PlayerSpectator>();
+        foreach (PlayerSpectator spectator in spectators)
+        {
+            spectator.ToggleSpectatorGUI(false);
+            Debug.Log($"Hiding spectator GUI for {spectator.name}");
+        }
+
+        // Hide GameHUDManager
+        if (GameHUDManager.Instance != null)
+        {
+            // Hide all HUD panels
+            GameHUDManager.Instance.gameObject.SetActive(false);
+        }
+
+        // Hide RoleDisplayUI if it exists
+        if (RoleDisplayUI.Instance != null)
+        {
+            RoleDisplayUI.Instance.gameObject.SetActive(false);
+        }
+
+        // Find and hide any other UI elements with Canvas
+        Canvas[] allCanvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas canvas in allCanvases)
+        {
+            // Skip the end game UI's canvas
+            if (canvas.gameObject == this.gameObject) continue;
+
+            // Skip world space canvases (like health bars)
+            if (canvas.renderMode == RenderMode.WorldSpace) continue;
+
+            // Hide UI canvases
+            canvas.gameObject.SetActive(false);
+        }
+    }
+
+    // NEW: Bring EndGameUI to front
+    private void BringUIToFront()
+    {
+        // Make sure canvas renders on top
+        Canvas canvas = GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.sortingOrder = 9999; // Very high to ensure it's on top
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        }
+
+        // Also ensure panel is active
+        if (endGamePanel != null)
+        {
+            endGamePanel.transform.SetAsLastSibling();
+        }
     }
 
     private void SetSurvivorWinUI(string description)
@@ -121,16 +184,9 @@ public class EndGameUI : MonoBehaviour
 
             if (inventory != null)
                 inventory.enabled = false;
-
-            // Hide HUD
-            if (GameHUDManager.Instance != null)
-            {
-                GameHUDManager.Instance.gameObject.SetActive(false);
-            }
         }
 
         // Unlock cursor for ALL clients (not just player owner)
-        // This is crucial for being able to click the return button
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
