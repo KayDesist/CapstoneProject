@@ -8,7 +8,6 @@ public class NetworkPlayerController : NetworkBehaviour
     public float walkSpeed = 7f;
     public float sprintSpeed = 11f;
     public float mouseSensitivity = 3f;
-    public float jumpForce = 7f;
 
     [Header("Stamina Settings")]
     public int sprintStaminaCost = 15;
@@ -18,10 +17,12 @@ public class NetworkPlayerController : NetworkBehaviour
     public Transform playerCamera;
     public Transform cameraPivot;
 
+    [Header("Animation")]
+    [SerializeField] private NetworkCharacterAnimator characterAnimator;
+
     private Rigidbody rb;
     private PlayerHealth playerHealth;
     private float xRotation = 0f;
-    private bool isGrounded = true;
     private bool isSprinting = false;
     private float currentSpeed;
     private Vector3 lastPosition;
@@ -29,10 +30,53 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void Start()
     {
+        // ============ CRITICAL FIX: MAIN MENU CHECK ============
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        // If we're in MainMenu, disable ALL camera logic completely
+        if (currentScene == "MainMenu")
+        {
+            Debug.Log($"NetworkPlayerController in MainMenu - Disabling ALL camera logic");
+
+            // Find and disable any camera on this object or children
+            Camera[] playerCameras = GetComponentsInChildren<Camera>();
+            foreach (Camera cam in playerCameras)
+            {
+                cam.enabled = false;
+                cam.gameObject.SetActive(false);
+                Debug.Log($"Disabled player camera: {cam.gameObject.name}");
+            }
+
+            // Find and disable any AudioListener
+            AudioListener[] listeners = GetComponentsInChildren<AudioListener>();
+            foreach (AudioListener listener in listeners)
+            {
+                listener.enabled = false;
+                Debug.Log($"Disabled player audio listener: {listener.gameObject.name}");
+            }
+
+            // Completely disable this entire script
+            enabled = false;
+            return;
+        }
+
+        // Only run in GameScene
+        if (currentScene != "GameScene")
+        {
+            Debug.Log($"NetworkPlayerController disabled - Scene: {currentScene}");
+            enabled = false; // Disable the entire script
+            return;
+        }
+        // ============ END FIX ============
+
         rb = GetComponent<Rigidbody>();
         playerHealth = GetComponent<PlayerHealth>();
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
+
+        // Get animator reference
+        if (characterAnimator == null)
+            characterAnimator = GetComponent<NetworkCharacterAnimator>();
 
         Debug.Log($"PlayerController Start - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
 
@@ -94,10 +138,17 @@ public class NetworkPlayerController : NetworkBehaviour
             if (playerCamera != null)
             {
                 Camera cam = playerCamera.GetComponent<Camera>();
-                if (cam != null) cam.enabled = false;
+                if (cam != null)
+                {
+                    cam.enabled = false;
+                    // Remove MainCamera tag if it exists
+                    if (cam.CompareTag("MainCamera"))
+                        cam.tag = "Untagged";
+                }
 
                 AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
-                if (audioListener != null) audioListener.enabled = false;
+                if (audioListener != null)
+                    audioListener.enabled = false;
 
                 playerCamera.gameObject.SetActive(false);
             }
@@ -114,10 +165,16 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             playerCamera.gameObject.SetActive(true);
             Camera cam = playerCamera.GetComponent<Camera>();
-            if (cam != null) cam.enabled = true;
+            if (cam != null)
+            {
+                cam.enabled = true;
+                // IMPORTANT: Do NOT tag player cameras as MainCamera
+                cam.tag = "Untagged";
+            }
 
             AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
-            if (audioListener != null) audioListener.enabled = true;
+            if (audioListener != null)
+                audioListener.enabled = true;
         }
 
         UpdateCursorState();
@@ -133,6 +190,9 @@ public class NetworkPlayerController : NetworkBehaviour
         HandleMouseLook();
         HandleSprint();
         HandleMovement();
+        HandleAttack();
+        HandleTask();
+        HandleInteract();
 
         // Update movement state
         wasMoving = IsMoving();
@@ -252,20 +312,69 @@ public class NetworkPlayerController : NetworkBehaviour
         rb.linearVelocity = moveVelocity;
     }
 
+    private void HandleAttack()
+    {
+        if (Input.GetMouseButtonDown(0)) // Left mouse button
+        {
+            if (characterAnimator != null && !characterAnimator.IsDead())
+            {
+                characterAnimator.PlayAttackAnimation();
+                Debug.Log("Attack triggered");
+            }
+        }
+    }
+
+    private void HandleTask()
+    {
+        // Start task with E key
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (characterAnimator != null && !characterAnimator.IsDead() && !characterAnimator.IsPerformingTask())
+            {
+                characterAnimator.PlayTaskAnimation();
+                Debug.Log("Task started");
+            }
+        }
+
+        // Stop task when E is released
+        if (Input.GetKeyUp(KeyCode.E))
+        {
+            if (characterAnimator != null && characterAnimator.IsPerformingTask())
+            {
+                characterAnimator.StopTaskAnimation();
+                Debug.Log("Task stopped");
+            }
+        }
+    }
+
+    private void HandleInteract()
+    {
+        // Use F key for other interactions (like reviving)
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            // Check if we're looking at a dead player to revive
+            if (Physics.Raycast(playerCamera.position, playerCamera.forward, out RaycastHit hit, 3f))
+            {
+                if (hit.collider.CompareTag("Player"))
+                {
+                    NetworkCharacterAnimator otherAnimator = hit.collider.GetComponent<NetworkCharacterAnimator>();
+                    if (otherAnimator != null && otherAnimator.IsDead())
+                    {
+                        // Try to revive the player
+                        // You'll need to implement revive logic in your game
+                        Debug.Log("Attempting to revive player...");
+                    }
+                }
+            }
+        }
+    }
+
     [ServerRpc]
     private void RequestStaminaConsumptionServerRpc(int staminaCost)
     {
         if (playerHealth != null)
         {
             playerHealth.ConsumeStamina(staminaCost);
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
         }
     }
 
@@ -307,13 +416,25 @@ public class NetworkPlayerController : NetworkBehaviour
     public void DebugCameraStatus()
     {
         Debug.Log($"=== CAMERA STATUS ===");
+        Debug.Log($"Scene: {SceneManager.GetActiveScene().name}");
         Debug.Log($"IsOwner: {IsOwner}");
         Debug.Log($"PlayerCamera: {playerCamera}");
         if (playerCamera != null)
         {
             Debug.Log($"Camera active: {playerCamera.gameObject.activeInHierarchy}");
             Camera cam = playerCamera.GetComponent<Camera>();
-            if (cam != null) Debug.Log($"Camera enabled: {cam.enabled}");
+            if (cam != null)
+            {
+                Debug.Log($"Camera enabled: {cam.enabled}");
+                Debug.Log($"Camera tag: {cam.tag}");
+            }
         }
+
+        // Also check Camera.main
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+            Debug.Log($"Unity's Camera.main is: {mainCam.name}");
+        else
+            Debug.Log("Unity's Camera.main is NULL");
     }
 }

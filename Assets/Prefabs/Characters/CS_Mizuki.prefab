@@ -551,6 +551,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CS_Mizuki
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 2aaed0d50aff8334c9a135802314de0a, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 5b83a6d1244ae4147aca092e06137f6a, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -665,6 +669,7 @@ MonoBehaviour:
   sprintStaminaCost: 15
   playerCamera: {fileID: 4009909985633722256}
   cameraPivot: {fileID: 0}
+  characterAnimator: {fileID: 0}
 --- !u!114 &2381756137901915355
 MonoBehaviour:
   m_ObjectHideFlags: 0

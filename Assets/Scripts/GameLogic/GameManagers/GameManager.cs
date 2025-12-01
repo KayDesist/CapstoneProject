@@ -41,6 +41,14 @@ public class GameManager : NetworkBehaviour
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!IsServer) return;
+
+        // Don't initialize game if in main menu
+        if (sceneName == "MainMenu")
+        {
+            Debug.Log("MainMenu loaded, not initializing game managers");
+            return;
+        }
+
         if (sceneName != "GameScene") return;
 
         Debug.Log("GameScene loaded, initializing game...");
@@ -177,6 +185,13 @@ public class GameManager : NetworkBehaviour
 
     private void SpawnPlayerForClient(ulong clientId)
     {
+        // Don't spawn in main menu scene
+        if (SceneManager.GetActiveScene().name == "MainMenu")
+        {
+            Debug.Log("Not spawning player in MainMenu scene");
+            return;
+        }
+
         if (characterPrefabs == null || characterPrefabs.Length == 0)
         {
             Debug.LogError("Character prefabs are not assigned in GameManager!");

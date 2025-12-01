@@ -35,6 +35,35 @@ public class MainMenuUI : MonoBehaviour
         UpdateDebugText("MainMenu loaded - Ready");
     }
 
+    private void Update()
+    {
+        // Press F3 to debug cameras
+        if (Input.GetKeyDown(KeyCode.F3))
+        {
+            Debug.Log("=== MAIN MENU CAMERA DEBUG ===");
+
+            Camera[] cameras = FindObjectsOfType<Camera>();
+            Debug.Log($"Total cameras: {cameras.Length}");
+
+            foreach (Camera cam in cameras)
+            {
+                string status = cam.enabled ? "ENABLED" : "disabled";
+                string tagInfo = cam.CompareTag("MainCamera") ? "[MAIN]" : "";
+                Debug.Log($"- {cam.name}: {status} {tagInfo} (Depth: {cam.depth})");
+            }
+
+            // Check which camera is actually rendering
+            if (Camera.main != null)
+            {
+                Debug.Log($"Camera.main is: {Camera.main.name}");
+            }
+            else
+            {
+                Debug.LogError("Camera.main is NULL!");
+            }
+        }
+    }
+
     private void OnHostClicked()
     {
         UpdateDebugText("Host button clicked - Setting up as Host");

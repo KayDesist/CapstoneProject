@@ -1806,3 +1806,580 @@ Assets/OutsideAssets/Customizable Lights and Candles/Materials/shadeOuter_mat.ma
 Assets/OutsideAssets/Customizable Lights and Candles/Materials/trim_mat.mat
 Assets/OutsideAssets/PolyRonin/Viking Warrior Weapons Pack/Materials/Viking-weapons-colors.mat
 *.mat
+Assets/Animations/Kevin Iglesias.meta
+Assets/Animations/Kevin Iglesias/Human Animations.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle01-Idle02.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle01-Idle02.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle02-Idle01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle02-Idle01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle02.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Idles/HumanF@Idle02.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Fall01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Fall01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 - Begin.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 - Begin.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 - Land.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 - Land.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\] - Begin.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\] - Begin.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\] - Land.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\] - Land.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01 \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Jump/HumanF@Jump01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Backward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Backward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_BackwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_BackwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_BackwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_BackwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/HumanF@Run01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Backward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Backward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_BackwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_BackwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_BackwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_BackwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Run/RootMotion/HumanF@Run01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/HumanF@Sprint01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Sprint/RootMotion/HumanF@Sprint01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Turn/HumanF@Turn01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Backward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Backward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_BackwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_BackwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_BackwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_BackwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/HumanF@Walk01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Backward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Backward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_BackwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_BackwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_BackwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_BackwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Movement/Walk/RootMotion/HumanF@Walk01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Social.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Social/Conversation.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Social/Conversation/HumanF@Talk01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Female/Social/Conversation/HumanF@Talk01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/HumanBasicMotionsFREE_BlenderFiles.zip
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/HumanBasicMotionsFREE_BlenderFiles.zip.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle01-Idle02.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle01-Idle02.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle02-Idle01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle02-Idle01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle02.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Idles/HumanM@Idle02.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Fall01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Fall01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 - Begin.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 - Begin.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 - Land.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 - Land.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\] - Begin.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\] - Begin.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\] - Land.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\] - Land.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01 \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Jump/HumanM@Jump01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Backward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Backward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_BackwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_BackwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_BackwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_BackwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/HumanM@Run01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Backward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Backward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_BackwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_BackwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_BackwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_BackwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Run/RootMotion/HumanM@Run01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/HumanM@Sprint01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Sprint/RootMotion/HumanM@Sprint01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Turn/HumanM@Turn01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Backward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Backward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_BackwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_BackwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_BackwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_BackwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Forward.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Forward.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_ForwardLeft.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_ForwardLeft.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_ForwardRight.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_ForwardRight.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Left.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Left.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Right.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/HumanM@Walk01_Right.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Backward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Backward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_BackwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_BackwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_BackwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_BackwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Forward \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Forward \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_ForwardLeft \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_ForwardLeft \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_ForwardRight \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_ForwardRight \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Left \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Left \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Right \[RM\].fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Movement/Walk/RootMotion/HumanM@Walk01_Right \[RM\].fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Social.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Social/Conversation.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Social/Conversation/HumanM@Talk01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Male/Social/Conversation/HumanM@Talk01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Masked Poses.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Masked Poses/Human@HandsClosed01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Masked Poses/Human@HandsClosed01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Masked Poses/Human@ObjectGripHands01.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Animations/Masked Poses/Human@ObjectGripHands01.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Human Basic Motions 2.4 FREE.pdf
+Assets/Animations/Kevin Iglesias/Human Animations/Human Basic Motions 2.4 FREE.pdf.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Materials.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Materials/HumanAnimations_Dummy-Orange.mat.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arm Left Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arm Left Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arm Right Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arm Right Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arms Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Arms/Human Arms Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hand Left Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hand Left Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hand Right Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hand Right Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hands Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Hands/Human Hands Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Body Full Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Body Full Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Body Upper Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Body Upper Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Head Mask.mask
+Assets/Animations/Kevin Iglesias/Human Animations/Models/Avatar Masks/Human Head Mask.mask.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/HumanF_Model.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Models/HumanF_Model.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Models/HumanM_Model.fbx
+Assets/Animations/Kevin Iglesias/Human Animations/Models/HumanM_Model.fbx.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Scripts.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs
+Assets/Animations/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Scripts/UpperBodyAnimations-SpineProxy.url
+Assets/Animations/Kevin Iglesias/Human Animations/Scripts/UpperBodyAnimations-SpineProxy.url.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Textures.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Textures/HumanAnimations_ColorPalette.png
+Assets/Animations/Kevin Iglesias/Human Animations/Textures/HumanAnimations_ColorPalette.png.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Fall01.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Fall01.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Idles.overrideController
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Idles.overrideController.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Jump01 \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Jump01 \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@MaskedWalking.overrideController
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@MaskedWalking.overrideController.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Backward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Backward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_BackwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_BackwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_BackwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_BackwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Run01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Sprint01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Talking.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Talking.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Turn01_Left \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Turn01_Left \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Turn01_Right \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Turn01_Right \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Backward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Backward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_BackwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_BackwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_BackwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_BackwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanF@Walk01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Fall01.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Fall01.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Idles.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Idles.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Jump01 \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Jump01 \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@MaskedWalking.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@MaskedWalking.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Backward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Backward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_BackwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_BackwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_BackwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_BackwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Run01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Sprint01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Talking.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Talking.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Turn01_Left \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Turn01_Left \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Turn01_Right \[RM\].controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Turn01_Right \[RM\].controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Backward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Backward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_BackwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_BackwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_BackwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_BackwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Forward.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Forward.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_ForwardLeft.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_ForwardLeft.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_ForwardRight.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_ForwardRight.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Left.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Left.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Right.controller
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/AnimatorControllers/HumanM@Walk01_Right.controller.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Human Basic Motions - Unity Demo Scene.unity
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Human Basic Motions - Unity Demo Scene.unity.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Materials.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Materials/HumanBasicMotions_Chair.mat.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Materials/HumanBasicMotions_Floor.mat.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Prefabs.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Prefabs/Human_BasicMotionsDummy_F.prefab
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Prefabs/Human_BasicMotionsDummy_F.prefab.meta
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Prefabs/Human_BasicMotionsDummy_M.prefab
+Assets/Animations/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Basic Motions/Prefabs/Human_BasicMotionsDummy_M.prefab.meta
+Assets/Animations/PlayerAnimatorController.controller
+Assets/Animations/PlayerAnimatorController.controller.meta
+Assets/EEJANAI_Team.meta
+Assets/EEJANAI_Team/Commons.meta
+Assets/EEJANAI_Team/Commons/Editor.meta
+Assets/EEJANAI_Team/Commons/Editor/ToonShaderInstaller.cs
+Assets/EEJANAI_Team/Commons/Editor/ToonShaderInstaller.cs.meta
+Assets/EEJANAI_Team/Commons/License.pdf
+Assets/EEJANAI_Team/Commons/License.pdf.meta
+Assets/EEJANAI_Team/Commons/Materials.meta
+Assets/EEJANAI_Team/Commons/Materials/samplemat1.mat.meta
+Assets/EEJANAI_Team/Commons/Materials/samplemat2.mat.meta
+Assets/EEJANAI_Team/Commons/Materials/samplemat3.mat.meta
+Assets/EEJANAI_Team/Commons/Model.meta
+Assets/EEJANAI_Team/Commons/Model/EEJANAIbot.fbx
+Assets/EEJANAI_Team/Commons/Model/EEJANAIbot.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/5 inch punch.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/5 inch punch.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/akk.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/akk.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/5 inch punch.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/5 inch punch.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/axe kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/axe kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/back fist.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/back fist.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/back kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/back kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/charge fist.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/charge fist.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/combo.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/combo.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/cressent kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/cressent kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/elbow chop.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/elbow chop.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/front sweep.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/front sweep.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/jumping side kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/jumping side kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/jumping uppercut.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/jumping uppercut.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/knee strike.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/knee strike.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/kungfu samba.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/kungfu samba.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/low kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/low kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/spinning axe kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/spinning axe kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/spinning elbow.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/spinning elbow.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/super blast.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/super blast.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/webster side kick.controller
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/Animator/webster side kick.controller.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/axe kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/axe kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/back fist.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/back fist.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/back kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/back kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/charge fist.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/charge fist.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/combo.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/combo.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/cressent kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/cressent kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/elbow chop.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/elbow chop.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/front sweep.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/front sweep.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/jumping side kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/jumping side kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/jumping uppercut.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/jumping uppercut.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/knee strike.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/knee strike.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/kungfu samba.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/kungfu samba.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/low kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/low kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/spinning axe kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/spinning axe kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/spinning elbow.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/spinning elbow.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/super blast.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/super blast.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/webster side kick.anim
+Assets/EEJANAI_Team/FreeFighterAnimations/Animations/webster side kick.anim.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/5 inch punch.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/5 inch punch.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/axe kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/axe kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/back fist.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/back fist.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/back kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/back kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/charge fist.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/charge fist.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/combo.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/combo.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/cressent kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/cressent kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/elbow chop.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/elbow chop.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/front sweep.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/front sweep.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/jumping side kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/jumping side kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/jumping uppercut.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/jumping uppercut.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/knee strike.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/knee strike.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/kungfu samba.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/kungfu samba.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/low kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/low kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/spinning axe kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/spinning axe kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/spinning elbow.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/spinning elbow.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/super blast.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/super blast.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/webster side kick.fbx
+Assets/EEJANAI_Team/FreeFighterAnimations/FBX/webster side kick.fbx.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Scenes.meta
+Assets/EEJANAI_Team/FreeFighterAnimations/Scenes/Sample.unity
+Assets/EEJANAI_Team/FreeFighterAnimations/Scenes/Sample.unity.meta
+Assets/EEJANAI_Team/Readme.pdf
+Assets/EEJANAI_Team/Readme.pdf.meta
+Assets/New Terrain 1.asset
+Assets/New Terrain 1.asset.meta
+Assets/OutsideAssets/Camping Low Poly Pack Lite/Prefabs/Tree_B.prefab
+Assets/OutsideAssets/Supercyan Free Forest Sample/Textures/Ground/Materials.meta
+Assets/OutsideAssets/Supercyan Free Forest Sample/Textures/Ground/Materials/forestpack_moss_light_tile_diffuse.mat.meta
+Assets/OutsideAssets/Camping Low Poly Pack Lite/Prefabs/Tree_B.prefab
+Assets/Prefabs/CampScene/Campfire Site.prefab
+Assets/Prefabs/CampScene/Campfire Site.prefab.meta
+Assets/Prefabs/CampScene.meta
+*.prefab
+Assets/OutsideAssets/Camping Low Poly Pack Lite/Prefabs/Tree_B.prefab

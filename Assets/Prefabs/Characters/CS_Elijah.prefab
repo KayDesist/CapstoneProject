@@ -267,7 +267,7 @@ GameObject:
   - component: {fileID: 6573106219725912270}
   - component: {fileID: 8694174899326452909}
   m_Layer: 0
-  m_Name: MainCamera
+  m_Name: FPSCamera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -551,6 +551,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CS_Elijah
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 50037b8881c2aaa46a8fb66fdb170462, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 5b83a6d1244ae4147aca092e06137f6a, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -664,7 +668,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2969902877
+  GlobalObjectIdHash: 3423596040
   InScenePlacedSourceGlobalObjectIdHash: 3423596040
   DeferredDespawnTick: 0
   Ownership: 1
@@ -743,6 +747,7 @@ MonoBehaviour:
   sprintStaminaCost: 15
   playerCamera: {fileID: 7698126403240845566}
   cameraPivot: {fileID: 0}
+  characterAnimator: {fileID: 0}
 --- !u!114 &8544178709896827391
 MonoBehaviour:
   m_ObjectHideFlags: 0
