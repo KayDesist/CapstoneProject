@@ -2,13 +2,15 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
-using System.Collections;
+using System.Threading;
+using System;
+using Unity.Netcode;
 
 public class MainMenuUI : MonoBehaviour
 {
     [Header("Main Buttons")]
-    [SerializeField] private GameObject hostButton;
-    [SerializeField] private GameObject joinButton;
+    [SerializeField] private Button hostButton;
+    [SerializeField] private Button joinButton;
 
     [Header("Join Panel")]
     [SerializeField] private GameObject joinPanel;
@@ -19,123 +21,251 @@ public class MainMenuUI : MonoBehaviour
     [Header("Debug Info")]
     [SerializeField] private TMP_Text debugText;
 
+    [Header("Character Display")]
+    [SerializeField] private MainMenuCharacterManager characterManager;
+
+    private RelayConnector relayConnector;
+    private CancellationTokenSource cancellationTokenSource;
+    private bool isConnecting = false;
+
     private void Start()
     {
-        joinPanel.SetActive(false);
+        // Initialize UI
+        if (joinPanel != null)
+            joinPanel.SetActive(false);
 
         // Clear any previous data
         CrossSceneData.Reset();
 
-        // Button events
-        hostButton.GetComponent<Button>().onClick.AddListener(OnHostClicked);
-        joinButton.GetComponent<Button>().onClick.AddListener(OnJoinClicked);
-        confirmJoinButton.onClick.AddListener(OnConfirmJoinClicked);
-        cancelJoinButton.onClick.AddListener(OnCancelJoinClicked);
+        // Setup button listeners
+        if (hostButton != null)
+            hostButton.onClick.AddListener(OnHostClicked);
 
-        UpdateDebugText("MainMenu loaded - Ready");
+        if (joinButton != null)
+            joinButton.onClick.AddListener(OnJoinClicked);
+
+        if (confirmJoinButton != null)
+            confirmJoinButton.onClick.AddListener(OnConfirmJoinClicked);
+
+        if (cancelJoinButton != null)
+            cancelJoinButton.onClick.AddListener(OnCancelJoinClicked);
+
+        // Create cancellation token source
+        cancellationTokenSource = new CancellationTokenSource();
+
+        UpdateDebugText("MainMenu ready");
+
+        // Ensure character manager continues to work
+        if (characterManager != null)
+        {
+            characterManager.enabled = true;
+        }
     }
 
     private void Update()
     {
-        // Press F3 to debug cameras
+        // Simple debug key
         if (Input.GetKeyDown(KeyCode.F3))
         {
-            Debug.Log("=== MAIN MENU CAMERA DEBUG ===");
-
-            Camera[] cameras = FindObjectsOfType<Camera>();
-            Debug.Log($"Total cameras: {cameras.Length}");
-
-            foreach (Camera cam in cameras)
-            {
-                string status = cam.enabled ? "ENABLED" : "disabled";
-                string tagInfo = cam.CompareTag("MainCamera") ? "[MAIN]" : "";
-                Debug.Log($"- {cam.name}: {status} {tagInfo} (Depth: {cam.depth})");
-            }
-
-            // Check which camera is actually rendering
-            if (Camera.main != null)
-            {
-                Debug.Log($"Camera.main is: {Camera.main.name}");
-            }
-            else
-            {
-                Debug.LogError("Camera.main is NULL!");
-            }
+            CrossSceneData.LogCurrentData();
         }
     }
 
-    private void OnHostClicked()
+    private async void OnHostClicked()
     {
-        UpdateDebugText("Host button clicked - Setting up as Host");
-        CrossSceneData.LobbyMode = "Host";
-        CrossSceneData.JoinCode = ""; // Clear any previous join code
-        Debug.Log($"MAIN MENU: Starting as HOST. LobbyMode: {CrossSceneData.LobbyMode}");
-        SceneManager.LoadScene("Lobby");
+        if (isConnecting) return;
+
+        try
+        {
+            isConnecting = true;
+            UpdateDebugText("Creating lobby...");
+
+            // Disable buttons during connection
+            SetButtonsInteractable(false);
+
+            // Clean up any existing network state
+            await CleanupNetworkState();
+
+            // Setup lobby data
+            CrossSceneData.LobbyMode = "Host";
+            CrossSceneData.JoinCode = "";
+
+            // Create and use relay connector
+            relayConnector = gameObject.AddComponent<RelayConnector>();
+
+            string joinCode = await relayConnector.StartHostWithRelay(10, "wss");
+
+            if (string.IsNullOrEmpty(joinCode))
+            {
+                UpdateDebugText("Failed to create lobby");
+                SetButtonsInteractable(true);
+                return;
+            }
+
+            CrossSceneData.JoinCode = joinCode;
+            UpdateDebugText($"Lobby created! Code: {joinCode}");
+
+            // Load lobby scene immediately without delay
+            SceneManager.LoadScene("Lobby");
+        }
+        catch (Exception e)
+        {
+            UpdateDebugText($"Error: {e.Message}");
+            SetButtonsInteractable(true);
+        }
+        finally
+        {
+            isConnecting = false;
+        }
     }
 
     private void OnJoinClicked()
     {
-        UpdateDebugText("Join button clicked - Showing join panel");
-        // Hide menu buttons, show join UI
-        hostButton.SetActive(false);
-        joinButton.SetActive(false);
-        joinPanel.SetActive(true);
-        joinCodeInput.text = "";
-        joinCodeInput.Select();
-        joinCodeInput.ActivateInputField();
+        if (isConnecting) return;
 
-        // Ensure the panel is fully visible and interactive
-        joinPanel.transform.SetAsLastSibling(); // Bring to front
+        // Show join panel
+        if (hostButton != null) hostButton.gameObject.SetActive(false);
+        if (joinButton != null) joinButton.gameObject.SetActive(false);
+        if (joinPanel != null)
+        {
+            joinPanel.SetActive(true);
+            joinPanel.transform.SetAsLastSibling();
+        }
 
-        UpdateDebugText("Join panel activated - Ready for code input");
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.text = "";
+            joinCodeInput.Select();
+            joinCodeInput.ActivateInputField();
+        }
+
+        UpdateDebugText("Enter 6-character lobby code");
     }
 
-    private void OnConfirmJoinClicked()
+    private async void OnConfirmJoinClicked()
     {
-        string code = joinCodeInput.text.Trim().ToUpper();
+        if (isConnecting) return;
 
-        if (string.IsNullOrEmpty(code))
+        string code = joinCodeInput?.text?.Trim().ToUpper() ?? "";
+
+        if (string.IsNullOrEmpty(code) || code.Length < 6)
         {
-            UpdateDebugText("ERROR: No lobby code entered!");
-            Debug.LogWarning("No lobby code entered!");
-
-            // Visual feedback - make input field flash red
-            StartCoroutine(FlashInputFieldRed());
+            UpdateDebugText("Code must be at least 6 characters");
+            FlashInputFieldRed();
             return;
         }
 
-        if (code.Length < 4)
+        try
         {
-            UpdateDebugText("ERROR: Join code too short!");
-            Debug.LogWarning($"Join code too short: {code}");
-            StartCoroutine(FlashInputFieldRed());
-            return;
-        }
+            isConnecting = true;
+            UpdateDebugText($"Joining lobby: {code}");
 
-        UpdateDebugText($"Joining lobby with code: {code}");
-        CrossSceneData.LobbyMode = "Client";
-        CrossSceneData.JoinCode = code;
-        Debug.Log($"MAIN MENU: Starting as CLIENT. LobbyMode: {CrossSceneData.LobbyMode}, JoinCode: {CrossSceneData.JoinCode}");
-        SceneManager.LoadScene("Lobby");
+            // Disable buttons during connection
+            SetButtonsInteractable(false);
+
+            // Clean up any existing network state
+            await CleanupNetworkState();
+
+            // Setup lobby data
+            CrossSceneData.LobbyMode = "Client";
+            CrossSceneData.JoinCode = code;
+
+            // Create and use relay connector
+            relayConnector = gameObject.AddComponent<RelayConnector>();
+
+            bool joined = await relayConnector.StartClientWithRelay(code, "wss");
+
+            if (!joined)
+            {
+                UpdateDebugText("Failed to join lobby");
+                SetButtonsInteractable(true);
+                return;
+            }
+
+            UpdateDebugText("Successfully joined!");
+
+            // Load lobby scene immediately without delay
+            SceneManager.LoadScene("Lobby");
+        }
+        catch (Exception e)
+        {
+            UpdateDebugText($"Error: {e.Message}");
+            SetButtonsInteractable(true);
+        }
+        finally
+        {
+            isConnecting = false;
+        }
     }
 
     private void OnCancelJoinClicked()
     {
-        UpdateDebugText("Cancelled join - Returning to main menu");
-        // Bring buttons back, hide join panel
-        joinPanel.SetActive(false);
-        hostButton.SetActive(true);
-        joinButton.SetActive(true);
+        // Return to main buttons
+        if (hostButton != null) hostButton.gameObject.SetActive(true);
+        if (joinButton != null) joinButton.gameObject.SetActive(true);
+        if (joinPanel != null) joinPanel.SetActive(false);
+
+        UpdateDebugText("Join cancelled");
     }
 
-    private System.Collections.IEnumerator FlashInputFieldRed()
+    private async System.Threading.Tasks.Task CleanupNetworkState()
     {
-        if (joinCodeInput != null)
+        try
+        {
+            // Shut down any existing NetworkManager
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                NetworkManager.Singleton.Shutdown();
+                await System.Threading.Tasks.Task.Delay(100);
+            }
+
+            // Clean up any leftover RelayConnector
+            var oldConnectors = GetComponents<RelayConnector>();
+            foreach (var connector in oldConnectors)
+            {
+                if (connector != relayConnector)
+                    Destroy(connector);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Cleanup warning: {e.Message}");
+        }
+    }
+
+    private void SetButtonsInteractable(bool interactable)
+    {
+        if (hostButton != null)
+        {
+            hostButton.interactable = interactable;
+            hostButton.gameObject.SetActive(interactable);
+        }
+
+        if (joinButton != null)
+        {
+            joinButton.interactable = interactable;
+            joinButton.gameObject.SetActive(interactable);
+        }
+
+        if (confirmJoinButton != null)
+            confirmJoinButton.interactable = interactable;
+
+        if (cancelJoinButton != null)
+            cancelJoinButton.interactable = interactable;
+    }
+
+    private async void FlashInputFieldRed()
+    {
+        if (joinCodeInput != null && joinCodeInput.image != null)
         {
             Color originalColor = joinCodeInput.image.color;
             joinCodeInput.image.color = Color.red;
-            yield return new WaitForSeconds(0.5f);
-            joinCodeInput.image.color = originalColor;
+
+            // Use Task.Delay instead of coroutine for async method
+            await System.Threading.Tasks.Task.Delay(500);
+
+            if (joinCodeInput != null && joinCodeInput.image != null)
+                joinCodeInput.image.color = originalColor;
         }
     }
 
@@ -143,20 +273,19 @@ public class MainMenuUI : MonoBehaviour
     {
         if (debugText != null)
         {
-            debugText.text = $"[Debug] {message}";
+            debugText.text = $"[MainMenu] {message}";
         }
-        Debug.Log($"[MainMenu] {message}");
+        Debug.Log($"[MainMenuUI] {message}");
     }
 
-    // Debug method to check current state
-    [ContextMenu("Debug Current State")]
-    public void DebugCurrentState()
+    private void OnDestroy()
     {
-        Debug.Log($"=== MAIN MENU STATE ===");
-        Debug.Log($"LobbyMode: {CrossSceneData.LobbyMode}");
-        Debug.Log($"JoinCode: {CrossSceneData.JoinCode}");
-        Debug.Log($"Host Button Active: {hostButton.activeInHierarchy}");
-        Debug.Log($"Join Button Active: {joinButton.activeInHierarchy}");
-        Debug.Log($"Join Panel Active: {joinPanel.activeInHierarchy}");
+        // Cancel any ongoing operations
+        cancellationTokenSource?.Cancel();
+        cancellationTokenSource?.Dispose();
+
+        // Clean up relay connector
+        if (relayConnector != null)
+            Destroy(relayConnector);
     }
 }

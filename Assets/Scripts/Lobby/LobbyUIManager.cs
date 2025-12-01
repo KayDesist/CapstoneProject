@@ -28,6 +28,12 @@ public class LobbyUIManager : MonoBehaviour
 
         SetupUI();
         HideAllPlayerSlots();
+
+        // Initialize UI with current data
+        if (!string.IsNullOrEmpty(CrossSceneData.JoinCode) && lobbyCodeText != null)
+        {
+            lobbyCodeText.text = $"Join Code: {CrossSceneData.JoinCode}";
+        }
     }
 
     private void SetupUI()
@@ -40,6 +46,9 @@ public class LobbyUIManager : MonoBehaviour
 
         if (startButton != null)
             startButton.gameObject.SetActive(false);
+
+        if (playerCountText != null)
+            playerCountText.text = "Players: 0/10";
     }
 
     private void HideAllPlayerSlots()
@@ -49,11 +58,6 @@ public class LobbyUIManager : MonoBehaviour
             if (slot != null)
                 slot.SetActive(false);
         }
-    }
-
-    private void Update()
-    {
-        UpdatePlayerCountDisplay();
     }
 
     public void UpdatePlayerCountDisplay()
@@ -78,6 +82,12 @@ public class LobbyUIManager : MonoBehaviour
         // First hide all slots
         HideAllPlayerSlots();
 
+        if (players == null || players.Count == 0)
+        {
+            Debug.Log("[LobbyUIManager] No players to display");
+            return;
+        }
+
         // Sort players by client ID for consistent order
         var sortedPlayers = players.OrderBy(p => p.ClientId).ToList();
 
@@ -90,6 +100,8 @@ public class LobbyUIManager : MonoBehaviour
                 SetupPlayerSlot(playerSlots[i], sortedPlayers[i]);
             }
         }
+
+        UpdatePlayerCountDisplay();
     }
 
     private void SetupPlayerSlot(GameObject playerSlot, LobbyPlayerData playerData)
@@ -113,7 +125,7 @@ public class LobbyUIManager : MonoBehaviour
             if (playerData.ClientId == 0)
             {
                 playerNameText.text = name + " (Host)";
-                playerNameText.color = Color.yellow; // Optional: Make host name stand out
+                playerNameText.color = Color.yellow;
             }
             else
             {
@@ -168,14 +180,20 @@ public class LobbyUIManager : MonoBehaviour
 
     private void OnStartClicked()
     {
+        Debug.Log("[LobbyUIManager] Start button clicked");
         if (lobbyManager != null)
             lobbyManager.StartGame();
+        else
+            Debug.LogError("[LobbyUIManager] LobbyManager is null!");
     }
 
     private void OnLeaveClicked()
     {
+        Debug.Log("[LobbyUIManager] Leave button clicked");
         if (lobbyManager != null)
             lobbyManager.LeaveLobby();
+        else
+            Debug.LogError("[LobbyUIManager] LobbyManager is null!");
     }
 
     [ContextMenu("Test UI Update")]
@@ -190,6 +208,6 @@ public class LobbyUIManager : MonoBehaviour
         };
 
         UpdatePlayerList(testPlayers);
-        Debug.Log("Test UI update completed");
+        Debug.Log("[LobbyUIManager] Test UI update completed");
     }
 }

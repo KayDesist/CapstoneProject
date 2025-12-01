@@ -1254,13 +1254,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 954db29fc423d6342993b87587d6fc18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hostButton: {fileID: 2031762351}
-  joinButton: {fileID: 1679243084}
+  hostButton: {fileID: 2031762353}
+  joinButton: {fileID: 1679243086}
   joinPanel: {fileID: 1517047656}
   joinCodeInput: {fileID: 1350479673}
   confirmJoinButton: {fileID: 1034657257}
   cancelJoinButton: {fileID: 674497627}
   debugText: {fileID: 0}
+  characterManager: {fileID: 0}
 --- !u!114 &769726389
 MonoBehaviour:
   m_ObjectHideFlags: 0
