@@ -8,6 +8,7 @@ public class NetworkPlayerController : NetworkBehaviour
     public float walkSpeed = 7f;
     public float sprintSpeed = 11f;
     public float mouseSensitivity = 3f;
+    public float jumpForce = 7f;
 
     [Header("Stamina Settings")]
     public int sprintStaminaCost = 15;
@@ -17,12 +18,10 @@ public class NetworkPlayerController : NetworkBehaviour
     public Transform playerCamera;
     public Transform cameraPivot;
 
-    [Header("Animation")]
-    [SerializeField] private NetworkCharacterAnimator characterAnimator;
-
     private Rigidbody rb;
     private PlayerHealth playerHealth;
     private float xRotation = 0f;
+    private bool isGrounded = true;
     private bool isSprinting = false;
     private float currentSpeed;
     private Vector3 lastPosition;
@@ -30,153 +29,33 @@ public class NetworkPlayerController : NetworkBehaviour
 
     private void Start()
     {
-        // ============ CRITICAL FIX: MAIN MENU CHECK ============
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        // If we're in MainMenu, disable ALL camera logic completely
-        if (currentScene == "MainMenu")
-        {
-            Debug.Log($"NetworkPlayerController in MainMenu - Disabling ALL camera logic");
-
-            // Find and disable any camera on this object or children
-            Camera[] playerCameras = GetComponentsInChildren<Camera>();
-            foreach (Camera cam in playerCameras)
-            {
-                cam.enabled = false;
-                cam.gameObject.SetActive(false);
-                Debug.Log($"Disabled player camera: {cam.gameObject.name}");
-            }
-
-            // Find and disable any AudioListener
-            AudioListener[] listeners = GetComponentsInChildren<AudioListener>();
-            foreach (AudioListener listener in listeners)
-            {
-                listener.enabled = false;
-                Debug.Log($"Disabled player audio listener: {listener.gameObject.name}");
-            }
-
-            // Completely disable this entire script
-            enabled = false;
-            return;
-        }
-
-        // Only run in GameScene
-        if (currentScene != "GameScene")
-        {
-            Debug.Log($"NetworkPlayerController disabled - Scene: {currentScene}");
-            enabled = false; // Disable the entire script
-            return;
-        }
-        // ============ END FIX ============
-
         rb = GetComponent<Rigidbody>();
         playerHealth = GetComponent<PlayerHealth>();
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
 
-        // Get animator reference
-        if (characterAnimator == null)
-            characterAnimator = GetComponent<NetworkCharacterAnimator>();
-
-        Debug.Log($"PlayerController Start - ClientID: {NetworkManager.Singleton.LocalClientId}, IsOwner: {IsOwner}");
-
-        // Find camera pivot in character hierarchy
+        // Create camera pivot if it doesn't exist
         if (cameraPivot == null)
         {
-            Transform foundPivot = transform.Find("CameraPivot");
-            if (foundPivot != null)
-            {
-                cameraPivot = foundPivot;
-                Debug.Log("Found existing CameraPivot");
-            }
-            else
-            {
-                GameObject pivot = new GameObject("CameraPivot");
-                pivot.transform.SetParent(transform);
-                pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-                cameraPivot = pivot.transform;
-                Debug.Log("Created new CameraPivot");
-            }
-        }
-
-        // Find main camera in children
-        if (playerCamera == null)
-        {
-            Camera cam = GetComponentInChildren<Camera>();
-            if (cam != null)
-            {
-                playerCamera = cam.transform;
-                Debug.Log("Found player camera in children");
-            }
-            else
-            {
-                Debug.LogError("No camera found in character prefab! Creating one...");
-
-                // Create camera as fallback
-                GameObject cameraObj = new GameObject("PlayerCamera");
-                cameraObj.transform.SetParent(cameraPivot);
-                cameraObj.transform.localPosition = Vector3.zero;
-                cameraObj.transform.localRotation = Quaternion.identity;
-
-                Camera newCam = cameraObj.AddComponent<Camera>();
-                cameraObj.AddComponent<AudioListener>(); // Add audio listener for local player
-
-                playerCamera = cameraObj.transform;
-                Debug.Log("Created fallback camera");
-            }
+            GameObject pivot = new GameObject("CameraPivot");
+            pivot.transform.SetParent(transform);
+            pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+            cameraPivot = pivot.transform;
         }
 
         if (rb != null)
             rb.freezeRotation = true;
 
-        // CRITICAL: Only enable camera and controls for owner
+        // Disable camera and controls for non-owners
         if (!IsOwner)
         {
-            Debug.Log($"Disabling controls for non-owner client: {NetworkManager.Singleton.LocalClientId}");
-
-            // Disable camera
             if (playerCamera != null)
-            {
-                Camera cam = playerCamera.GetComponent<Camera>();
-                if (cam != null)
-                {
-                    cam.enabled = false;
-                    // Remove MainCamera tag if it exists
-                    if (cam.CompareTag("MainCamera"))
-                        cam.tag = "Untagged";
-                }
-
-                AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
-                if (audioListener != null)
-                    audioListener.enabled = false;
-
                 playerCamera.gameObject.SetActive(false);
-            }
-
-            // Disable this script
             enabled = false;
             return;
         }
 
-        // Enable camera and controls for owner
-        Debug.Log($"Enabling controls for owner client: {NetworkManager.Singleton.LocalClientId}");
-
-        if (playerCamera != null)
-        {
-            playerCamera.gameObject.SetActive(true);
-            Camera cam = playerCamera.GetComponent<Camera>();
-            if (cam != null)
-            {
-                cam.enabled = true;
-                // IMPORTANT: Do NOT tag player cameras as MainCamera
-                cam.tag = "Untagged";
-            }
-
-            AudioListener audioListener = playerCamera.GetComponent<AudioListener>();
-            if (audioListener != null)
-                audioListener.enabled = true;
-        }
-
+        // Cursor control
         UpdateCursorState();
     }
 
@@ -190,9 +69,6 @@ public class NetworkPlayerController : NetworkBehaviour
         HandleMouseLook();
         HandleSprint();
         HandleMovement();
-        HandleAttack();
-        HandleTask();
-        HandleInteract();
 
         // Update movement state
         wasMoving = IsMoving();
@@ -206,7 +82,6 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            Debug.Log("Cursor locked for gameplay");
         }
         else
         {
@@ -244,7 +119,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = true;
                     currentSpeed = sprintSpeed;
                     // Notify PlayerHealth about sprinting state
-                    if (playerHealth != null) playerHealth.SetSprinting(true);
+                    playerHealth.SetSprinting(true);
                 }
 
                 // Accumulate stamina cost and consume when it reaches at least 1
@@ -257,7 +132,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     // Use ServerRpc to consume stamina on the server
                     if (IsServer)
                     {
-                        if (playerHealth != null) playerHealth.ConsumeStamina(staminaToConsume);
+                        playerHealth.ConsumeStamina(staminaToConsume);
                     }
                     else
                     {
@@ -275,7 +150,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = false;
                     currentSpeed = walkSpeed;
                     // Notify PlayerHealth about sprinting state
-                    if (playerHealth != null) playerHealth.SetSprinting(false);
+                    playerHealth.SetSprinting(false);
                 }
             }
         }
@@ -287,7 +162,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 isSprinting = false;
                 currentSpeed = walkSpeed;
                 // Notify PlayerHealth about sprinting state
-                if (playerHealth != null) playerHealth.SetSprinting(false);
+                playerHealth.SetSprinting(false);
             }
         }
 
@@ -297,7 +172,7 @@ public class NetworkPlayerController : NetworkBehaviour
             isSprinting = false;
             currentSpeed = walkSpeed;
             // Notify PlayerHealth about sprinting state
-            if (playerHealth != null) playerHealth.SetSprinting(false);
+            playerHealth.SetSprinting(false);
         }
     }
 
@@ -312,69 +187,20 @@ public class NetworkPlayerController : NetworkBehaviour
         rb.linearVelocity = moveVelocity;
     }
 
-    private void HandleAttack()
-    {
-        if (Input.GetMouseButtonDown(0)) // Left mouse button
-        {
-            if (characterAnimator != null && !characterAnimator.IsDead())
-            {
-                characterAnimator.PlayAttackAnimation();
-                Debug.Log("Attack triggered");
-            }
-        }
-    }
-
-    private void HandleTask()
-    {
-        // Start task with E key
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            if (characterAnimator != null && !characterAnimator.IsDead() && !characterAnimator.IsPerformingTask())
-            {
-                characterAnimator.PlayTaskAnimation();
-                Debug.Log("Task started");
-            }
-        }
-
-        // Stop task when E is released
-        if (Input.GetKeyUp(KeyCode.E))
-        {
-            if (characterAnimator != null && characterAnimator.IsPerformingTask())
-            {
-                characterAnimator.StopTaskAnimation();
-                Debug.Log("Task stopped");
-            }
-        }
-    }
-
-    private void HandleInteract()
-    {
-        // Use F key for other interactions (like reviving)
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            // Check if we're looking at a dead player to revive
-            if (Physics.Raycast(playerCamera.position, playerCamera.forward, out RaycastHit hit, 3f))
-            {
-                if (hit.collider.CompareTag("Player"))
-                {
-                    NetworkCharacterAnimator otherAnimator = hit.collider.GetComponent<NetworkCharacterAnimator>();
-                    if (otherAnimator != null && otherAnimator.IsDead())
-                    {
-                        // Try to revive the player
-                        // You'll need to implement revive logic in your game
-                        Debug.Log("Attempting to revive player...");
-                    }
-                }
-            }
-        }
-    }
-
     [ServerRpc]
     private void RequestStaminaConsumptionServerRpc(int staminaCost)
     {
         if (playerHealth != null)
         {
             playerHealth.ConsumeStamina(staminaCost);
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = true;
         }
     }
 
@@ -409,32 +235,5 @@ public class NetworkPlayerController : NetworkBehaviour
 
         currentSpeed = walkSpeed;
         Debug.Log($"Role settings applied - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
-    }
-
-    // Debug method to check camera status
-    [ContextMenu("Debug Camera Status")]
-    public void DebugCameraStatus()
-    {
-        Debug.Log($"=== CAMERA STATUS ===");
-        Debug.Log($"Scene: {SceneManager.GetActiveScene().name}");
-        Debug.Log($"IsOwner: {IsOwner}");
-        Debug.Log($"PlayerCamera: {playerCamera}");
-        if (playerCamera != null)
-        {
-            Debug.Log($"Camera active: {playerCamera.gameObject.activeInHierarchy}");
-            Camera cam = playerCamera.GetComponent<Camera>();
-            if (cam != null)
-            {
-                Debug.Log($"Camera enabled: {cam.enabled}");
-                Debug.Log($"Camera tag: {cam.tag}");
-            }
-        }
-
-        // Also check Camera.main
-        Camera mainCam = Camera.main;
-        if (mainCam != null)
-            Debug.Log($"Unity's Camera.main is: {mainCam.name}");
-        else
-            Debug.Log("Unity's Camera.main is NULL");
     }
 }

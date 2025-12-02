@@ -16,9 +16,6 @@ public class InteractableObject : NetworkBehaviour
     [SerializeField] private Material completeMaterial;
     private MeshRenderer meshRenderer;
 
-    [Header("Animation Settings")]
-    [SerializeField] private bool triggerTaskAnimation = true;
-
     private NetworkVariable<bool> isInteractable = new NetworkVariable<bool>(true);
     private NetworkVariable<bool> isCompleted = new NetworkVariable<bool>(false);
     private NetworkVariable<float> interactionProgress = new NetworkVariable<float>(0f);
@@ -26,9 +23,6 @@ public class InteractableObject : NetworkBehaviour
     private bool playerInRange = false;
     private bool isInteracting = false;
     private float localInteractionProgress = 0f;
-
-    // Reference to current interacting player's animator
-    private NetworkCharacterAnimator currentPlayerAnimator;
 
     public override void OnNetworkSpawn()
     {
@@ -164,17 +158,6 @@ public class InteractableObject : NetworkBehaviour
         isInteracting = true;
         localInteractionProgress = 0f;
 
-        // Get player's animator for task animation
-        NetworkPlayerController playerController = FindLocalPlayerController();
-        if (playerController != null && triggerTaskAnimation)
-        {
-            currentPlayerAnimator = playerController.GetComponent<NetworkCharacterAnimator>();
-            if (currentPlayerAnimator != null)
-            {
-                currentPlayerAnimator.PlayTaskAnimation();
-            }
-        }
-
         Debug.Log($"Local player started interacting with {gameObject.name}");
 
         // Notify server
@@ -182,19 +165,6 @@ public class InteractableObject : NetworkBehaviour
         {
             StartInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
         }
-    }
-
-    private NetworkPlayerController FindLocalPlayerController()
-    {
-        NetworkPlayerController[] allPlayers = FindObjectsOfType<NetworkPlayerController>();
-        foreach (NetworkPlayerController player in allPlayers)
-        {
-            if (player.IsOwner)
-            {
-                return player;
-            }
-        }
-        return null;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -221,12 +191,6 @@ public class InteractableObject : NetworkBehaviour
     {
         Debug.Log($"Local interaction completed with {gameObject.name}");
 
-        // Stop task animation
-        if (currentPlayerAnimator != null)
-        {
-            currentPlayerAnimator.StopTaskAnimation();
-        }
-
         if (IsServer)
         {
             CompleteInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
@@ -239,7 +203,6 @@ public class InteractableObject : NetworkBehaviour
         // Reset local state
         isInteracting = false;
         localInteractionProgress = 0f;
-        currentPlayerAnimator = null;
 
         // Hide UI
         if (GameHUDManager.Instance != null)
@@ -282,16 +245,8 @@ public class InteractableObject : NetworkBehaviour
         if (isInteracting)
         {
             Debug.Log("Interaction cancelled");
-
-            // Stop task animation
-            if (currentPlayerAnimator != null)
-            {
-                currentPlayerAnimator.StopTaskAnimation();
-            }
-
             isInteracting = false;
             localInteractionProgress = 0f;
-            currentPlayerAnimator = null;
 
             // Reset progress on server
             if (IsServer)

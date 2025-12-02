@@ -6,8 +6,7 @@ using System.Collections;
 
 public class GameManager : NetworkBehaviour
 {
-    [Header("Character Prefabs - Assign in order: 0=Jaxen, 1=Sam, 2=Mizuki, 3=Elijah, 4=Clint")]
-    [SerializeField] private GameObject[] characterPrefabs;
+    [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameObject roleManagerPrefab;
     [SerializeField] private GameObject taskManagerPrefab;
     [SerializeField] private GameObject endGameManagerPrefab;
@@ -15,8 +14,6 @@ public class GameManager : NetworkBehaviour
     private HashSet<ulong> spawnedPlayers = new HashSet<ulong>();
     private bool sceneInitialized = false;
     private bool isShuttingDown = false;
-
-    private Dictionary<ulong, int> clientCharacterMap = new Dictionary<ulong, int>();
 
     private void OnEnable()
     {
@@ -41,21 +38,13 @@ public class GameManager : NetworkBehaviour
     private void OnSceneLoaded(string sceneName, LoadSceneMode loadMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!IsServer) return;
-
-        // Don't initialize game if in main menu
-        if (sceneName == "MainMenu")
-        {
-            Debug.Log("MainMenu loaded, not initializing game managers");
-            return;
-        }
-
         if (sceneName != "GameScene") return;
 
         Debug.Log("GameScene loaded, initializing game...");
         sceneInitialized = true;
         spawnedPlayers.Clear();
-        clientCharacterMap.Clear();
 
+        // Spawn managers with proper order
         StartCoroutine(InitializeManagers());
     }
 
@@ -65,6 +54,7 @@ public class GameManager : NetworkBehaviour
 
         Debug.Log($"Client {clientId} connected");
 
+        // If scene is already loaded, spawn player for this client
         if (sceneInitialized && SceneManager.GetActiveScene().name == "GameScene")
         {
             Debug.Log($"Spawning player for late-joining client {clientId}");
@@ -72,6 +62,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    // FIXED: More robust error handling for client disconnection
     private void OnClientDisconnected(ulong clientId)
     {
         if (!IsServer || isShuttingDown) return;
@@ -80,24 +71,29 @@ public class GameManager : NetworkBehaviour
 
         try
         {
+            // Remove from spawned players list
             if (spawnedPlayers.Contains(clientId))
             {
                 spawnedPlayers.Remove(clientId);
             }
-            if (clientCharacterMap.ContainsKey(clientId))
-            {
-                clientCharacterMap.Remove(clientId);
-            }
 
+            // FIX: More robust check for EndGameManager
             if (EndGameManager.Instance != null && EndGameManager.Instance.gameObject != null)
             {
                 EndGameManager.Instance.OnClientDisconnected(clientId);
             }
+            else
+            {
+                Debug.LogWarning("EndGameManager.Instance is null or destroyed - game may be shutting down");
+            }
 
+            // Check if we should end the game (e.g., if host disconnects)
             if (clientId == NetworkManager.Singleton.LocalClientId && !isShuttingDown)
             {
                 Debug.Log("Host disconnected - ending game for everyone");
                 isShuttingDown = true;
+
+                // Only load scene if NetworkManager is still available
                 if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
                 {
                     NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
@@ -107,13 +103,15 @@ public class GameManager : NetworkBehaviour
         catch (System.Exception e)
         {
             Debug.LogWarning($"Error during client disconnection handling: {e.Message}");
+            // Don't rethrow - this is during shutdown so we want to be graceful
         }
     }
 
     private IEnumerator InitializeManagers()
     {
-        yield return new WaitForSeconds(1f); // Increased delay for stability
+        yield return new WaitForSeconds(0.5f);
 
+        // Spawn RoleManager if it doesn't exist
         if (RoleManager.Instance == null && roleManagerPrefab != null)
         {
             GameObject roleManager = Instantiate(roleManagerPrefab);
@@ -121,8 +119,9 @@ public class GameManager : NetworkBehaviour
             Debug.Log("Spawned RoleManager");
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
 
+        // Spawn TaskManager if it doesn't exist
         if (TaskManager.Instance == null && taskManagerPrefab != null)
         {
             GameObject taskManager = Instantiate(taskManagerPrefab);
@@ -130,8 +129,9 @@ public class GameManager : NetworkBehaviour
             Debug.Log("Spawned TaskManager");
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
 
+        // Spawn EndGameManager if it doesn't exist
         if (EndGameManager.Instance == null && endGameManagerPrefab != null)
         {
             GameObject endGameManager = Instantiate(endGameManagerPrefab);
@@ -139,44 +139,36 @@ public class GameManager : NetworkBehaviour
             Debug.Log("Spawned EndGameManager");
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
 
+        // Spawn players for all currently connected clients
         StartCoroutine(SpawnPlayersWithDelay());
     }
 
     private IEnumerator SpawnPlayersWithDelay()
     {
-        yield return new WaitForSeconds(1f); // Increased delay for stability
+        yield return new WaitForSeconds(0.5f);
 
         Debug.Log($"Spawning players for {NetworkManager.Singleton.ConnectedClientsIds.Count} clients");
 
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
+            // Only spawn if not already spawned
             if (!spawnedPlayers.Contains(clientId))
             {
                 SpawnPlayerForClient(clientId);
-                yield return new WaitForSeconds(0.2f); // Increased delay between spawns
+                yield return new WaitForSeconds(0.1f);
             }
         }
 
         Debug.Log("Finished spawning all players");
-
-        // Debug log all spawned players
-        foreach (var playerId in spawnedPlayers)
-        {
-            string charName = "Unknown";
-            if (clientCharacterMap.ContainsKey(playerId))
-            {
-                charName = CrossSceneData.GetCharacterName(clientCharacterMap[playerId]);
-            }
-            Debug.Log($"Final check - Player {playerId} spawned as {charName}");
-        }
     }
 
     private IEnumerator SpawnPlayerWithDelay(ulong clientId)
     {
-        yield return new WaitForSeconds(1f); // Increased delay
+        yield return new WaitForSeconds(0.5f);
 
+        // Only spawn if not already spawned and scene is still game scene
         if (!spawnedPlayers.Contains(clientId) && SceneManager.GetActiveScene().name == "GameScene")
         {
             SpawnPlayerForClient(clientId);
@@ -185,35 +177,13 @@ public class GameManager : NetworkBehaviour
 
     private void SpawnPlayerForClient(ulong clientId)
     {
-        // Don't spawn in main menu scene
-        if (SceneManager.GetActiveScene().name == "MainMenu")
+        if (playerPrefab == null)
         {
-            Debug.Log("Not spawning player in MainMenu scene");
+            Debug.LogError("Player prefab is not assigned in GameManager!");
             return;
         }
 
-        if (characterPrefabs == null || characterPrefabs.Length == 0)
-        {
-            Debug.LogError("Character prefabs are not assigned in GameManager!");
-            return;
-        }
-
-        int characterIndex = GetCharacterIndexForClient(clientId);
-
-        if (characterIndex < 0 || characterIndex >= characterPrefabs.Length)
-        {
-            Debug.LogError($"Invalid character index {characterIndex} for client {clientId}");
-            return;
-        }
-
-        GameObject selectedCharacterPrefab = characterPrefabs[characterIndex];
-
-        if (selectedCharacterPrefab == null)
-        {
-            Debug.LogError($"Character prefab at index {characterIndex} is null!");
-            return;
-        }
-
+        // Check if player already exists for this client
         if (spawnedPlayers.Contains(clientId))
         {
             Debug.LogWarning($"Player for client {clientId} already spawned!");
@@ -221,68 +191,61 @@ public class GameManager : NetworkBehaviour
         }
 
         Vector3 spawnPos = GetSpawnPosition();
+        GameObject go = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
 
-        // Instantiate the character
-        GameObject characterInstance = Instantiate(selectedCharacterPrefab, spawnPos, Quaternion.identity);
-
-        // Check for NetworkObject
-        NetworkObject networkObject = characterInstance.GetComponent<NetworkObject>();
-        if (networkObject == null)
+        NetworkObject networkObject = go.GetComponent<NetworkObject>();
+        if (networkObject != null)
         {
-            Debug.LogError($"Character prefab doesn't have NetworkObject component for client {clientId}");
-            Destroy(characterInstance);
-            return;
-        }
-
-        // Store the character assignment
-        clientCharacterMap[clientId] = characterIndex;
-
-        // Spawn the player object
-        networkObject.SpawnAsPlayerObject(clientId);
-        spawnedPlayers.Add(clientId);
-
-        string characterName = CrossSceneData.GetCharacterName(characterIndex);
-        Debug.Log($"Successfully spawned {characterName} for client {clientId} at position {spawnPos}");
-
-        // Force ownership update
-        StartCoroutine(VerifyPlayerOwnership(clientId, characterInstance));
-    }
-
-    private IEnumerator VerifyPlayerOwnership(ulong clientId, GameObject playerObject)
-    {
-        yield return new WaitForSeconds(1f);
-
-        NetworkObject netObj = playerObject.GetComponent<NetworkObject>();
-        if (netObj != null)
-        {
-            Debug.Log($"Ownership verification - Client {clientId}, IsOwner: {netObj.IsOwner}, OwnerClientId: {netObj.OwnerClientId}");
+            networkObject.SpawnAsPlayerObject(clientId, true);
+            spawnedPlayers.Add(clientId);
+            Debug.Log($"Successfully spawned player for client {clientId} at position {spawnPos}");
         }
         else
         {
-            Debug.LogError($"Ownership verification failed - No NetworkObject for client {clientId}");
+            Debug.LogError($"Player prefab doesn't have NetworkObject component for client {clientId}");
+            Destroy(go);
         }
-    }
-
-    private int GetCharacterIndexForClient(ulong clientId)
-    {
-        return CrossSceneData.GetCharacterIndexForClient(clientId);
     }
 
     private Vector3 GetSpawnPosition()
     {
-        // Simple spawn logic - you can enhance this later
-        float x = Random.Range(-8f, 8f);
-        float z = Random.Range(-8f, 8f);
-        return new Vector3(x, 1.1f, z);
+        // Better spawn position logic to avoid overlapping
+        int attempts = 0;
+        Vector3 spawnPos;
+
+        do
+        {
+            spawnPos = new Vector3(Random.Range(-8f, 8f), 1.1f, Random.Range(-8f, 8f));
+            attempts++;
+
+            // Check if position is clear (simple distance check)
+            bool positionClear = true;
+            foreach (var playerId in spawnedPlayers)
+            {
+                if (NetworkManager.Singleton.ConnectedClients.TryGetValue(playerId, out var client))
+                {
+                    if (Vector3.Distance(spawnPos, client.PlayerObject.transform.position) < 2f)
+                    {
+                        positionClear = false;
+                        break;
+                    }
+                }
+            }
+
+            if (positionClear) break;
+
+        } while (attempts < 10); // Prevent infinite loop
+
+        return spawnPos;
     }
 
     public override void OnNetworkSpawn()
     {
-        Debug.Log($"GameManager network spawned - IsServer: {IsServer}, IsClient: {IsClient}");
+        Debug.Log("GameManager network spawned");
 
+        // If we're a client that joined after scene was loaded, request spawn
         if (!IsServer && IsClient)
         {
-            Debug.Log("Client requesting player spawn...");
             RequestPlayerSpawnServerRpc();
         }
     }
@@ -304,48 +267,20 @@ public class GameManager : NetworkBehaviour
         isShuttingDown = true;
     }
 
+    // Debug method to check spawned players
     [ContextMenu("Debug Spawned Players")]
     public void DebugSpawnedPlayers()
     {
         Debug.Log($"=== SPAWNED PLAYERS ({spawnedPlayers.Count}) ===");
         foreach (var playerId in spawnedPlayers)
         {
-            string characterName = "Unknown";
-            if (clientCharacterMap.ContainsKey(playerId))
-            {
-                characterName = CrossSceneData.GetCharacterName(clientCharacterMap[playerId]);
-            }
-            Debug.Log($"Player ID: {playerId} -> Character: {characterName}");
+            Debug.Log($"Player ID: {playerId}");
         }
 
         Debug.Log($"=== CONNECTED CLIENTS ({NetworkManager.Singleton.ConnectedClientsIds.Count}) ===");
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             Debug.Log($"Client ID: {clientId}");
-        }
-    }
-
-    [ContextMenu("Check Character Prefabs")]
-    public void CheckCharacterPrefabs()
-    {
-        Debug.Log("=== CHARACTER PREFAB CHECK ===");
-        for (int i = 0; i < characterPrefabs.Length; i++)
-        {
-            if (characterPrefabs[i] == null)
-            {
-                Debug.LogError($"Character prefab at index {i} is NULL!");
-                continue;
-            }
-
-            NetworkObject netObj = characterPrefabs[i].GetComponent<NetworkObject>();
-            if (netObj == null)
-            {
-                Debug.LogError($"Character prefab at index {i} has NO NetworkObject!");
-            }
-            else
-            {
-                Debug.Log($"Character {i}: {characterPrefabs[i].name} - NetworkObject: OK");
-            }
         }
     }
 }

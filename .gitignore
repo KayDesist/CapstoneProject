@@ -1783,6 +1783,7 @@ Assets/OutsideAssets/Supercyan Free Forest Sample/Textures/Stone/Materials/fores
 Assets/OutsideAssets/Supercyan Free Forest Sample/Textures/Stone/Materials/forestpack_stone_diffuse.mat.meta
 Assets/OutsideAssets/Toasty Planet Games/Industrial Equipment - Electric Motor/Art/Materials/Metal 1.mat
 Assets/OutsideAssets/Toasty Planet Games/Industrial Equipment - Electric Motor/Art/Materials/Metal 1.mat.meta
+<<<<<<< HEAD
 Assets/OutsideAssets/Customizable Lights and Candles/Materials/body_mat.mat
 Assets/OutsideAssets/Customizable Lights and Candles/Materials/bulb_mat.mat
 Assets/OutsideAssets/Customizable Lights and Candles/Materials/candle_mat.mat
@@ -2383,3 +2384,28 @@ Assets/Prefabs/CampScene/Campfire Site.prefab.meta
 Assets/Prefabs/CampScene.meta
 *.prefab
 Assets/OutsideAssets/Camping Low Poly Pack Lite/Prefabs/Tree_B.prefab
+=======
+>>>>>>> parent of 9d65ab9 (GitIgnore files)
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/body_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/bulb_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/candle_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/glass_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/groundPlane_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/metal_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/mirror_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/shadeInner_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/shadeOuter_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/trim_mat.mat
+Assets/OutsideAssets/PolyRonin/Viking Warrior Weapons Pack/Materials/Viking-weapons-colors.mat
+*.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/body_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/bulb_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/candle_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/glass_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/groundPlane_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/metal_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/mirror_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/shadeInner_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/shadeOuter_mat.mat
+Assets/OutsideAssets/Customizable Lights and Candles/Materials/trim_mat.mat
+Assets/OutsideAssets/PolyRonin/Viking Warrior Weapons Pack/Materials/Viking-weapons-colors.mat

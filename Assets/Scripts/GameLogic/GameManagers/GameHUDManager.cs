@@ -178,45 +178,6 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // NEW: Hide ALL game HUD
-    public void HideAllGameHUD()
-    {
-        if (persistentRoleDisplay != null)
-        {
-            persistentRoleDisplay.SetActive(false);
-            Debug.Log("Hidden persistent role display");
-        }
-
-        if (healthStaminaPanel != null)
-        {
-            healthStaminaPanel.SetActive(false);
-            Debug.Log("Hidden health/stamina panel");
-        }
-
-        if (taskPanel != null)
-        {
-            taskPanel.SetActive(false);
-            Debug.Log("Hidden task panel");
-        }
-
-        if (interactionPanel != null)
-        {
-            interactionPanel.SetActive(false);
-            Debug.Log("Hidden interaction panel");
-        }
-
-        if (spectatorPanel != null)
-        {
-            spectatorPanel.SetActive(false);
-            Debug.Log("Hidden spectator panel");
-        }
-
-        if (interactionProgressBar != null)
-        {
-            interactionProgressBar.gameObject.SetActive(false);
-        }
-    }
-
     // ============ SPECTATOR UI METHODS ============
     public void ShowSpectatorUI(string currentPlayerName = "")
     {

@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using System.Linq;
 
 public class LobbyUIManager : MonoBehaviour
 {
@@ -13,10 +12,7 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] private Button leaveButton;
 
     [Header("Player Slots - Drag ALL player slots here")]
-    [SerializeField] private List<GameObject> playerSlots;
-
-    [Header("Character Sprites - Assign in order: 0=Jaxen, 1=Sam, 2=Mizuki, 3=Elijah, 4=Clint")]
-    [SerializeField] private Sprite[] characterSprites;
+    [SerializeField] private List<GameObject> playerSlots; // Drag Player_1, Player_2, etc. here
 
     [Header("Manager Reference")]
     [SerializeField] private LobbyManager lobbyManager;
@@ -27,28 +23,23 @@ public class LobbyUIManager : MonoBehaviour
             lobbyManager = FindObjectOfType<LobbyManager>();
 
         SetupUI();
-        HideAllPlayerSlots();
 
-        // Initialize UI with current data
-        if (!string.IsNullOrEmpty(CrossSceneData.JoinCode) && lobbyCodeText != null)
-        {
-            lobbyCodeText.text = $"Join Code: {CrossSceneData.JoinCode}";
-        }
+        // Initially hide all player slots
+        HideAllPlayerSlots();
     }
 
     private void SetupUI()
     {
+        // Button listeners
         if (startButton != null)
             startButton.onClick.AddListener(OnStartClicked);
 
         if (leaveButton != null)
             leaveButton.onClick.AddListener(OnLeaveClicked);
 
+        // Initially hide start button
         if (startButton != null)
             startButton.gameObject.SetActive(false);
-
-        if (playerCountText != null)
-            playerCountText.text = "Players: 0/10";
     }
 
     private void HideAllPlayerSlots()
@@ -58,6 +49,11 @@ public class LobbyUIManager : MonoBehaviour
             if (slot != null)
                 slot.SetActive(false);
         }
+    }
+
+    private void Update()
+    {
+        UpdatePlayerCountDisplay();
     }
 
     public void UpdatePlayerCountDisplay()
@@ -82,55 +78,31 @@ public class LobbyUIManager : MonoBehaviour
         // First hide all slots
         HideAllPlayerSlots();
 
-        if (players == null || players.Count == 0)
-        {
-            Debug.Log("[LobbyUIManager] No players to display");
-            return;
-        }
-
-        // Sort players by client ID for consistent order
-        var sortedPlayers = players.OrderBy(p => p.ClientId).ToList();
-
         // Then show and update slots for current players
-        for (int i = 0; i < sortedPlayers.Count && i < playerSlots.Count; i++)
+        for (int i = 0; i < players.Count && i < playerSlots.Count; i++)
         {
             if (playerSlots[i] != null)
             {
                 playerSlots[i].SetActive(true);
-                SetupPlayerSlot(playerSlots[i], sortedPlayers[i]);
+                SetupPlayerSlot(playerSlots[i], players[i]);
             }
         }
-
-        UpdatePlayerCountDisplay();
     }
 
     private void SetupPlayerSlot(GameObject playerSlot, LobbyPlayerData playerData)
     {
-        // Find the child UI components
+        // Find the child text components and update them
         TMP_Text playerNameText = playerSlot.transform.Find("Player Name")?.GetComponent<TMP_Text>();
         TMP_Text readyStateText = playerSlot.transform.Find("Ready State")?.GetComponent<TMP_Text>();
-        TMP_Text characterNameText = playerSlot.transform.Find("Character Name")?.GetComponent<TMP_Text>();
-        Image characterImage = playerSlot.transform.Find("Character Image")?.GetComponent<Image>();
-
-        // Get character info
-        string characterName = CrossSceneData.GetCharacterName(playerData.CharacterIndex);
-        Sprite characterSprite = GetCharacterSprite(playerData.CharacterIndex);
 
         if (playerNameText != null)
         {
-            // Convert FixedString to regular string
-            string name = playerData.PlayerName.ToString();
+            playerNameText.text = playerData.PlayerName.ToString();
 
-            // Add (Host) indicator if this is the host (clientId 0)
-            if (playerData.ClientId == 0)
+            // Add (Host) indicator if this is the host
+            if (playerData.ClientId == 0) // Host is usually client ID 0
             {
-                playerNameText.text = name + " (Host)";
-                playerNameText.color = Color.yellow;
-            }
-            else
-            {
-                playerNameText.text = name;
-                playerNameText.color = Color.white;
+                playerNameText.text += " (Host)";
             }
         }
 
@@ -139,35 +111,6 @@ public class LobbyUIManager : MonoBehaviour
             readyStateText.text = playerData.IsReady ? "Ready ✓" : "Not Ready";
             readyStateText.color = playerData.IsReady ? Color.green : Color.gray;
         }
-
-        // Update character name and image
-        if (characterNameText != null)
-        {
-            characterNameText.text = characterName;
-        }
-
-        if (characterImage != null)
-        {
-            if (characterSprite != null)
-            {
-                characterImage.sprite = characterSprite;
-                characterImage.color = Color.white;
-            }
-            else
-            {
-                characterImage.color = Color.clear;
-                Debug.LogWarning($"No character sprite found for index {playerData.CharacterIndex}");
-            }
-        }
-    }
-
-    private Sprite GetCharacterSprite(int characterIndex)
-    {
-        if (characterSprites != null && characterIndex >= 0 && characterIndex < characterSprites.Length)
-        {
-            return characterSprites[characterIndex];
-        }
-        return null;
     }
 
     public void SetStartButtonVisible(bool visible)
@@ -180,34 +123,13 @@ public class LobbyUIManager : MonoBehaviour
 
     private void OnStartClicked()
     {
-        Debug.Log("[LobbyUIManager] Start button clicked");
         if (lobbyManager != null)
             lobbyManager.StartGame();
-        else
-            Debug.LogError("[LobbyUIManager] LobbyManager is null!");
     }
 
     private void OnLeaveClicked()
     {
-        Debug.Log("[LobbyUIManager] Leave button clicked");
         if (lobbyManager != null)
             lobbyManager.LeaveLobby();
-        else
-            Debug.LogError("[LobbyUIManager] LobbyManager is null!");
-    }
-
-    [ContextMenu("Test UI Update")]
-    public void TestUIUpdate()
-    {
-        // Create test data
-        var testPlayers = new List<LobbyPlayerData>
-        {
-            new LobbyPlayerData(0, "Test Host", true, 2), // Mizuki
-            new LobbyPlayerData(1, "Test Player 1", true, 1), // Sam
-            new LobbyPlayerData(2, "Test Player 2", false, 3) // Elijah
-        };
-
-        UpdatePlayerList(testPlayers);
-        Debug.Log("[LobbyUIManager] Test UI update completed");
     }
 }

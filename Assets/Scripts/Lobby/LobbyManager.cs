@@ -5,88 +5,269 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
 using System;
+using Unity.Collections;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
 
 public class LobbyManager : NetworkBehaviour
 {
     [Header("UI Manager Reference")]
     [SerializeField] private LobbyUIManager lobbyUIManager;
 
-    [Header("Debug Info")]
-    [SerializeField] private TMP_Text debugText;
-
     // Network synchronized variables
     private NetworkList<LobbyPlayerData> lobbyPlayers;
     private string currentJoinCode;
+    private RelayConnector relayConnector;
 
     private void Awake()
     {
         lobbyPlayers = new NetworkList<LobbyPlayerData>();
+        relayConnector = GetComponent<RelayConnector>();
+        if (relayConnector == null)
+            relayConnector = gameObject.AddComponent<RelayConnector>();
     }
 
-    private void Start()
+    private async void Start()
     {
-        UpdateDebugText($"Lobby loaded. Mode: {CrossSceneData.LobbyMode}, Code: {CrossSceneData.JoinCode}");
-
         // Find UI Manager if not assigned
         if (lobbyUIManager == null)
-        {
             lobbyUIManager = FindObjectOfType<LobbyUIManager>();
-            if (lobbyUIManager == null)
-                Debug.LogWarning("[LobbyManager] LobbyUIManager not found!");
-        }
 
-        // Display join code if we have one
-        if (!string.IsNullOrEmpty(CrossSceneData.JoinCode) && lobbyUIManager != null)
-        {
-            lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
-            currentJoinCode = CrossSceneData.JoinCode;
-        }
+        // Ensure NetworkManager is in a clean state
+        await EnsureCleanNetworkState();
 
-        // Check if we're already connected
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        // Based on how we entered the lobby, start as host or client
+        if (CrossSceneData.LobbyMode == "Host")
         {
-            UpdateDebugText($"Already connected as {NetworkManager.Singleton.LocalClientId}");
+            await StartHost();
+        }
+        else if (CrossSceneData.LobbyMode == "Client")
+        {
+            await StartClient();
         }
         else
         {
-            UpdateDebugText("ERROR: Not connected to network! Connection should have been established in MainMenu.");
+            Debug.LogError("Unknown lobby mode!");
+            ReturnToMainMenu();
+        }
+    }
 
-            // If we somehow got here without a connection, go back to main menu
-            if (Application.isPlaying)
+    // NEW: Ensure NetworkManager is in clean state
+    private async Task EnsureCleanNetworkState()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            Debug.Log("NetworkManager was still listening - shutting down");
+            NetworkManager.Singleton.Shutdown();
+            // Wait a moment for shutdown to complete
+            await Task.Delay(100);
+        }
+
+        // Clean up any leftover manager instances
+        CleanupLeftoverManagers();
+    }
+
+    // NEW: Clean up leftover manager instances
+    private void CleanupLeftoverManagers()
+    {
+        RoleManager.ResetInstance();
+        TaskManager.ResetInstance();
+        GameHUDManager.ResetInstance();
+        EndGameManager.ResetInstance();
+
+        Debug.Log("Cleaned up leftover manager instances");
+    }
+
+    private async Task InitializeUnityServices()
+    {
+        try
+        {
+            await UnityServices.InitializeAsync();
+
+            if (!AuthenticationService.Instance.IsSignedIn)
             {
-                UpdateDebugText("Returning to main menu...");
-                StartCoroutine(LoadMainMenuAsync());
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("Signed in to Unity Services");
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Services initialization failed: {e.Message}");
+        }
+    }
+
+    private async Task StartHost()
+    {
+        Debug.Log("Starting as host...");
+
+        try
+        {
+            // FIXED: Initialize Unity Services first
+            await InitializeUnityServices();
+
+            // FIXED: Add timeout and retry logic
+            string joinCode = await StartRelayWithRetry(3); // 3 retries
+
+            if (string.IsNullOrEmpty(joinCode))
+            {
+                Debug.LogError("Failed to create lobby after retries! Relay returned null join code.");
+                ShowErrorToUser("Failed to create lobby. Please check your internet connection and try again.");
+                ReturnToMainMenu();
+                return;
+            }
+
+            currentJoinCode = joinCode;
+
+            // Update UI with join code
+            if (lobbyUIManager != null)
+            {
+                lobbyUIManager.UpdateLobbyCodeDisplay(joinCode);
+            }
+
+            Debug.Log($"[LobbyManager] Lobby created with code {joinCode}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception while starting host: {e.Message}");
+            ShowErrorToUser($"Failed to create lobby: {e.Message}");
+            ReturnToMainMenu();
+        }
+    }
+
+    // NEW: Add retry logic for Relay connection
+    private async Task<string> StartRelayWithRetry(int maxRetries)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                Debug.Log($"Relay connection attempt {attempt}/{maxRetries}");
+                string joinCode = await relayConnector.StartHostWithRelay(maxConnections: 10, connectionType: "wss");
+
+                if (!string.IsNullOrEmpty(joinCode))
+                {
+                    return joinCode;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Relay attempt {attempt} failed: {e.Message}");
+
+                if (attempt < maxRetries)
+                {
+                    Debug.Log($"Retrying in {attempt * 2} seconds...");
+                    await Task.Delay(attempt * 2000); // Exponential backoff
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private async Task StartClient()
+    {
+        if (string.IsNullOrEmpty(CrossSceneData.JoinCode))
+        {
+            Debug.LogError("No join code provided!");
+            ShowErrorToUser("No join code provided!");
+            ReturnToMainMenu();
+            return;
+        }
+
+        Debug.Log("Starting as client...");
+
+        try
+        {
+            // FIXED: Initialize Unity Services first
+            await InitializeUnityServices();
+
+            // FIXED: Add retry logic for client connection
+            bool success = await JoinRelayWithRetry(CrossSceneData.JoinCode, 3);
+
+            if (!success)
+            {
+                Debug.LogError("Failed to join lobby after retries!");
+                ShowErrorToUser("Failed to join lobby! Please check the join code and try again.");
+                ReturnToMainMenu();
+                return;
+            }
+
+            currentJoinCode = CrossSceneData.JoinCode;
+
+            // Update UI with join code
+            if (lobbyUIManager != null)
+            {
+                lobbyUIManager.UpdateLobbyCodeDisplay(CrossSceneData.JoinCode);
+            }
+
+            Debug.Log("[LobbyManager] Successfully joined relay session");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Exception while starting client: {e.Message}");
+            ShowErrorToUser($"Failed to join lobby: {e.Message}");
+            ReturnToMainMenu();
+        }
+    }
+
+    // NEW: Add retry logic for client Relay connection
+    private async Task<bool> JoinRelayWithRetry(string joinCode, int maxRetries)
+    {
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                Debug.Log($"Client Relay connection attempt {attempt}/{maxRetries}");
+                bool success = await relayConnector.StartClientWithRelay(joinCode, "wss");
+
+                if (success)
+                {
+                    return true;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Client Relay attempt {attempt} failed: {e.Message}");
+
+                if (attempt < maxRetries)
+                {
+                    Debug.Log($"Retrying in {attempt * 2} seconds...");
+                    await Task.Delay(attempt * 2000); // Exponential backoff
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // NEW: Show error messages to user
+    private void ShowErrorToUser(string message)
+    {
+        Debug.LogError($"USER ERROR: {message}");
+        // You can implement this to show error messages in UI
+        // Example: if you have an error text UI element
+        // errorText.text = message;
+        // errorPanel.SetActive(true);
     }
 
     public override void OnNetworkSpawn()
     {
-        UpdateDebugText($"Network spawned - IsServer: {IsServer}, IsClient: {IsClient}, IsHost: {IsHost}");
-
         // Register network callbacks
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
-        }
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
 
         lobbyPlayers.OnListChanged += OnLobbyPlayersChanged;
 
         // Add the local player to the lobby
         if (IsServer)
         {
-            UpdateDebugText("I am the SERVER/HOST - Adding host to lobby");
             // Host adds themselves
-            int characterIndex = CrossSceneData.GetCharacterIndexForClient(NetworkManager.Singleton.LocalClientId);
-            AddPlayerToLobby(NetworkManager.Singleton.LocalClientId, "Host", characterIndex);
+            AddPlayerToLobby(NetworkManager.Singleton.LocalClientId, "Player");
         }
         else if (IsClient)
         {
-            UpdateDebugText("I am a CLIENT - Adding to lobby");
-            // Client adds themselves via ServerRPC
-            int characterIndex = CrossSceneData.GetCharacterIndexForClient(NetworkManager.Singleton.LocalClientId);
-            AddPlayerToLobbyServerRpc(NetworkManager.Singleton.LocalClientId, "Player", characterIndex);
+            // Client requests to be added
+            AddPlayerToLobbyServerRpc(NetworkManager.Singleton.LocalClientId, "Player");
         }
 
         UpdateUI();
@@ -94,39 +275,32 @@ public class LobbyManager : NetworkBehaviour
 
     private void OnLobbyPlayersChanged(NetworkListEvent<LobbyPlayerData> changeEvent)
     {
-        UpdateDebugText($"Lobby players changed: {lobbyPlayers.Count} players");
         UpdateUI();
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void AddPlayerToLobbyServerRpc(ulong clientId, string playerName, int characterIndex, ServerRpcParams rpcParams = default)
+    private void AddPlayerToLobbyServerRpc(ulong clientId, string playerName, ServerRpcParams rpcParams = default)
     {
-        UpdateDebugText($"Client {clientId} requesting to join lobby");
-        AddPlayerToLobby(clientId, $"{playerName} {clientId}", characterIndex);
+        AddPlayerToLobby(clientId, $"{playerName} {clientId}");
     }
 
-    private void AddPlayerToLobby(ulong clientId, string playerName, int characterIndex)
+    private void AddPlayerToLobby(ulong clientId, string playerName)
     {
         // Check if player already exists
         foreach (var player in lobbyPlayers)
         {
             if (player.ClientId == clientId)
-            {
-                UpdateDebugText($"Player {clientId} already in lobby, skipping");
                 return;
-            }
         }
 
         lobbyPlayers.Add(new LobbyPlayerData
         {
             ClientId = clientId,
             PlayerName = playerName,
-            IsReady = true,
-            CharacterIndex = characterIndex
+            IsReady = false
         });
 
-        string characterName = CrossSceneData.GetCharacterName(characterIndex);
-        UpdateDebugText($"Added {playerName} as {characterName}");
+        Debug.Log($"Added player to lobby: {playerName} (ID: {clientId})");
     }
 
     private void RemovePlayerFromLobby(ulong clientId)
@@ -136,7 +310,6 @@ public class LobbyManager : NetworkBehaviour
             if (lobbyPlayers[i].ClientId == clientId)
             {
                 lobbyPlayers.RemoveAt(i);
-                UpdateDebugText($"Removed player {clientId} from lobby");
                 break;
             }
         }
@@ -144,11 +317,7 @@ public class LobbyManager : NetworkBehaviour
 
     private void UpdateUI()
     {
-        if (!IsSpawned)
-        {
-            UpdateDebugText("Not spawned yet, skipping UI update");
-            return;
-        }
+        if (!IsSpawned) return;
 
         // Convert NetworkList to regular List for UI
         List<LobbyPlayerData> playersList = new List<LobbyPlayerData>();
@@ -157,28 +326,17 @@ public class LobbyManager : NetworkBehaviour
             playersList.Add(player);
         }
 
-        // Update UI on ALL clients
+        // Update UI
         if (lobbyUIManager != null)
         {
             lobbyUIManager.UpdatePlayerList(playersList);
             lobbyUIManager.UpdatePlayerCountDisplay();
 
-            // Show start button only for host and when we have at least 2 players
+            // Show start button only for host and when we have enough players
             if (IsHost)
             {
-                bool canStart = lobbyPlayers.Count >= 2;
-                lobbyUIManager.SetStartButtonVisible(canStart);
-                UpdateDebugText($"Host UI - {lobbyPlayers.Count} players, start button: {canStart}");
+                lobbyUIManager.SetStartButtonVisible(lobbyPlayers.Count >= 2); // Change to 5 for final
             }
-            else
-            {
-                lobbyUIManager.SetStartButtonVisible(false);
-                UpdateDebugText($"Client UI - {lobbyPlayers.Count} players in lobby");
-            }
-        }
-        else
-        {
-            UpdateDebugText("LobbyUIManager is null, cannot update UI");
         }
     }
 
@@ -190,65 +348,64 @@ public class LobbyManager : NetworkBehaviour
     // Simple leave / shutdown
     public void LeaveLobby()
     {
-        UpdateDebugText("Leaving lobby...");
-
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.Shutdown();
         }
 
-        // Return to main menu
-        CrossSceneData.Reset();
-        StartCoroutine(LoadMainMenuAsync());
+        ReturnToMainMenu();
     }
 
-    private System.Collections.IEnumerator LoadMainMenuAsync()
+    private void ReturnToMainMenu()
     {
-        yield return null; // Wait one frame
+        // Clear cross-scene data
+        CrossSceneData.Reset();
+
         SceneManager.LoadScene("MainMenu");
     }
 
-    // Host-only StartGame
+    // Host-only StartGame - UPDATED for better scene loading
     public void StartGame()
     {
         if (!IsHost)
         {
-            UpdateDebugText("ERROR: Only host can start the game!");
+            Debug.LogWarning("[LobbyManager] Only host can start the game");
             return;
         }
 
-        if (lobbyPlayers.Count < 2)
+        if (lobbyPlayers.Count < 2) // Change to 5 for your final version
         {
-            UpdateDebugText("ERROR: Need at least 2 players to start!");
+            Debug.LogWarning("[LobbyManager] Need at least 2 players to start");
             return;
         }
 
-        UpdateDebugText($"Starting game with {lobbyPlayers.Count} players...");
+        Debug.Log($"[LobbyManager] Starting GameScene for {lobbyPlayers.Count} players...");
 
-        // Log character assignments
-        foreach (var player in lobbyPlayers)
-        {
-            Debug.Log($"[LobbyManager] Client {player.ClientId} -> {CrossSceneData.GetCharacterName(player.CharacterIndex)}");
-        }
-
-        // Load game scene
+        // Ensure all clients are synchronized before loading scene
         NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+
+        // Log for debugging
+        Debug.Log($"Current connected clients: {NetworkManager.Singleton.ConnectedClientsIds.Count}");
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            Debug.Log($" - Client {clientId}");
+        }
     }
 
     // Network callbacks
     private void OnClientConnected(ulong clientId)
     {
-        UpdateDebugText($"Client {clientId} connected to lobby");
+        Debug.Log($"[LobbyManager] Client connected: {clientId}");
 
         if (IsServer)
         {
-            UpdateDebugText($"Server: Client {clientId} connected, waiting for join request...");
+            AddPlayerToLobby(clientId, $"Player {clientId}");
         }
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
-        UpdateDebugText($"Client {clientId} disconnected from lobby");
+        Debug.Log($"[LobbyManager] Client disconnected: {clientId}");
 
         if (IsServer)
         {
@@ -258,16 +415,12 @@ public class LobbyManager : NetworkBehaviour
         // If we get disconnected as client, return to main menu
         if (!IsServer && clientId == NetworkManager.Singleton.LocalClientId)
         {
-            UpdateDebugText("I was disconnected - returning to main menu");
-            CrossSceneData.Reset();
-            StartCoroutine(LoadMainMenuAsync());
+            ReturnToMainMenu();
         }
     }
 
     public override void OnNetworkDespawn()
     {
-        UpdateDebugText("Network despawned - cleaning up");
-
         // Clean up callbacks
         if (NetworkManager.Singleton != null)
         {
@@ -275,37 +428,67 @@ public class LobbyManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
 
-        if (lobbyPlayers != null)
-            lobbyPlayers.OnListChanged -= OnLobbyPlayersChanged;
+        lobbyPlayers.OnListChanged -= OnLobbyPlayersChanged;
     }
 
-    private void UpdateDebugText(string message)
-    {
-        if (debugText != null)
-        {
-            debugText.text = $"[Lobby] {message}";
-        }
-        Debug.Log($"[LobbyManager] {message}");
-    }
-
+    // Debug methods
     [ContextMenu("Debug Lobby State")]
     public void DebugLobbyState()
     {
         Debug.Log("=== LOBBY STATE ===");
+        Debug.Log($"Players: {lobbyPlayers.Count}");
+        Debug.Log($"Join Code: {currentJoinCode}");
         Debug.Log($"Is Host: {IsHost}");
         Debug.Log($"Is Server: {IsServer}");
-        Debug.Log($"Is Client: {IsClient}");
-        Debug.Log($"Is Spawned: {IsSpawned}");
-        Debug.Log($"Players: {lobbyPlayers?.Count ?? 0}");
-        Debug.Log($"Join Code: {currentJoinCode}");
 
-        if (lobbyPlayers != null)
+        foreach (var player in lobbyPlayers)
         {
-            foreach (var player in lobbyPlayers)
-            {
-                string characterName = CrossSceneData.GetCharacterName(player.CharacterIndex);
-                Debug.Log($"- Player {player.ClientId}: {player.PlayerName} -> {characterName}");
-            }
+            Debug.Log($"- Player {player.ClientId}: {player.PlayerName} (Ready: {player.IsReady})");
         }
+    }
+
+    [ContextMenu("Force Start Game")]
+    public void ForceStartGame()
+    {
+        if (IsHost)
+        {
+            StartGame();
+        }
+        else
+        {
+            Debug.LogWarning("Only host can force start game");
+        }
+    }
+}
+
+// Network-serializable player data
+public struct LobbyPlayerData : INetworkSerializable, IEquatable<LobbyPlayerData>
+{
+    public ulong ClientId;
+    public FixedString32Bytes PlayerName;
+    public bool IsReady;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref ClientId);
+        serializer.SerializeValue(ref PlayerName);
+        serializer.SerializeValue(ref IsReady);
+    }
+
+    public bool Equals(LobbyPlayerData other)
+    {
+        return ClientId == other.ClientId &&
+               PlayerName.Equals(other.PlayerName) &&
+               IsReady == other.IsReady;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return obj is LobbyPlayerData other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(ClientId, PlayerName, IsReady);
     }
 }
