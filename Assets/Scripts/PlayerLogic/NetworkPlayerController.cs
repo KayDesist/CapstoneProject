@@ -26,8 +26,15 @@ public class NetworkPlayerController : NetworkBehaviour
     private float currentSpeed;
     private Vector3 lastPosition;
     private bool wasMoving = false;
+    private string currentCharacterName = "";
+    private bool isInitialized = false;
 
     private void Start()
+    {
+        InitializeComponents();
+    }
+
+    private void InitializeComponents()
     {
         rb = GetComponent<Rigidbody>();
         playerHealth = GetComponent<PlayerHealth>();
@@ -41,22 +48,54 @@ public class NetworkPlayerController : NetworkBehaviour
             pivot.transform.SetParent(transform);
             pivot.transform.localPosition = new Vector3(0f, 1.6f, 0f);
             cameraPivot = pivot.transform;
+            Debug.Log("Created CameraPivot for player");
         }
 
         if (rb != null)
-            rb.freezeRotation = true;
-
-        // Disable camera and controls for non-owners
-        if (!IsOwner)
         {
-            if (playerCamera != null)
-                playerCamera.gameObject.SetActive(false);
-            enabled = false;
-            return;
+            rb.freezeRotation = true;
         }
+        else
+        {
+            Debug.LogError("Rigidbody component not found on player!");
+        }
+    }
 
-        // Cursor control
-        UpdateCursorState();
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        Debug.Log($"Player spawned - IsOwner: {IsOwner}, OwnerClientId: {OwnerClientId}");
+
+        // Setup camera and controls based on ownership
+        if (IsOwner)
+        {
+            // Enable camera for owner
+            if (playerCamera != null)
+            {
+                playerCamera.gameObject.SetActive(true);
+            }
+
+            // Enable this script
+            enabled = true;
+
+            // Cursor control
+            UpdateCursorState();
+
+            Debug.Log("Enabled camera and controls for owner player");
+        }
+        else
+        {
+            // Disable camera for non-owners
+            if (playerCamera != null)
+            {
+                playerCamera.gameObject.SetActive(false);
+            }
+
+            // Disable this script for non-owners
+            enabled = false;
+            Debug.Log("Disabled camera and controls for non-owner player");
+        }
     }
 
     private void Update()
@@ -69,6 +108,7 @@ public class NetworkPlayerController : NetworkBehaviour
         HandleMouseLook();
         HandleSprint();
         HandleMovement();
+        HandleJump();
 
         // Update movement state
         wasMoving = IsMoving();
@@ -98,7 +138,11 @@ public class NetworkPlayerController : NetworkBehaviour
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        if (playerCamera != null)
+        {
+            playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        }
+
         transform.Rotate(Vector3.up * mouseX);
     }
 
@@ -119,7 +163,10 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = true;
                     currentSpeed = sprintSpeed;
                     // Notify PlayerHealth about sprinting state
-                    playerHealth.SetSprinting(true);
+                    if (playerHealth != null)
+                    {
+                        playerHealth.SetSprinting(true);
+                    }
                 }
 
                 // Accumulate stamina cost and consume when it reaches at least 1
@@ -132,7 +179,10 @@ public class NetworkPlayerController : NetworkBehaviour
                     // Use ServerRpc to consume stamina on the server
                     if (IsServer)
                     {
-                        playerHealth.ConsumeStamina(staminaToConsume);
+                        if (playerHealth != null)
+                        {
+                            playerHealth.ConsumeStamina(staminaToConsume);
+                        }
                     }
                     else
                     {
@@ -150,7 +200,10 @@ public class NetworkPlayerController : NetworkBehaviour
                     isSprinting = false;
                     currentSpeed = walkSpeed;
                     // Notify PlayerHealth about sprinting state
-                    playerHealth.SetSprinting(false);
+                    if (playerHealth != null)
+                    {
+                        playerHealth.SetSprinting(false);
+                    }
                 }
             }
         }
@@ -162,7 +215,10 @@ public class NetworkPlayerController : NetworkBehaviour
                 isSprinting = false;
                 currentSpeed = walkSpeed;
                 // Notify PlayerHealth about sprinting state
-                playerHealth.SetSprinting(false);
+                if (playerHealth != null)
+                {
+                    playerHealth.SetSprinting(false);
+                }
             }
         }
 
@@ -182,9 +238,21 @@ public class NetworkPlayerController : NetworkBehaviour
         float vertical = Input.GetAxis("Vertical");
 
         Vector3 moveDir = (transform.forward * vertical + transform.right * horizontal).normalized;
-        Vector3 moveVelocity = new Vector3(moveDir.x * currentSpeed, rb.linearVelocity.y, moveDir.z * currentSpeed);
 
-        rb.linearVelocity = moveVelocity;
+        if (rb != null)
+        {
+            Vector3 moveVelocity = new Vector3(moveDir.x * currentSpeed, rb.linearVelocity.y, moveDir.z * currentSpeed);
+            rb.linearVelocity = moveVelocity;
+        }
+    }
+
+    private void HandleJump()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && rb != null)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            isGrounded = false;
+        }
     }
 
     [ServerRpc]
@@ -204,6 +272,14 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            isGrounded = false;
+        }
+    }
+
     public bool IsMoving()
     {
         return (transform.position - lastPosition).sqrMagnitude > 0.001f;
@@ -214,26 +290,70 @@ public class NetworkPlayerController : NetworkBehaviour
         return isSprinting;
     }
 
+    // Character-specific initialization (called from GameManager)
+    public void SetupCharacter(string characterName)
+    {
+        currentCharacterName = characterName;
+        Debug.Log($"Character setup: {characterName}");
+
+        // Character-specific settings are now set by GameManager directly
+        // GameManager sets walkSpeed and sprintSpeed directly on this component
+
+        isInitialized = true;
+        Debug.Log($"Character {characterName} is ready - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
+    }
+
     // Role-based movement speed adjustment
     public void ApplyRoleSpecificSettings(RoleManager.PlayerRole role)
     {
-        Debug.Log($"Applying role settings: {role}");
+        Debug.Log($"Applying role settings: {role} on character: {currentCharacterName}");
 
         switch (role)
         {
             case RoleManager.PlayerRole.Survivor:
                 // Survivor-specific settings
-                walkSpeed = 7f;
-                sprintSpeed = 10f;
+                walkSpeed += 0f;
+                sprintSpeed += 0f;
                 break;
             case RoleManager.PlayerRole.Cultist:
                 // Cultist-specific settings
-                walkSpeed = 8f;
-                sprintSpeed = 12f; // Cultist is faster
+                walkSpeed += 1f;
+                sprintSpeed += 2f;
                 break;
         }
 
         currentSpeed = walkSpeed;
         Debug.Log($"Role settings applied - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
+    }
+
+    public string GetCharacterName()
+    {
+        return currentCharacterName;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        // Reset cursor when player is destroyed
+        if (IsOwner)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+    }
+
+    // Debug method to check player state
+    [ContextMenu("Debug Player State")]
+    public void DebugPlayerState()
+    {
+        Debug.Log($"=== PLAYER STATE ===");
+        Debug.Log($"Character: {currentCharacterName}");
+        Debug.Log($"IsOwner: {IsOwner}");
+        Debug.Log($"OwnerClientId: {OwnerClientId}");
+        Debug.Log($"IsInitialized: {isInitialized}");
+        Debug.Log($"Speed: {currentSpeed} (Walk: {walkSpeed}, Sprint: {sprintSpeed})");
+        Debug.Log($"Camera Active: {playerCamera != null && playerCamera.gameObject.activeInHierarchy}");
+        Debug.Log($"Controller Enabled: {enabled}");
     }
 }

@@ -775,7 +775,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_text
-      value: 'Sam
+      value: 'Jaxen
 
 '
       objectReference: {fileID: 0}
@@ -1117,7 +1117,6 @@ MonoBehaviour:
   - {fileID: 771516156}
   - {fileID: 866444527}
   - {fileID: 2079028959}
-  characterSprites: []
   lobbyManager: {fileID: 201646485}
 --- !u!1 &771516156
 GameObject:
@@ -1944,7 +1943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6352561951820975131, guid: e03b75b77c386ad42989837e029409b2, type: 3}
       propertyPath: m_text
-      value: 'Mizuki
+      value: 'Sam
 
 '
       objectReference: {fileID: 0}

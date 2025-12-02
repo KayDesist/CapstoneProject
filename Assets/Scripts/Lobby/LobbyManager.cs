@@ -15,13 +15,13 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] private LobbyUIManager lobbyUIManager;
 
     // Network synchronized variables
-    private NetworkList<LobbyPlayerData> lobbyPlayers;
+    private NetworkList<NetworkPlayerInfo> lobbyPlayers;
     private string currentJoinCode;
     private RelayConnector relayConnector;
 
     private void Awake()
     {
-        lobbyPlayers = new NetworkList<LobbyPlayerData>();
+        lobbyPlayers = new NetworkList<NetworkPlayerInfo>();
         relayConnector = GetComponent<RelayConnector>();
         if (relayConnector == null)
             relayConnector = gameObject.AddComponent<RelayConnector>();
@@ -273,7 +273,7 @@ public class LobbyManager : NetworkBehaviour
         UpdateUI();
     }
 
-    private void OnLobbyPlayersChanged(NetworkListEvent<LobbyPlayerData> changeEvent)
+    private void OnLobbyPlayersChanged(NetworkListEvent<NetworkPlayerInfo> changeEvent)
     {
         UpdateUI();
     }
@@ -293,11 +293,12 @@ public class LobbyManager : NetworkBehaviour
                 return;
         }
 
-        lobbyPlayers.Add(new LobbyPlayerData
+        lobbyPlayers.Add(new NetworkPlayerInfo
         {
             ClientId = clientId,
             PlayerName = playerName,
-            IsReady = false
+            IsReady = false,
+            CharacterIndex = -1 // Default: no character selected yet
         });
 
         Debug.Log($"Added player to lobby: {playerName} (ID: {clientId})");
@@ -320,7 +321,7 @@ public class LobbyManager : NetworkBehaviour
         if (!IsSpawned) return;
 
         // Convert NetworkList to regular List for UI
-        List<LobbyPlayerData> playersList = new List<LobbyPlayerData>();
+        List<NetworkPlayerInfo> playersList = new List<NetworkPlayerInfo>();
         foreach (var player in lobbyPlayers)
         {
             playersList.Add(player);
@@ -458,37 +459,5 @@ public class LobbyManager : NetworkBehaviour
         {
             Debug.LogWarning("Only host can force start game");
         }
-    }
-}
-
-// Network-serializable player data
-public struct LobbyPlayerData : INetworkSerializable, IEquatable<LobbyPlayerData>
-{
-    public ulong ClientId;
-    public FixedString32Bytes PlayerName;
-    public bool IsReady;
-
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-    {
-        serializer.SerializeValue(ref ClientId);
-        serializer.SerializeValue(ref PlayerName);
-        serializer.SerializeValue(ref IsReady);
-    }
-
-    public bool Equals(LobbyPlayerData other)
-    {
-        return ClientId == other.ClientId &&
-               PlayerName.Equals(other.PlayerName) &&
-               IsReady == other.IsReady;
-    }
-
-    public override bool Equals(object obj)
-    {
-        return obj is LobbyPlayerData other && Equals(other);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(ClientId, PlayerName, IsReady);
     }
 }

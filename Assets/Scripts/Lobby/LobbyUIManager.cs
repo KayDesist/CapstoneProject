@@ -73,7 +73,7 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
-    public void UpdatePlayerList(List<LobbyPlayerData> players)
+    public void UpdatePlayerList(List<NetworkPlayerInfo> players)
     {
         // First hide all slots
         HideAllPlayerSlots();
@@ -89,7 +89,7 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
-    private void SetupPlayerSlot(GameObject playerSlot, LobbyPlayerData playerData)
+    private void SetupPlayerSlot(GameObject playerSlot, NetworkPlayerInfo playerData)
     {
         // Find the child text components and update them
         TMP_Text playerNameText = playerSlot.transform.Find("Player Name")?.GetComponent<TMP_Text>();

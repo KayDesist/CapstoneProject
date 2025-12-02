@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -6,14 +6,22 @@ using System.Collections;
 
 public class GameManager : NetworkBehaviour
 {
-    [SerializeField] private GameObject playerPrefab;
+    // Array of all available player character prefabs
+    [Header("Player Character Prefabs")]
+    [SerializeField] private GameObject[] playerCharacterPrefabs; // Mizuki, Jaxen, Sam, Elijah, Clint in order
+
+    [Header("Manager Prefabs")]
     [SerializeField] private GameObject roleManagerPrefab;
     [SerializeField] private GameObject taskManagerPrefab;
     [SerializeField] private GameObject endGameManagerPrefab;
 
     private HashSet<ulong> spawnedPlayers = new HashSet<ulong>();
+    private Dictionary<ulong, int> playerCharacterIndex = new Dictionary<ulong, int>();
     private bool sceneInitialized = false;
     private bool isShuttingDown = false;
+
+    // Network variable to track which character each player is using
+    private NetworkVariable<int> nextCharacterIndex = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private void OnEnable()
     {
@@ -43,6 +51,8 @@ public class GameManager : NetworkBehaviour
         Debug.Log("GameScene loaded, initializing game...");
         sceneInitialized = true;
         spawnedPlayers.Clear();
+        playerCharacterIndex.Clear();
+        nextCharacterIndex.Value = 1; // Reset character index counter, start at 1 (host is 0)
 
         // Spawn managers with proper order
         StartCoroutine(InitializeManagers());
@@ -60,9 +70,13 @@ public class GameManager : NetworkBehaviour
             Debug.Log($"Spawning player for late-joining client {clientId}");
             StartCoroutine(SpawnPlayerWithDelay(clientId));
         }
+        else
+        {
+            // If in lobby, track the player but don't spawn yet
+            Debug.Log($"Client {clientId} connected to lobby");
+        }
     }
 
-    // FIXED: More robust error handling for client disconnection
     private void OnClientDisconnected(ulong clientId)
     {
         if (!IsServer || isShuttingDown) return;
@@ -71,10 +85,15 @@ public class GameManager : NetworkBehaviour
 
         try
         {
-            // Remove from spawned players list
+            // Remove from tracking
             if (spawnedPlayers.Contains(clientId))
             {
                 spawnedPlayers.Remove(clientId);
+            }
+
+            if (playerCharacterIndex.ContainsKey(clientId))
+            {
+                playerCharacterIndex.Remove(clientId);
             }
 
             // FIX: More robust check for EndGameManager
@@ -103,7 +122,6 @@ public class GameManager : NetworkBehaviour
         catch (System.Exception e)
         {
             Debug.LogWarning($"Error during client disconnection handling: {e.Message}");
-            // Don't rethrow - this is during shutdown so we want to be graceful
         }
     }
 
@@ -177,9 +195,9 @@ public class GameManager : NetworkBehaviour
 
     private void SpawnPlayerForClient(ulong clientId)
     {
-        if (playerPrefab == null)
+        if (playerCharacterPrefabs == null || playerCharacterPrefabs.Length == 0)
         {
-            Debug.LogError("Player prefab is not assigned in GameManager!");
+            Debug.LogError("Player character prefabs array is not assigned or empty in GameManager!");
             return;
         }
 
@@ -190,21 +208,154 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
+        // Assign a character based on connection order
+        int characterIndex = GetCharacterIndexForClient(clientId);
+
+        if (characterIndex >= playerCharacterPrefabs.Length)
+        {
+            Debug.LogError($"Character index {characterIndex} out of bounds! Only {playerCharacterPrefabs.Length} characters available.");
+            return;
+        }
+
+        GameObject characterPrefab = playerCharacterPrefabs[characterIndex];
+
+        if (characterPrefab == null)
+        {
+            Debug.LogError($"Character prefab at index {characterIndex} is null!");
+            return;
+        }
+
         Vector3 spawnPos = GetSpawnPosition();
-        GameObject go = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+        GameObject go = Instantiate(characterPrefab, spawnPos, Quaternion.identity);
 
         NetworkObject networkObject = go.GetComponent<NetworkObject>();
         if (networkObject != null)
         {
-            networkObject.SpawnAsPlayerObject(clientId, true);
+            // CRITICAL: Spawn with ownership for the specific client
+            networkObject.SpawnWithOwnership(clientId);
+
             spawnedPlayers.Add(clientId);
-            Debug.Log($"Successfully spawned player for client {clientId} at position {spawnPos}");
+            playerCharacterIndex[clientId] = characterIndex;
+
+            // Assign character name to the player object for reference
+            string characterName = GetCharacterName(characterIndex);
+            go.name = $"{characterName}_Player_{clientId}";
+
+            Debug.Log($"Successfully spawned {characterName} for client {clientId} at position {spawnPos}");
+
+            // Notify client about their character assignment
+            AssignCharacterToClientClientRpc(clientId, characterIndex);
         }
         else
         {
-            Debug.LogError($"Player prefab doesn't have NetworkObject component for client {clientId}");
+            Debug.LogError($"Character prefab doesn't have NetworkObject component for client {clientId}");
             Destroy(go);
         }
+    }
+
+    private int GetCharacterIndexForClient(ulong clientId)
+    {
+        // Host (clientId 0) always gets Mizuki (index 0)
+        if (clientId == 0)
+        {
+            return 0; // Mizuki
+        }
+
+        // If we've already assigned a character to this client, return it
+        if (playerCharacterIndex.ContainsKey(clientId))
+        {
+            return playerCharacterIndex[clientId];
+        }
+
+        // Assign next available character index
+        int index = nextCharacterIndex.Value;
+
+        // If index exceeds available characters, wrap around (skip 0 which is host)
+        if (index >= playerCharacterPrefabs.Length)
+        {
+            index = 1; // Skip 0 (host) and start from 1
+        }
+
+        // Increment for next client
+        nextCharacterIndex.Value = index + 1;
+
+        // Wrap around if needed
+        if (nextCharacterIndex.Value >= playerCharacterPrefabs.Length)
+        {
+            nextCharacterIndex.Value = 1; // Skip 0
+        }
+
+        return index;
+    }
+
+    private string GetCharacterName(int index)
+    {
+        switch (index)
+        {
+            case 0: return "Mizuki";
+            case 1: return "Jaxen";
+            case 2: return "Sam";
+            case 3: return "Elijah";
+            case 4: return "Clint";
+            default: return $"Character_{index}";
+        }
+    }
+
+    [ClientRpc]
+    private void AssignCharacterToClientClientRpc(ulong clientId, int characterIndex)
+    {
+        // Only process for the client who owns this player
+        if (clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            string characterName = GetCharacterName(characterIndex);
+            Debug.Log($"You have been assigned character: {characterName}");
+
+            // Find the player object for this client
+            if (NetworkManager.Singleton.LocalClient.PlayerObject != null)
+            {
+                var playerController = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<NetworkPlayerController>();
+                if (playerController != null)
+                {
+                    // Initialize character settings
+                    SetupCharacterSettings(playerController, characterName);
+                }
+            }
+        }
+    }
+
+    private void SetupCharacterSettings(NetworkPlayerController playerController, string characterName)
+    {
+        Debug.Log($"Setting up character: {characterName}");
+
+        // Apply character-specific settings
+        switch (characterName)
+        {
+            case "Mizuki":
+                playerController.walkSpeed = 6.5f;
+                playerController.sprintSpeed = 9.5f;
+                break;
+            case "Jaxen":
+                playerController.walkSpeed = 7.5f;
+                playerController.sprintSpeed = 11f;
+                break;
+            case "Sam":
+                playerController.walkSpeed = 7f;
+                playerController.sprintSpeed = 10f;
+                break;
+            case "Elijah":
+                playerController.walkSpeed = 6f;
+                playerController.sprintSpeed = 9f;
+                break;
+            case "Clint":
+                playerController.walkSpeed = 8f;
+                playerController.sprintSpeed = 12f;
+                break;
+            default:
+                Debug.LogWarning($"Unknown character name: {characterName}, using default settings");
+                break;
+        }
+
+        Debug.Log($"Character {characterName} setup - Walk: {playerController.walkSpeed}, Sprint: {playerController.sprintSpeed}");
     }
 
     private Vector3 GetSpawnPosition()
@@ -234,7 +385,7 @@ public class GameManager : NetworkBehaviour
 
             if (positionClear) break;
 
-        } while (attempts < 10); // Prevent infinite loop
+        } while (attempts < 10);
 
         return spawnPos;
     }
@@ -267,6 +418,16 @@ public class GameManager : NetworkBehaviour
         isShuttingDown = true;
     }
 
+    // Public method to get character info for a player
+    public string GetPlayerCharacterName(ulong clientId)
+    {
+        if (playerCharacterIndex.ContainsKey(clientId))
+        {
+            return GetCharacterName(playerCharacterIndex[clientId]);
+        }
+        return "Unknown";
+    }
+
     // Debug method to check spawned players
     [ContextMenu("Debug Spawned Players")]
     public void DebugSpawnedPlayers()
@@ -274,13 +435,46 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"=== SPAWNED PLAYERS ({spawnedPlayers.Count}) ===");
         foreach (var playerId in spawnedPlayers)
         {
-            Debug.Log($"Player ID: {playerId}");
+            string charName = GetPlayerCharacterName(playerId);
+            Debug.Log($"Player ID: {playerId} - Character: {charName}");
         }
 
         Debug.Log($"=== CONNECTED CLIENTS ({NetworkManager.Singleton.ConnectedClientsIds.Count}) ===");
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             Debug.Log($"Client ID: {clientId}");
+        }
+    }
+
+    [ContextMenu("Print Character Assignments")]
+    private void PrintCharacterAssignments()
+    {
+        Debug.Log("=== CHARACTER ASSIGNMENTS ===");
+        foreach (var kvp in playerCharacterIndex)
+        {
+            Debug.Log($"Client {kvp.Key} → {GetCharacterName(kvp.Value)}");
+        }
+    }
+
+    [ContextMenu("Force Spawn Test Players")]
+    private void ForceSpawnTestPlayers()
+    {
+        if (!IsServer) return;
+
+        Debug.Log("=== FORCE SPAWNING TEST PLAYERS ===");
+
+        // Clear existing
+        spawnedPlayers.Clear();
+        playerCharacterIndex.Clear();
+        nextCharacterIndex.Value = 1;
+
+        // Spawn host (Mizuki)
+        SpawnPlayerForClient(0);
+
+        // Spawn test clients
+        for (ulong i = 1; i <= 4; i++)
+        {
+            SpawnPlayerForClient(i);
         }
     }
 }
