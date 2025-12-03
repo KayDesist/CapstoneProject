@@ -907,6 +907,7 @@ MonoBehaviour:
   playerCamera: {fileID: 5161401816267770401}
   cameraPivot: {fileID: 0}
   animator: {fileID: 0}
+  animationBlendSpeed: 8
 --- !u!4 &1931131112790654928 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8dbaa82f525f2774483681293c073227, type: 3}
