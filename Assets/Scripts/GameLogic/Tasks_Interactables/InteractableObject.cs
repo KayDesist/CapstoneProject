@@ -11,6 +11,10 @@ public class InteractableObject : NetworkBehaviour
     [SerializeField] private bool isSurvivorTask = true;
     [SerializeField] private int progressToAdd = 1;
 
+    [Header("Animation Settings")]
+    [SerializeField] private string taskAnimationName = "Task";
+    [SerializeField] private bool usePlayerTaskAnimation = true;
+
     [Header("Visual Feedback")]
     [SerializeField] private Material incompleteMaterial;
     [SerializeField] private Material completeMaterial;
@@ -23,6 +27,7 @@ public class InteractableObject : NetworkBehaviour
     private bool playerInRange = false;
     private bool isInteracting = false;
     private float localInteractionProgress = 0f;
+    private NetworkPlayerController interactingPlayer;
 
     public override void OnNetworkSpawn()
     {
@@ -107,6 +112,7 @@ public class InteractableObject : NetworkBehaviour
         if (player != null && player.IsOwner)
         {
             playerInRange = true;
+            interactingPlayer = player;
 
             // Check if player can interact based on role
             if (CanInteract(NetworkManager.Singleton.LocalClientId))
@@ -136,6 +142,7 @@ public class InteractableObject : NetworkBehaviour
         if (player != null && player.IsOwner)
         {
             playerInRange = false;
+            interactingPlayer = null;
             CancelInteraction();
 
             if (GameHUDManager.Instance != null)
@@ -159,6 +166,12 @@ public class InteractableObject : NetworkBehaviour
         localInteractionProgress = 0f;
 
         Debug.Log($"Local player started interacting with {gameObject.name}");
+
+        // Start task animation on player (client-side only)
+        if (interactingPlayer != null && usePlayerTaskAnimation)
+        {
+            interactingPlayer.PlayTaskAnimation(true);
+        }
 
         // Notify server
         if (!IsServer)
@@ -191,6 +204,12 @@ public class InteractableObject : NetworkBehaviour
     {
         Debug.Log($"Local interaction completed with {gameObject.name}");
 
+        // Stop task animation on player
+        if (interactingPlayer != null && usePlayerTaskAnimation)
+        {
+            interactingPlayer.PlayTaskAnimation(false);
+        }
+
         if (IsServer)
         {
             CompleteInteractionServerRpc(NetworkManager.Singleton.LocalClientId);
@@ -203,6 +222,7 @@ public class InteractableObject : NetworkBehaviour
         // Reset local state
         isInteracting = false;
         localInteractionProgress = 0f;
+        interactingPlayer = null;
 
         // Hide UI
         if (GameHUDManager.Instance != null)
@@ -245,8 +265,16 @@ public class InteractableObject : NetworkBehaviour
         if (isInteracting)
         {
             Debug.Log("Interaction cancelled");
+
+            // Stop task animation on player
+            if (interactingPlayer != null && usePlayerTaskAnimation)
+            {
+                interactingPlayer.PlayTaskAnimation(false);
+            }
+
             isInteracting = false;
             localInteractionProgress = 0f;
+            interactingPlayer = null;
 
             // Reset progress on server
             if (IsServer)

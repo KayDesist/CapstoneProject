@@ -8,7 +8,6 @@ public class NetworkPlayerController : NetworkBehaviour
     public float walkSpeed = 7f;
     public float sprintSpeed = 11f;
     public float mouseSensitivity = 3f;
-    public float jumpForce = 7f;
 
     [Header("Stamina Settings")]
     public int sprintStaminaCost = 15;
@@ -18,14 +17,15 @@ public class NetworkPlayerController : NetworkBehaviour
     public Transform playerCamera;
     public Transform cameraPivot;
 
+    [Header("Animation")]
+    public Animator animator;
+
     private Rigidbody rb;
     private PlayerHealth playerHealth;
     private float xRotation = 0f;
-    private bool isGrounded = true;
     private bool isSprinting = false;
     private float currentSpeed;
     private Vector3 lastPosition;
-    private bool wasMoving = false;
     private string currentCharacterName = "";
     private bool isInitialized = false;
 
@@ -41,6 +41,10 @@ public class NetworkPlayerController : NetworkBehaviour
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
 
+        // Try to find animator if not assigned
+        if (animator == null)
+            animator = GetComponentInChildren<Animator>();
+
         // Create camera pivot if it doesn't exist
         if (cameraPivot == null)
         {
@@ -54,6 +58,12 @@ public class NetworkPlayerController : NetworkBehaviour
         if (rb != null)
         {
             rb.freezeRotation = true;
+            rb.useGravity = true;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+
+            // Reset any existing velocity
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
         else
         {
@@ -107,12 +117,34 @@ public class NetworkPlayerController : NetworkBehaviour
 
         HandleMouseLook();
         HandleSprint();
-        HandleMovement();
-        HandleJump();
 
-        // Update movement state
-        wasMoving = IsMoving();
+        // Update movement state before handling movement
         lastPosition = transform.position;
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsOwner) return;
+        if (SceneManager.GetActiveScene().name != "GameScene") return;
+
+        HandleMovement();
+        UpdateAnimations();
+    }
+
+    private void UpdateAnimations()
+    {
+        if (animator == null) return;
+
+        // Calculate movement speed for animation
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+        float speed = horizontalVelocity.magnitude;
+
+        // Normalize speed for animation (0-1 range based on walk speed)
+        float normalizedSpeed = Mathf.Clamp01(speed / walkSpeed);
+
+        // Set animation parameters
+        animator.SetFloat("Speed", normalizedSpeed);
+        animator.SetBool("IsSprinting", isSprinting);
     }
 
     private void UpdateCursorState()
@@ -241,17 +273,9 @@ public class NetworkPlayerController : NetworkBehaviour
 
         if (rb != null)
         {
+            // Keep vertical velocity (gravity)
             Vector3 moveVelocity = new Vector3(moveDir.x * currentSpeed, rb.linearVelocity.y, moveDir.z * currentSpeed);
             rb.linearVelocity = moveVelocity;
-        }
-    }
-
-    private void HandleJump()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && rb != null)
-        {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            isGrounded = false;
         }
     }
 
@@ -261,22 +285,6 @@ public class NetworkPlayerController : NetworkBehaviour
         if (playerHealth != null)
         {
             playerHealth.ConsumeStamina(staminaCost);
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-        }
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = false;
         }
     }
 
@@ -326,6 +334,23 @@ public class NetworkPlayerController : NetworkBehaviour
         Debug.Log($"Role settings applied - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
     }
 
+    // Simple animation methods
+    public void PlayAttackAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }
+    }
+
+    public void PlayTaskAnimation(bool isPerformingTask)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsPerformingTask", isPerformingTask);
+        }
+    }
+
     public string GetCharacterName()
     {
         return currentCharacterName;
@@ -355,5 +380,22 @@ public class NetworkPlayerController : NetworkBehaviour
         Debug.Log($"Speed: {currentSpeed} (Walk: {walkSpeed}, Sprint: {sprintSpeed})");
         Debug.Log($"Camera Active: {playerCamera != null && playerCamera.gameObject.activeInHierarchy}");
         Debug.Log($"Controller Enabled: {enabled}");
+        Debug.Log($"Animator: {animator != null}");
+        Debug.Log($"Rigidbody: {rb != null}");
+        if (rb != null)
+        {
+            Debug.Log($"Rigidbody Velocity: {rb.linearVelocity}");
+            Debug.Log($"Rigidbody Use Gravity: {rb.useGravity}");
+        }
+    }
+
+    [ContextMenu("Test Movement")]
+    public void TestMovement()
+    {
+        if (rb != null)
+        {
+            Debug.Log("Testing movement - applying forward force");
+            rb.linearVelocity = transform.forward * 5f;
+        }
     }
 }

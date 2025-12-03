@@ -6,15 +6,19 @@ public class Weapon : NetworkBehaviour
 {
     [Header("Weapon Settings")]
     public string weaponName = "Weapon";
-    public int damage = 25; // Changed to int
+    public int damage = 25;
     public float attackCooldown = 1f;
-    public int staminaCost = 10; // Changed to int
-    public float baseAttackDuration = 0.5f; // Increased for better testing
+    public int staminaCost = 10;
+    public float baseAttackDuration = 0.5f;
+
+    [Header("Animation Settings")]
+    public string attackAnimationName = "Attack";
 
     protected float lastAttackTime;
     protected PlayerHealth ownerHealth;
     public ulong ownerId;
     public PlayerHitboxDamage playerHitbox;
+    protected NetworkPlayerController playerController;
 
     // Timer-based attack system
     protected float weaponAttackEndTime = 0f;
@@ -27,7 +31,13 @@ public class Weapon : NetworkBehaviour
         ownerHealth = health;
         playerHitbox = hitbox;
 
-        Debug.Log($"Weapon {weaponName} initialized for player {ownerId}. Hitbox: {playerHitbox != null}");
+        // Get player controller for animations
+        if (health != null)
+        {
+            playerController = health.GetComponent<NetworkPlayerController>();
+        }
+
+        Debug.Log($"Weapon {weaponName} initialized for player {ownerId}. Hitbox: {playerHitbox != null}, PlayerController: {playerController != null}");
     }
 
     protected virtual void Update()
@@ -117,10 +127,16 @@ public class Weapon : NetworkBehaviour
 
         ConsumeStamina();
 
+        // Trigger attack animation on player
+        if (playerController != null)
+        {
+            playerController.PlayAttackAnimation();
+        }
+
         // Activate player's hitbox
         if (playerHitbox != null)
         {
-            playerHitbox.SetActive(true, damage, ownerId); // Now passing int
+            playerHitbox.SetActive(true, damage, ownerId);
             Debug.Log($"Hitbox activated for player {ownerId} with damage {damage}");
         }
         else
@@ -171,17 +187,17 @@ public class Weapon : NetworkBehaviour
             Debug.Log($"Consuming {staminaCost} stamina");
             if (IsServer)
             {
-                ownerHealth.ConsumeStamina(staminaCost); // Now passing int
+                ownerHealth.ConsumeStamina(staminaCost);
             }
             else
             {
-                RequestStaminaConsumptionServerRpc(staminaCost); // Now passing int
+                RequestStaminaConsumptionServerRpc(staminaCost);
             }
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestStaminaConsumptionServerRpc(int cost) // Changed to int
+    private void RequestStaminaConsumptionServerRpc(int cost)
     {
         if (ownerHealth != null)
         {

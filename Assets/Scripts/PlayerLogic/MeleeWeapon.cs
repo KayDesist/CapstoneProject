@@ -7,6 +7,9 @@ public class MeleeWeapon : Weapon
     [Header("Melee Settings")]
     public float meleeAttackDuration = 0.3f;
 
+    [Header("Melee Animation")]
+    public string meleeAttackAnimation = "MeleeAttack";
+
     public override void Initialize(ulong ownerClientId, PlayerHealth health, PlayerHitboxDamage hitbox)
     {
         base.Initialize(ownerClientId, health, hitbox);

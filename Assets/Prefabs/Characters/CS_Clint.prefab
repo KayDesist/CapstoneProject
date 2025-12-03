@@ -585,7 +585,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 8dbaa82f525f2774483681293c073227, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 5b83a6d1244ae4147aca092e06137f6a, type: 2}
+      objectReference: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -903,10 +903,10 @@ MonoBehaviour:
   walkSpeed: 7
   sprintSpeed: 11
   mouseSensitivity: 3
-  jumpForce: 7
   sprintStaminaCost: 15
   playerCamera: {fileID: 5161401816267770401}
   cameraPivot: {fileID: 0}
+  animator: {fileID: 0}
 --- !u!4 &1931131112790654928 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8dbaa82f525f2774483681293c073227, type: 3}
