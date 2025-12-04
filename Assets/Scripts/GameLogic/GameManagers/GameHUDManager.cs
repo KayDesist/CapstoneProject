@@ -68,9 +68,9 @@ public class GameHUDManager : MonoBehaviour
         if (taskPanel != null) taskPanel.SetActive(false);
         if (spectatorPanel != null) spectatorPanel.SetActive(false);
 
-        // Initialize interaction UI
-        if (interactionPanel != null) interactionPanel.SetActive(false);
-        if (interactionProgressBar != null) interactionProgressBar.gameObject.SetActive(false);
+        // CRITICAL FIX: Ensure interaction panel is ALWAYS hidden at start
+        HideInteractionPrompt();
+        HideInteractionProgress();
 
         // Initialize with default values
         UpdateHealth(100, 100);
@@ -176,6 +176,10 @@ public class GameHUDManager : MonoBehaviour
             taskPanel.SetActive(true);
             Debug.Log("Task panel shown");
         }
+
+        // FIX: CRITICAL - Ensure interaction panel remains hidden when showing persistent HUD
+        HideInteractionPrompt();
+        HideInteractionProgress();
     }
 
     // ============ SPECTATOR UI METHODS ============
@@ -478,6 +482,7 @@ public class GameHUDManager : MonoBehaviour
         if (interactionProgressBar != null)
         {
             interactionProgressBar.gameObject.SetActive(false);
+            interactionProgressBar.value = 0f; // Reset progress
         }
     }
 
@@ -485,7 +490,10 @@ public class GameHUDManager : MonoBehaviour
     {
         if (interactionProgressBar != null)
         {
-            interactionProgressBar.gameObject.SetActive(true);
+            if (!interactionProgressBar.gameObject.activeSelf)
+            {
+                interactionProgressBar.gameObject.SetActive(true);
+            }
             interactionProgressBar.maxValue = maxProgress;
             interactionProgressBar.value = progress;
         }
@@ -496,13 +504,30 @@ public class GameHUDManager : MonoBehaviour
         if (interactionProgressBar != null)
         {
             interactionProgressBar.gameObject.SetActive(false);
+            interactionProgressBar.value = 0f;
         }
+    }
+
+    // FIX: Reset method to clean up UI state
+    public void ResetHUD()
+    {
+        HideInteractionPrompt();
+        HideInteractionProgress();
+
+        if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
+        if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
+        if (taskPanel != null) taskPanel.SetActive(false);
+        if (spectatorPanel != null) spectatorPanel.SetActive(false);
+
+        Debug.Log("HUD fully reset");
     }
 
     public static void ResetInstance()
     {
         if (Instance != null)
         {
+            // Reset HUD state before destroying
+            Instance.ResetHUD();
             Destroy(Instance.gameObject);
             Instance = null;
             Debug.Log("GameHUDManager instance reset");

@@ -111,22 +111,46 @@ public class InventorySystem : NetworkBehaviour
 
     private void Update()
     {
-   
         if (!IsOwner || gameEnded) return;
 
         HandleInput();
 
-        // Check if the current itemInRange is still valid and pickupable
-        if (itemInRange != null && (!itemInRange.CanBePickedUp || itemInRange.IsPickedUp))
+        // FIX: Update item detection every frame, not just on trigger events
+        CheckForItemsInRange();
+    }
+
+    // FIX: Add this method to continuously check for items in range
+    private void CheckForItemsInRange()
+    {
+        // Use a sphere cast to find nearby items
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, 3f);
+        PickupableItem nearestItem = null;
+        float nearestDistance = float.MaxValue;
+
+        foreach (var collider in hitColliders)
         {
-            itemInRange = null;
-            GameHUDManager.Instance?.HideInteractionPrompt();
+            PickupableItem item = collider.GetComponent<PickupableItem>();
+            if (item != null && item.CanBePickedUp && !item.IsPickedUp)
+            {
+                float distance = Vector3.Distance(transform.position, collider.transform.position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestItem = item;
+                }
+            }
+        }
+
+        // Update itemInRange
+        if (itemInRange != nearestItem)
+        {
+            itemInRange = nearestItem;
+            UpdateInteractionPrompt();
         }
     }
 
     private void HandleInput()
     {
-     
         if (gameEnded) return;
 
         // Slot switching - FIXED: Handle locally for immediate response
@@ -212,7 +236,7 @@ public class InventorySystem : NetworkBehaviour
         if (item != null && item == itemInRange)
         {
             itemInRange = null;
-            GameHUDManager.Instance?.HideInteractionPrompt();
+            UpdateInteractionPrompt();
         }
     }
 
@@ -248,7 +272,6 @@ public class InventorySystem : NetworkBehaviour
     [ServerRpc]
     private void PickupItemServerRpc(ulong itemId)
     {
-    
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
         {
             Debug.LogWarning($"Cannot pickup item - network object {itemId} not found");
@@ -457,7 +480,6 @@ public class InventorySystem : NetworkBehaviour
         {
             var targetSlot = inventorySlots[slotIndex];
 
-           
             if (NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.SpawnManager != null &&
                 NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetSlot.itemNetworkId, out NetworkObject itemNetObject))
@@ -512,7 +534,6 @@ public class InventorySystem : NetworkBehaviour
         {
             var currentSlot = inventorySlots[currentSlotIndex.Value];
 
-         
             if (NetworkManager.Singleton != null &&
                 NetworkManager.Singleton.SpawnManager != null &&
                 NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(currentSlot.itemNetworkId, out NetworkObject itemNetObject))
@@ -564,7 +585,6 @@ public class InventorySystem : NetworkBehaviour
         return false;
     }
 
- 
     private void HandleGameEnded()
     {
         gameEnded = true;
@@ -587,7 +607,6 @@ public class InventorySystem : NetworkBehaviour
         inventorySlots.OnListChanged -= OnInventoryChanged;
         currentSlotIndex.OnValueChanged -= OnCurrentSlotChanged;
 
-       
         if (EndGameManager.Instance != null)
         {
             EndGameManager.Instance.OnGameEnded -= HandleGameEnded;
