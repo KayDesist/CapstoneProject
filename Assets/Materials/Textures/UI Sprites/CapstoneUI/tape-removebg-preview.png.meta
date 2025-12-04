@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -95,7 +95,117 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: tape-removebg-preview_0
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 421
+        width: 368
+        height: 70
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bafc6cc071304334ab444f3a5c548545
+      internalID: 208803135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tape-removebg-preview_1
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 320
+        width: 335
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8628de44c5052fd47ab4a120bea4885b
+      internalID: 791197484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tape-removebg-preview_2
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 215
+        width: 302
+        height: 74
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38cf7c0930e690b47912c074c56d8cae
+      internalID: 731092667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tape-removebg-preview_3
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 117
+        width: 215
+        height: 69
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5828ea73adcdd014f9226909621a56c7
+      internalID: -1405466906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: tape-removebg-preview_4
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 32
+        width: 160
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ecef44b2938950e48a68788e3f298136
+      internalID: -1272430244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -109,7 +219,12 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      tape-removebg-preview_0: 208803135
+      tape-removebg-preview_1: 791197484
+      tape-removebg-preview_2: 731092667
+      tape-removebg-preview_3: -1405466906
+      tape-removebg-preview_4: -1272430244
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
