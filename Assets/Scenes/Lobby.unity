@@ -397,16 +397,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 198947757}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0.030682588, w: 0.99952924}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 160418335}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3.517}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -53, y: -55}
+  m_AnchoredPosition: {x: -91, y: -62}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &198947759
@@ -456,8 +456,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 24
+  m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -494,7 +494,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -109.19708, y: 0, z: 0, w: 0}
+  m_margin: {x: -50.911438, y: 7.739563, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -1004,7 +1004,7 @@ GameObject:
   - component: {fileID: 517631693}
   - component: {fileID: 517631692}
   m_Layer: 0
-  m_Name: Image
+  m_Name: codetapepin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1024,11 +1024,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 712895876}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 274, y: 346}
-  m_SizeDelta: {x: 100, y: 163.6624}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -145, y: 55.831177}
+  m_SizeDelta: {x: 100, y: 163.66241}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &517631692
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1284,7 +1284,7 @@ GameObject:
   - component: {fileID: 818823858}
   - component: {fileID: 818823857}
   m_Layer: 0
-  m_Name: Image
+  m_Name: CodeTape
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1304,11 +1304,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 160418335}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3.55}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.51500005, y: 0.5}
-  m_AnchoredPosition: {x: 239.25, y: 284.66}
-  m_SizeDelta: {x: 305.6408, y: 74.995}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -62.929596, y: 284.66}
+  m_SizeDelta: {x: 319.6408, y: 74.995}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &818823857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1756,7 +1756,7 @@ GameObject:
   - component: {fileID: 1268856620}
   - component: {fileID: 1268856619}
   m_Layer: 0
-  m_Name: Image
+  m_Name: playercountstickynote
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1776,11 +1776,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 160418335}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -320, y: 246}
-  m_SizeDelta: {x: 209.3178, y: 343.8717}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 44.341095, y: 45.935852}
+  m_SizeDelta: {x: 209.31781, y: 343.8717}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &1268856619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2423,16 +2423,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2064403018}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0.029049605, w: 0.99957806}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 160418335}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3.329}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 81, y: -75}
+  m_AnchoredPosition: {x: 97, y: -75}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2064403020
