@@ -434,7 +434,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -3.517}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -91, y: -62}
+  m_AnchoredPosition: {x: -93, y: -75}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &198947759
@@ -459,8 +459,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Code: 123456'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: b2d16d1f241d2d14ba0a2bd0a00ff161, type: 2}
-  m_sharedMaterial: {fileID: -3910122985236758161, guid: b2d16d1f241d2d14ba0a2bd0a00ff161, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2bb08edf85c772f42963feecefc65d56, type: 2}
+  m_sharedMaterial: {fileID: 2908644619155526586, guid: 2bb08edf85c772f42963feecefc65d56, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -522,7 +522,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -50.911438, y: 7.739563, z: 0, w: 0}
+  m_margin: {x: -50.911438, y: 7.739563, z: -25.396042, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
