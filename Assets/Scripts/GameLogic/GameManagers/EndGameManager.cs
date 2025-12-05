@@ -49,7 +49,7 @@ public class EndGameManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // REMOVED: DontDestroyOnLoad(gameObject); // This was causing issues
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -110,14 +110,9 @@ public class EndGameManager : NetworkBehaviour
         // Show UI immediately when result changes - THIS FIXES CLIENT UI
         if (newValue != GameResult.None)
         {
-            // Show UI with a small delay to ensure it's ready
-            Invoke(nameof(ShowEndGameUIForClient), 0.5f);
+            // Show UI immediately
+            ShowEndGameUI();
         }
-    }
-
-    private void ShowEndGameUIForClient()
-    {
-        ShowEndGameUI();
     }
 
     private void ShowEndGameUI()
@@ -169,30 +164,6 @@ public class EndGameManager : NetworkBehaviour
         {
             Debug.LogError("EndGameUI prefab not found in Resources!");
         }
-    }
-
-    private void DisableAllPlayerControls()
-    {
-        // Find all players and disable their controls
-        var players = FindObjectsOfType<NetworkPlayerController>();
-        foreach (var player in players)
-        {
-            if (player.enabled && player.IsOwner)
-            {
-                player.enabled = false;
-
-                // Also disable PlayerSpectator if it exists
-                var spectator = player.GetComponent<PlayerSpectator>();
-                if (spectator != null)
-                {
-                    spectator.enabled = false;
-                }
-            }
-        }
-
-        // Ensure cursor is visible for all local players
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     private void CheckWinConditions()
@@ -344,9 +315,6 @@ public class EndGameManager : NetworkBehaviour
 
         // Notify all clients with a direct RPC call
         EndGameClientRpc(result);
-
-        // Also disable controls for all players
-        DisableAllPlayerControls();
     }
 
     [ClientRpc]
@@ -358,54 +326,15 @@ public class EndGameManager : NetworkBehaviour
         ShowEndGameUI();
     }
 
-    // NEW: Method to return to Main Menu (called by UI)
+    // Method to return to Main Menu (called by UI)
     public void ReturnToMainMenu()
     {
         Debug.Log("Returning to Main Menu...");
 
-        // Clean up all UI instances before returning
-        CleanupEndGameUI();
-
-        // Notify all clients
-        ReturnToMainMenuClientRpc();
-
-        // Small delay before loading scene
-        Invoke(nameof(LoadMainMenuScene), 1f);
-    }
-
-    [ClientRpc]
-    private void ReturnToMainMenuClientRpc()
-    {
-        Debug.Log("Server is returning everyone to Main Menu...");
-
-        // Clean up UI on client side too
-        CleanupEndGameUI();
-    }
-
-    private void CleanupEndGameUI()
-    {
-        // Destroy all EndGameUI instances
-        EndGameUI[] allEndGameUIs = FindObjectsOfType<EndGameUI>();
-        foreach (var ui in allEndGameUIs)
-        {
-            if (ui != null && ui.gameObject != null)
-            {
-                Destroy(ui.gameObject);
-            }
-        }
-
-        // Also reset the static instance
-        EndGameUI.Instance = null;
-    }
-
-    private void LoadMainMenuScene()
-    {
-        if (!IsServer) return;
-
         // Clean up cross-scene data
         CrossSceneData.Reset();
 
-        // Load Main Menu scene for all clients
+        // Immediately load Main Menu scene for all clients
         NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 

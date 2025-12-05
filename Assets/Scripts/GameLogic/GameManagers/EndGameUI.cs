@@ -22,10 +22,11 @@ public class EndGameUI : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern - but we'll clean it up properly
+        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -52,7 +53,7 @@ public class EndGameUI : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         // Auto-destroy if we're in the MainMenu scene
-        if (scene.name == "MainMenu" && isEndGameActive)
+        if (scene.name == "MainMenu")
         {
             Debug.Log("EndGameUI detected MainMenu scene - cleaning up");
             Cleanup();
@@ -179,9 +180,6 @@ public class EndGameUI : MonoBehaviour
             // We are a client, request the host
             RequestReturnToMainMenuServerRpc();
         }
-
-        // Clean up after a delay
-        Invoke(nameof(Cleanup), 2f);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -204,10 +202,17 @@ public class EndGameUI : MonoBehaviour
 
     private void Cleanup()
     {
+        Debug.Log("EndGameUI cleaning up in MainMenu scene");
+
         // Hide the UI
         HideEndGameScreen();
 
         // Destroy this gameObject
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
         Destroy(gameObject);
     }
 

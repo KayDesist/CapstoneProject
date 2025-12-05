@@ -97,26 +97,16 @@ public class GameManager : NetworkBehaviour
                 playerCharacterIndex.Remove(clientId);
             }
 
-            // FIX: More robust check for EndGameManager
-            if (EndGameManager.Instance != null && EndGameManager.Instance.gameObject != null)
-            {
-                EndGameManager.Instance.OnClientDisconnected(clientId);
-            }
-            else
-            {
-                Debug.LogWarning("EndGameManager.Instance is null or destroyed - game may be shutting down");
-            }
-
             // Check if we should end the game (e.g., if host disconnects)
             if (clientId == NetworkManager.Singleton.LocalClientId && !isShuttingDown)
             {
                 Debug.Log("Host disconnected - ending game for everyone");
                 isShuttingDown = true;
 
-                // Only load scene if NetworkManager is still available
+                // Load Main Menu for everyone
                 if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
                 {
-                    NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single); // Changed to MainMenu
+                    NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
                 }
             }
         }
@@ -125,7 +115,6 @@ public class GameManager : NetworkBehaviour
             Debug.LogWarning($"Error during client disconnection handling: {e.Message}");
         }
     }
-
     private IEnumerator InitializeManagers()
     {
         yield return new WaitForSeconds(0.5f);
