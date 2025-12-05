@@ -24,7 +24,7 @@ public class EndGameUI : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Make it persist
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -32,11 +32,9 @@ public class EndGameUI : MonoBehaviour
             return;
         }
 
-        // Hide panel initially
         if (endGamePanel != null)
             endGamePanel.SetActive(false);
 
-        // Setup return button
         if (returnButton != null)
         {
             returnButton.onClick.AddListener(OnReturnButtonClicked);
@@ -80,7 +78,7 @@ public class EndGameUI : MonoBehaviour
                 break;
         }
 
-        // Disable player controls and enable mouse interaction
+        // Disable player controls
         DisablePlayerControls();
 
         Debug.Log($"End game UI shown for result: {result}");
@@ -116,85 +114,59 @@ public class EndGameUI : MonoBehaviour
         var localPlayer = FindObjectOfType<NetworkPlayerController>();
         if (localPlayer != null && localPlayer.IsOwner)
         {
-            // Disable various components
-            var playerController = localPlayer.GetComponent<NetworkPlayerController>();
-            var inventory = localPlayer.GetComponent<InventorySystem>();
+            localPlayer.enabled = false;
+
+            // Also disable PlayerSpectator
             var spectator = localPlayer.GetComponent<PlayerSpectator>();
-
-            if (playerController != null)
-                playerController.enabled = false;
-
-            if (inventory != null)
-                inventory.enabled = false;
-
             if (spectator != null)
-                spectator.enabled = false;
-
-            // Hide HUD
-            if (GameHUDManager.Instance != null)
             {
-                GameHUDManager.Instance.gameObject.SetActive(false);
+                spectator.enabled = false;
             }
         }
 
-        // Unlock cursor for ALL clients
+        // Unlock cursor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        Debug.Log("Player controls disabled and cursor unlocked for UI interaction");
+        Debug.Log("Player controls disabled for end game");
     }
 
     private void OnReturnButtonClicked()
     {
         if (!isEndGameActive) return;
 
-        Debug.Log("Return to main menu button clicked");
+        Debug.Log("Return to lobby button clicked");
 
         // Prevent multiple clicks
         isEndGameActive = false;
+        returnButton.interactable = false;
+        returnButton.GetComponentInChildren<TMP_Text>().text = "Returning to lobby...";
 
-        if (returnButton != null)
+        // Request server to return everyone to lobby
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            returnButton.interactable = false;
-            returnButton.GetComponentInChildren<TMP_Text>().text = "Returning...";
+            // We are the host
+            if (EndGameManager.Instance != null)
+            {
+                EndGameManager.Instance.ReturnToLobby();
+            }
         }
-
-        // Clean up cross-scene data
-        CrossSceneData.Reset();
-
-        // Reset all manager instances
-        ResetManagers();
-
-        // Load main menu directly
-        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
-
-        // Destroy this instance after scene load
-        Destroy(gameObject, 0.5f);
+        else if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
+        {
+            // We are a client, request the host
+            RequestReturnToLobbyServerRpc();
+        }
     }
 
-    private void ResetManagers()
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestReturnToLobbyServerRpc()
     {
-        // Destroy all manager instances
-        var endGameManager = FindObjectOfType<EndGameManager>();
-        if (endGameManager != null) Destroy(endGameManager.gameObject);
-
-        var roleManager = FindObjectOfType<RoleManager>();
-        if (roleManager != null) Destroy(roleManager.gameObject);
-
-        var taskManager = FindObjectOfType<TaskManager>();
-        if (taskManager != null) Destroy(taskManager.gameObject);
-
-        var hudManager = FindObjectOfType<GameHUDManager>();
-        if (hudManager != null) Destroy(hudManager.gameObject);
-
-        // Shutdown network if it exists
-        if (NetworkManager.Singleton != null)
+        if (EndGameManager.Instance != null)
         {
-            NetworkManager.Singleton.Shutdown();
+            EndGameManager.Instance.ReturnToLobby();
         }
     }
 
-    // Method to hide the UI (useful for testing)
     public void HideEndGameScreen()
     {
         if (endGamePanel != null)
@@ -203,18 +175,11 @@ public class EndGameUI : MonoBehaviour
         isEndGameActive = false;
     }
 
-    // Debug method to check UI state
-    [ContextMenu("Debug UI State")]
-    public void DebugUIState()
+    private void OnDestroy()
     {
-        Debug.Log($"EndGamePanel active: {endGamePanel != null && endGamePanel.activeInHierarchy}");
-        Debug.Log($"Return button interactable: {returnButton != null && returnButton.interactable}");
-        Debug.Log($"Cursor lock state: {Cursor.lockState}, visible: {Cursor.visible}");
-        Debug.Log($"NetworkManager exists: {NetworkManager.Singleton != null}");
-        if (NetworkManager.Singleton != null)
+        if (Instance == this)
         {
-            Debug.Log($"IsServer: {NetworkManager.Singleton.IsServer}");
-            Debug.Log($"IsClient: {NetworkManager.Singleton.IsClient}");
+            Instance = null;
         }
     }
 }

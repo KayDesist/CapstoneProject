@@ -10,8 +10,8 @@ using Unity.Networking.Transport.Relay;
 
 public class RelayConnector : MonoBehaviour
 {
-
     private float lastHeartbeatTime = 0f;
+    private const float HEARTBEAT_INTERVAL = 3f;
 
     /// <summary>
     /// Starts a host through Unity Relay and returns a join code.
@@ -143,11 +143,10 @@ public class RelayConnector : MonoBehaviour
 
     private void Update()
     {
-        // Only run on active network sessions
+        // Only send heartbeat if connected
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
 
-        // Send a heartbeat approximately every 3 seconds to stay well under the 10-second timeout
-        if (Time.time - lastHeartbeatTime >= 3.0f)
+        if (Time.time - lastHeartbeatTime >= HEARTBEAT_INTERVAL)
         {
             SendRelayHeartbeatServerRpc();
             lastHeartbeatTime = Time.time;
@@ -158,11 +157,7 @@ public class RelayConnector : MonoBehaviour
     private void SendRelayHeartbeatServerRpc(ServerRpcParams rpcParams = default)
     {
         // This empty RPC serves as a network "ping"
-        // It keeps the connection to the Relay server active for the sender
-        // The ServerRpc ensures it travels over the network, triggering Relay activity
-        // No logic needed here - the act of sending the message is what matters
+        // It keeps the connection to the Relay server active
     }
-
-   
 
 }  
