@@ -2,6 +2,7 @@
 using Unity.Netcode;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class EndGameManager : NetworkBehaviour
 {
@@ -9,6 +10,7 @@ public class EndGameManager : NetworkBehaviour
 
     [Header("Game Settings")]
     [SerializeField] private float endGameDelay = 5f;
+    [SerializeField] private float returnToMenuDelay = 10f; // Increased delay for UI visibility
 
     private NetworkVariable<bool> isGameEnded = new NetworkVariable<bool>(false);
     private NetworkVariable<GameResult> gameResult = new NetworkVariable<GameResult>();
@@ -26,6 +28,9 @@ public class EndGameManager : NetworkBehaviour
     // For Update-based checking
     private float lastCheckTime = 0f;
     private float checkInterval = 1f; // Check every second
+
+    // Track if UI has been shown
+    private bool uiShown = false;
 
     // FIXED: Added game end event
     public event System.Action OnGameEnded;
@@ -67,6 +72,69 @@ public class EndGameManager : NetworkBehaviour
         cultistTasksComplete.OnValueChanged += OnCultistTasksCompleteChanged;
 
         Debug.Log("EndGameManager spawned and ready");
+    }
+
+    private void OnGameEndedChanged(bool oldValue, bool newValue)
+    {
+        Debug.Log($"GameEnded changed: {oldValue} -> {newValue}");
+
+        if (newValue && IsServer)
+        {
+            // Server: Start the return to menu sequence
+            StartCoroutine(GameEndSequence());
+        }
+    }
+
+    private IEnumerator GameEndSequence()
+    {
+        Debug.Log("Starting game end sequence");
+
+        // Wait for end game delay before returning to menu
+        yield return new WaitForSeconds(endGameDelay);
+
+        Debug.Log("Game end delay complete, returning to main menu");
+
+        // Return to main menu
+        ReturnToMainMenu();
+    }
+
+    private void OnGameResultChanged(GameResult oldValue, GameResult newValue)
+    {
+        Debug.Log($"GameResult changed: {oldValue} -> {newValue}");
+
+        // Show UI immediately when result changes
+        if (newValue != GameResult.None && EndGameUI.Instance != null && !uiShown)
+        {
+            uiShown = true;
+            EndGameUI.Instance.ShowEndGameScreen(newValue);
+
+            // Disable player movement and controls
+            DisableAllPlayerControls();
+        }
+    }
+
+    private void DisableAllPlayerControls()
+    {
+        // Find all players and disable their controls
+        var players = FindObjectsOfType<NetworkPlayerController>();
+        foreach (var player in players)
+        {
+            if (player.enabled)
+            {
+                player.enabled = false;
+
+                // Also disable PlayerSpectator if it exists
+                var spectator = player.GetComponent<PlayerSpectator>();
+                if (spectator != null)
+                {
+                    spectator.enabled = false;
+                }
+            }
+        }
+
+        // Ensure cursor is visible
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void Update()
@@ -271,7 +339,6 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
-
     private void EndGame(GameResult result)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -286,9 +353,6 @@ public class EndGameManager : NetworkBehaviour
 
         // Notify all clients
         EndGameClientRpc(result);
-
-        // Return to main menu after delay
-        Invoke(nameof(ReturnToMainMenu), endGameDelay);
     }
 
     [ClientRpc]
@@ -384,16 +448,6 @@ public class EndGameManager : NetworkBehaviour
     }
 
     // NetworkVariable change handlers for debugging
-    private void OnGameEndedChanged(bool oldValue, bool newValue)
-    {
-        Debug.Log($"GameEnded changed: {oldValue} -> {newValue}");
-    }
-
-    private void OnGameResultChanged(GameResult oldValue, GameResult newValue)
-    {
-        Debug.Log($"GameResult changed: {oldValue} -> {newValue}");
-    }
-
     private void OnSurvivorDeathsChanged(int oldValue, int newValue)
     {
         Debug.Log($"SurvivorDeaths changed: {oldValue} -> {newValue}");

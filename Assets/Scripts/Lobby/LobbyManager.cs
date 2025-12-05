@@ -36,23 +36,33 @@ public class LobbyManager : NetworkBehaviour
         // Ensure NetworkManager is in a clean state
         await EnsureCleanNetworkState();
 
-        // Based on how we entered the lobby, start as host or client
-        if (CrossSceneData.LobbyMode == "Host")
+        // Add error handling for Relay timeout
+        try
         {
-            await StartHost();
+            // Based on how we entered the lobby, start as host or client
+            if (CrossSceneData.LobbyMode == "Host")
+            {
+                await StartHost();
+            }
+            else if (CrossSceneData.LobbyMode == "Client")
+            {
+                await StartClient();
+            }
+            else
+            {
+                Debug.LogError("Unknown lobby mode!");
+                ReturnToMainMenu();
+            }
         }
-        else if (CrossSceneData.LobbyMode == "Client")
+        catch (System.Exception e)
         {
-            await StartClient();
-        }
-        else
-        {
-            Debug.LogError("Unknown lobby mode!");
+            Debug.LogError($"Failed to initialize lobby: {e.Message}");
+            ShowErrorToUser($"Connection failed: {e.Message}");
             ReturnToMainMenu();
         }
     }
 
-    // NEW: Ensure NetworkManager is in clean state
+   
     private async Task EnsureCleanNetworkState()
     {
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)

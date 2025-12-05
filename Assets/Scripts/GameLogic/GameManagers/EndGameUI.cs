@@ -17,11 +17,14 @@ public class EndGameUI : MonoBehaviour
     [SerializeField] private string survivorWinTitle = "SURVIVORS WIN!";
     [SerializeField] private string cultistWinTitle = "CULTISTS WIN!";
 
+    private bool isEndGameActive = false;
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // Make it persist
         }
         else
         {
@@ -50,6 +53,7 @@ public class EndGameUI : MonoBehaviour
             return;
         }
 
+        isEndGameActive = true;
         endGamePanel.SetActive(true);
 
         // Set content based on game result
@@ -115,12 +119,16 @@ public class EndGameUI : MonoBehaviour
             // Disable various components
             var playerController = localPlayer.GetComponent<NetworkPlayerController>();
             var inventory = localPlayer.GetComponent<InventorySystem>();
+            var spectator = localPlayer.GetComponent<PlayerSpectator>();
 
             if (playerController != null)
                 playerController.enabled = false;
 
             if (inventory != null)
                 inventory.enabled = false;
+
+            if (spectator != null)
+                spectator.enabled = false;
 
             // Hide HUD
             if (GameHUDManager.Instance != null)
@@ -129,8 +137,7 @@ public class EndGameUI : MonoBehaviour
             }
         }
 
-        // Unlock cursor for ALL clients (not just player owner)
-        // This is crucial for being able to click the return button
+        // Unlock cursor for ALL clients
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -139,57 +146,52 @@ public class EndGameUI : MonoBehaviour
 
     private void OnReturnButtonClicked()
     {
+        if (!isEndGameActive) return;
+
         Debug.Log("Return to main menu button clicked");
 
-        // Show immediate feedback that button was clicked
+        // Prevent multiple clicks
+        isEndGameActive = false;
+
         if (returnButton != null)
         {
             returnButton.interactable = false;
             returnButton.GetComponentInChildren<TMP_Text>().text = "Returning...";
         }
 
-        // If we're the server, trigger immediate return
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            if (EndGameManager.Instance != null)
-            {
-                EndGameManager.Instance.ReturnToMainMenuImmediately();
-            }
-            else
-            {
-                Debug.LogError("EndGameManager.Instance is null!");
-                FallbackReturnToMainMenu();
-            }
-        }
-        else
-        {
-            // If we're a client, request the server to return
-            RequestReturnToMainMenuServerRpc();
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void RequestReturnToMainMenuServerRpc()
-    {
-        if (EndGameManager.Instance != null)
-        {
-            EndGameManager.Instance.ReturnToMainMenuImmediately();
-        }
-        else
-        {
-            Debug.LogError("EndGameManager.Instance is null on server!");
-        }
-    }
-
-    private void FallbackReturnToMainMenu()
-    {
-        Debug.Log("Using fallback method to return to main menu");
-
         // Clean up cross-scene data
         CrossSceneData.Reset();
 
+        // Reset all manager instances
+        ResetManagers();
+
         // Load main menu directly
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+
+        // Destroy this instance after scene load
+        Destroy(gameObject, 0.5f);
+    }
+
+    private void ResetManagers()
+    {
+        // Destroy all manager instances
+        var endGameManager = FindObjectOfType<EndGameManager>();
+        if (endGameManager != null) Destroy(endGameManager.gameObject);
+
+        var roleManager = FindObjectOfType<RoleManager>();
+        if (roleManager != null) Destroy(roleManager.gameObject);
+
+        var taskManager = FindObjectOfType<TaskManager>();
+        if (taskManager != null) Destroy(taskManager.gameObject);
+
+        var hudManager = FindObjectOfType<GameHUDManager>();
+        if (hudManager != null) Destroy(hudManager.gameObject);
+
+        // Shutdown network if it exists
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
     }
 
     // Method to hide the UI (useful for testing)
@@ -198,9 +200,7 @@ public class EndGameUI : MonoBehaviour
         if (endGamePanel != null)
             endGamePanel.SetActive(false);
 
-        // Re-enable cursor just in case
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        isEndGameActive = false;
     }
 
     // Debug method to check UI state
