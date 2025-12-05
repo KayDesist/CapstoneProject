@@ -17,9 +17,8 @@ public class NetworkPlayerController : NetworkBehaviour
     public Transform playerCamera;
     public Transform cameraPivot;
 
-    [Header("Animation Settings")]
+    [Header("Animation")]
     public Animator animator;
-    public float animationBlendSpeed = 8f; // How fast animations blend
 
     private Rigidbody rb;
     private PlayerHealth playerHealth;
@@ -29,11 +28,6 @@ public class NetworkPlayerController : NetworkBehaviour
     private Vector3 lastPosition;
     private string currentCharacterName = "";
     private bool isInitialized = false;
-
-    // Animation states
-    private float currentAnimationSpeed = 0f;
-    private bool isAttacking = false;
-    private bool isPerformingTask = false;
 
     private void Start()
     {
@@ -66,18 +60,14 @@ public class NetworkPlayerController : NetworkBehaviour
             rb.freezeRotation = true;
             rb.useGravity = true;
             rb.constraints = RigidbodyConstraints.FreezeRotation;
+
+            // Reset any existing velocity
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
         else
         {
             Debug.LogError("Rigidbody component not found on player!");
-        }
-
-        // Initialize animation parameters
-        if (animator != null)
-        {
-            animator.SetFloat("Speed", 0f);
-            animator.SetBool("IsSprinting", false);
-            animator.SetBool("IsPerformingTask", false);
         }
     }
 
@@ -150,21 +140,11 @@ public class NetworkPlayerController : NetworkBehaviour
         float speed = horizontalVelocity.magnitude;
 
         // Normalize speed for animation (0-1 range based on walk speed)
-        float targetSpeed = Mathf.Clamp01(speed / walkSpeed);
-
-        // Smoothly blend animation speed for better transitions
-        currentAnimationSpeed = Mathf.Lerp(currentAnimationSpeed, targetSpeed,
-                                          Time.fixedDeltaTime * animationBlendSpeed);
+        float normalizedSpeed = Mathf.Clamp01(speed / walkSpeed);
 
         // Set animation parameters
-        animator.SetFloat("Speed", currentAnimationSpeed);
+        animator.SetFloat("Speed", normalizedSpeed);
         animator.SetBool("IsSprinting", isSprinting);
-
-        // Update task animation state if needed
-        if (isPerformingTask)
-        {
-            animator.SetBool("IsPerformingTask", true);
-        }
     }
 
     private void UpdateCursorState()
@@ -308,39 +288,6 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-    // Animation methods
-    public void PlayAttackAnimation()
-    {
-        if (animator != null && !isPerformingTask)
-        {
-            animator.SetTrigger("Attack");
-            isAttacking = true;
-
-            // Reset attack state after animation
-            Invoke(nameof(ResetAttackState), 0.5f);
-        }
-    }
-
-    public void PlayTaskAnimation(bool performingTask)
-    {
-        if (animator != null)
-        {
-            isPerformingTask = performingTask;
-            animator.SetBool("IsPerformingTask", performingTask);
-
-            // If stopping task, also stop any attack animation
-            if (!performingTask && isAttacking)
-            {
-                animator.ResetTrigger("Attack");
-            }
-        }
-    }
-
-    private void ResetAttackState()
-    {
-        isAttacking = false;
-    }
-
     public bool IsMoving()
     {
         return (transform.position - lastPosition).sqrMagnitude > 0.001f;
@@ -387,6 +334,23 @@ public class NetworkPlayerController : NetworkBehaviour
         Debug.Log($"Role settings applied - Walk: {walkSpeed}, Sprint: {sprintSpeed}");
     }
 
+    // Simple animation methods
+    public void PlayAttackAnimation()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }
+    }
+
+    public void PlayTaskAnimation(bool isPerformingTask)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsPerformingTask", isPerformingTask);
+        }
+    }
+
     public string GetCharacterName()
     {
         return currentCharacterName;
@@ -414,36 +378,24 @@ public class NetworkPlayerController : NetworkBehaviour
         Debug.Log($"OwnerClientId: {OwnerClientId}");
         Debug.Log($"IsInitialized: {isInitialized}");
         Debug.Log($"Speed: {currentSpeed} (Walk: {walkSpeed}, Sprint: {sprintSpeed})");
-        Debug.Log($"Animation Speed: {currentAnimationSpeed}");
-        Debug.Log($"Is Sprinting: {isSprinting}");
-        Debug.Log($"Is Attacking: {isAttacking}");
-        Debug.Log($"Is Performing Task: {isPerformingTask}");
+        Debug.Log($"Camera Active: {playerCamera != null && playerCamera.gameObject.activeInHierarchy}");
+        Debug.Log($"Controller Enabled: {enabled}");
         Debug.Log($"Animator: {animator != null}");
-        if (animator != null)
+        Debug.Log($"Rigidbody: {rb != null}");
+        if (rb != null)
         {
-            Debug.Log($"Animator Speed Param: {animator.GetFloat("Speed")}");
-            Debug.Log($"Animator IsSprinting Param: {animator.GetBool("IsSprinting")}");
+            Debug.Log($"Rigidbody Velocity: {rb.linearVelocity}");
+            Debug.Log($"Rigidbody Use Gravity: {rb.useGravity}");
         }
     }
 
-    [ContextMenu("Test Attack Animation")]
-    public void TestAttackAnimation()
+    [ContextMenu("Test Movement")]
+    public void TestMovement()
     {
-        PlayAttackAnimation();
-        Debug.Log("Testing attack animation");
-    }
-
-    [ContextMenu("Test Task Animation")]
-    public void TestTaskAnimation()
-    {
-        PlayTaskAnimation(true);
-        Debug.Log("Testing task animation start");
-        Invoke(nameof(TestStopTaskAnimation), 2f);
-    }
-
-    private void TestStopTaskAnimation()
-    {
-        PlayTaskAnimation(false);
-        Debug.Log("Testing task animation stop");
+        if (rb != null)
+        {
+            Debug.Log("Testing movement - applying forward force");
+            rb.linearVelocity = transform.forward * 5f;
+        }
     }
 }
