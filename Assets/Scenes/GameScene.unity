@@ -468,7 +468,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0.000030517578, y: 0}
+  m_AnchoredPosition: {x: 0.000061035156, y: 0}
   m_SizeDelta: {x: 394.1562, y: 164.10309}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &108689613
@@ -4285,11 +4285,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerCharacterPrefabs:
-  - {fileID: 6323901835925246842, guid: 5c485bf0139f629499c363720b7944e4, type: 3}
-  - {fileID: 6439609074301724967, guid: a60c1e8cab7f4964cb6f042099888ef1, type: 3}
-  - {fileID: 3647581499883217187, guid: 8169b2bfff46d3f439bf25799582c3fc, type: 3}
-  - {fileID: 6396157932874996999, guid: 5575745b44696f741944c4edca33f0cc, type: 3}
-  - {fileID: 1262997115708581226, guid: 19a054514436fa3418efe1692e1f5e2b, type: 3}
+  - {fileID: 4020392051932624757, guid: 5c485bf0139f629499c363720b7944e4, type: 3}
+  - {fileID: 57156517736671299, guid: a60c1e8cab7f4964cb6f042099888ef1, type: 3}
+  - {fileID: 3666280288708664868, guid: 8169b2bfff46d3f439bf25799582c3fc, type: 3}
+  - {fileID: 1650211236402527682, guid: 5575745b44696f741944c4edca33f0cc, type: 3}
+  - {fileID: 8049183420308316499, guid: 19a054514436fa3418efe1692e1f5e2b, type: 3}
   roleManagerPrefab: {fileID: 4537833269111929824, guid: 7d405643a9596854ea431c84f1828f7d, type: 3}
   taskManagerPrefab: {fileID: 1902803486705307694, guid: e645a6954fd287441ac96c2741264e3a, type: 3}
   endGameManagerPrefab: {fileID: 6157652006208198683, guid: 9eda7d5fab6d1f64bb6d015229b2915e, type: 3}

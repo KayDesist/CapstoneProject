@@ -543,13 +543,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fe3e4e353f7738469ff9e2b63434371, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 10
-  lookAtTarget: {fileID: 0}
-  cameraHeight: 3
-  cameraDistance: 5
-  mainCamera: {fileID: 0}
-  currentAngle: 0
-  isInitialized: 0
 --- !u!1 &674497626
 GameObject:
   m_ObjectHideFlags: 0
