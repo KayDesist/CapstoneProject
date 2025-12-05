@@ -25,6 +25,9 @@ public class MainMenuCleanup : MonoBehaviour
         // Destroy any leftover manager objects
         DestroyManagers();
 
+        // Clean up EndGameUI specifically
+        CleanupEndGameUI();
+
         // Reset cross-scene data
         CrossSceneData.Reset();
 
@@ -74,7 +77,7 @@ public class MainMenuCleanup : MonoBehaviour
             }
         }
 
-        // Also clean up RoleDisplayUI if it exists
+        // Clean up RoleDisplayUI if it exists
         RoleDisplayUI[] roleDisplays = FindObjectsOfType<RoleDisplayUI>();
         foreach (RoleDisplayUI display in roleDisplays)
         {
@@ -87,6 +90,28 @@ public class MainMenuCleanup : MonoBehaviour
 
         // Reset static instances using the new methods
         ResetStaticInstances();
+    }
+
+    private void CleanupEndGameUI()
+    {
+        // Clean up any EndGameUI instances
+        EndGameUI[] endGameUIs = FindObjectsOfType<EndGameUI>();
+        foreach (EndGameUI ui in endGameUIs)
+        {
+            if (ui.gameObject != null && ui.gameObject != gameObject)
+            {
+                Debug.Log($"Destroying leftover EndGameUI: {ui.gameObject.name}");
+                Destroy(ui.gameObject);
+            }
+        }
+
+        // Also clean up any temporary end game canvases
+        GameObject tempCanvas = GameObject.Find("TempEndGameCanvas");
+        if (tempCanvas != null)
+        {
+            Debug.Log($"Destroying temporary end game canvas");
+            Destroy(tempCanvas);
+        }
     }
 
     private void ResetStaticInstances()

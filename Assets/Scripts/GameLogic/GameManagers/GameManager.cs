@@ -14,6 +14,7 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject roleManagerPrefab;
     [SerializeField] private GameObject taskManagerPrefab;
     [SerializeField] private GameObject endGameManagerPrefab;
+    [SerializeField] private GameObject gameHUDManagerPrefab; // Added for completeness
 
     private HashSet<ulong> spawnedPlayers = new HashSet<ulong>();
     private Dictionary<ulong, int> playerCharacterIndex = new Dictionary<ulong, int>();
@@ -115,7 +116,7 @@ public class GameManager : NetworkBehaviour
                 // Only load scene if NetworkManager is still available
                 if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
                 {
-                    NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+                    NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single); // Changed to MainMenu
                 }
             }
         }
@@ -128,6 +129,26 @@ public class GameManager : NetworkBehaviour
     private IEnumerator InitializeManagers()
     {
         yield return new WaitForSeconds(0.5f);
+
+        // CRITICAL FIX: Spawn EndGameManager FIRST
+        if (EndGameManager.Instance == null && endGameManagerPrefab != null)
+        {
+            GameObject endGameManager = Instantiate(endGameManagerPrefab);
+            endGameManager.GetComponent<NetworkObject>().Spawn();
+            Debug.Log("Spawned EndGameManager");
+        }
+
+        yield return new WaitForSeconds(0.2f);
+
+        // Spawn GameHUDManager if it doesn't exist
+        if (GameHUDManager.Instance == null && gameHUDManagerPrefab != null)
+        {
+            GameObject gameHUDManager = Instantiate(gameHUDManagerPrefab);
+            // GameHUDManager doesn't need NetworkObject since it's client-side only
+            Debug.Log("Spawned GameHUDManager");
+        }
+
+        yield return new WaitForSeconds(0.2f);
 
         // Spawn RoleManager if it doesn't exist
         if (RoleManager.Instance == null && roleManagerPrefab != null)
@@ -145,16 +166,6 @@ public class GameManager : NetworkBehaviour
             GameObject taskManager = Instantiate(taskManagerPrefab);
             taskManager.GetComponent<NetworkObject>().Spawn();
             Debug.Log("Spawned TaskManager");
-        }
-
-        yield return new WaitForSeconds(0.2f);
-
-        // Spawn EndGameManager if it doesn't exist
-        if (EndGameManager.Instance == null && endGameManagerPrefab != null)
-        {
-            GameObject endGameManager = Instantiate(endGameManagerPrefab);
-            endGameManager.GetComponent<NetworkObject>().Spawn();
-            Debug.Log("Spawned EndGameManager");
         }
 
         yield return new WaitForSeconds(0.2f);

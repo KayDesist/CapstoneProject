@@ -64,11 +64,11 @@ public class EndGameManager : NetworkBehaviour
             InitializeGameState();
         }
 
-        // Subscribe to changes
+        // Subscribe to changes - THIS IS CRITICAL FOR CLIENTS
         isGameEnded.OnValueChanged += OnGameEndedChanged;
         gameResult.OnValueChanged += OnGameResultChanged;
 
-        Debug.Log("EndGameManager spawned and ready");
+        Debug.Log($"EndGameManager spawned for {(IsServer ? "Server" : "Client")}");
     }
 
     private void Update()
@@ -105,13 +105,32 @@ public class EndGameManager : NetworkBehaviour
 
     private void OnGameResultChanged(GameResult oldValue, GameResult newValue)
     {
-        Debug.Log($"GameResult changed: {oldValue} -> {newValue}");
+        Debug.Log($"GameResult changed: {oldValue} -> {newValue} (Client: {!IsServer})");
 
-        // Show UI immediately when result changes
-        if (newValue != GameResult.None && EndGameUI.Instance != null)
+        // Show UI immediately when result changes - THIS FIXES CLIENT UI
+        if (newValue != GameResult.None)
         {
-            EndGameUI.Instance.ShowEndGameScreen(newValue);
+            // Show UI with a small delay to ensure it's ready
+            Invoke(nameof(ShowEndGameUI), 0.5f);
             DisableAllPlayerControls();
+        }
+    }
+
+    private void ShowEndGameUI()
+    {
+        if (EndGameUI.Instance != null)
+        {
+            EndGameUI.Instance.ShowEndGameScreen(gameResult.Value);
+        }
+        else
+        {
+            Debug.LogWarning("EndGameUI.Instance is null, trying to find it in scene...");
+            // Try to find it if it hasn't been initialized yet
+            var endGameUI = FindObjectOfType<EndGameUI>();
+            if (endGameUI != null)
+            {
+                endGameUI.ShowEndGameScreen(gameResult.Value);
+            }
         }
     }
 
@@ -285,6 +304,8 @@ public class EndGameManager : NetworkBehaviour
 
         Debug.Log($"🎮 GAME ENDED: {result} 🎮");
         OnGameEnded?.Invoke();
+
+        // Notify all clients
         EndGameClientRpc(result);
     }
 
@@ -293,42 +314,39 @@ public class EndGameManager : NetworkBehaviour
     {
         Debug.Log($"Client received end game notification: {result}");
 
-        if (EndGameUI.Instance != null)
-        {
-            EndGameUI.Instance.ShowEndGameScreen(result);
-        }
+        // The NetworkVariable change will trigger OnGameResultChanged
+        // which will show the UI
     }
 
-    // NEW: Method to return to lobby (called by UI)
-    public void ReturnToLobby()
+    // NEW: Method to return to Main Menu (called by UI)
+    public void ReturnToMainMenu()
     {
         if (!IsServer) return;
 
-        Debug.Log("Returning to lobby...");
+        Debug.Log("Returning to Main Menu...");
 
-        // Show loading screen or message
-        ReturnToLobbyClientRpc();
+        // Notify all clients
+        ReturnToMainMenuClientRpc();
 
-        // Small delay before loading lobby
-        Invoke(nameof(LoadLobbyScene), 1f);
+        // Small delay before loading scene
+        Invoke(nameof(LoadMainMenuScene), 1f);
     }
 
     [ClientRpc]
-    private void ReturnToLobbyClientRpc()
+    private void ReturnToMainMenuClientRpc()
     {
-        Debug.Log("Server is returning everyone to lobby...");
-        // Optional: Show "Returning to lobby..." message
+        Debug.Log("Server is returning everyone to Main Menu...");
     }
 
-    private void LoadLobbyScene()
+    private void LoadMainMenuScene()
     {
         if (!IsServer) return;
 
         // Clean up cross-scene data
         CrossSceneData.Reset();
 
-        // Load lobby scene for all clients
-        NetworkManager.Singleton.SceneManager.LoadScene("Lobby", LoadSceneMode.Single);
+        // Load Main Menu scene for all clients
+        NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
     // Handle client disconnection
@@ -383,7 +401,11 @@ public class EndGameManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        isGameEnded.OnValueChanged -= OnGameEndedChanged;
-        gameResult.OnValueChanged -= OnGameResultChanged;
+        // Unsubscribe from changes
+        if (isGameEnded != null)
+            isGameEnded.OnValueChanged -= OnGameEndedChanged;
+
+        if (gameResult != null)
+            gameResult.OnValueChanged -= OnGameResultChanged;
     }
 }

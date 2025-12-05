@@ -21,6 +21,7 @@ public class EndGameUI : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -32,9 +33,11 @@ public class EndGameUI : MonoBehaviour
             return;
         }
 
+        // Hide panel initially
         if (endGamePanel != null)
             endGamePanel.SetActive(false);
 
+        // Setup return button
         if (returnButton != null)
         {
             returnButton.onClick.AddListener(OnReturnButtonClicked);
@@ -78,7 +81,7 @@ public class EndGameUI : MonoBehaviour
                 break;
         }
 
-        // Disable player controls
+        // Disable player controls and enable mouse interaction
         DisablePlayerControls();
 
         Debug.Log($"End game UI shown for result: {result}");
@@ -124,49 +127,54 @@ public class EndGameUI : MonoBehaviour
             }
         }
 
-        // Unlock cursor
+        // Unlock cursor for UI interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        Debug.Log("Player controls disabled for end game");
+        Debug.Log("Player controls disabled for end game UI");
     }
 
     private void OnReturnButtonClicked()
     {
         if (!isEndGameActive) return;
 
-        Debug.Log("Return to lobby button clicked");
+        Debug.Log("Return to main menu button clicked");
 
         // Prevent multiple clicks
         isEndGameActive = false;
-        returnButton.interactable = false;
-        returnButton.GetComponentInChildren<TMP_Text>().text = "Returning to lobby...";
 
-        // Request server to return everyone to lobby
+        if (returnButton != null)
+        {
+            returnButton.interactable = false;
+            returnButton.GetComponentInChildren<TMP_Text>().text = "Returning...";
+        }
+
+        // Request server to return to Main Menu
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             // We are the host
             if (EndGameManager.Instance != null)
             {
-                EndGameManager.Instance.ReturnToLobby();
+                EndGameManager.Instance.ReturnToMainMenu();
             }
         }
         else if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
         {
             // We are a client, request the host
-            RequestReturnToLobbyServerRpc();
+            RequestReturnToMainMenuServerRpc();
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestReturnToLobbyServerRpc()
+    private void RequestReturnToMainMenuServerRpc()
     {
         if (EndGameManager.Instance != null)
         {
-            EndGameManager.Instance.ReturnToLobby();
+            EndGameManager.Instance.ReturnToMainMenu();
         }
     }
 
+    // Method to hide the UI (useful for testing)
     public void HideEndGameScreen()
     {
         if (endGamePanel != null)
@@ -175,6 +183,7 @@ public class EndGameUI : MonoBehaviour
         isEndGameActive = false;
     }
 
+    // Clean up when returning to main menu
     private void OnDestroy()
     {
         if (Instance == this)
