@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
+using UnityEngine.SceneManagement;
 
 public class EndGameUI : MonoBehaviour
 {
@@ -21,11 +22,10 @@ public class EndGameUI : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
+        // Singleton pattern - but we'll clean it up properly
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
@@ -44,6 +44,19 @@ public class EndGameUI : MonoBehaviour
         }
 
         Debug.Log("EndGameUI initialized");
+
+        // Subscribe to scene change event
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Auto-destroy if we're in the MainMenu scene
+        if (scene.name == "MainMenu" && isEndGameActive)
+        {
+            Debug.Log("EndGameUI detected MainMenu scene - cleaning up");
+            Cleanup();
+        }
     }
 
     public void ShowEndGameScreen(EndGameManager.GameResult result)
@@ -55,6 +68,9 @@ public class EndGameUI : MonoBehaviour
         }
 
         isEndGameActive = true;
+
+        // Force the gameObject to be active
+        gameObject.SetActive(true);
         endGamePanel.SetActive(true);
 
         // Set content based on game result
@@ -163,6 +179,9 @@ public class EndGameUI : MonoBehaviour
             // We are a client, request the host
             RequestReturnToMainMenuServerRpc();
         }
+
+        // Clean up after a delay
+        Invoke(nameof(Cleanup), 2f);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -183,6 +202,15 @@ public class EndGameUI : MonoBehaviour
         isEndGameActive = false;
     }
 
+    private void Cleanup()
+    {
+        // Hide the UI
+        HideEndGameScreen();
+
+        // Destroy this gameObject
+        Destroy(gameObject);
+    }
+
     // Clean up when returning to main menu
     private void OnDestroy()
     {
@@ -190,5 +218,8 @@ public class EndGameUI : MonoBehaviour
         {
             Instance = null;
         }
+
+        // Unsubscribe from scene change event
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

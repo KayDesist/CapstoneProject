@@ -49,7 +49,7 @@ public class EndGameManager : NetworkBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // REMOVED: DontDestroyOnLoad(gameObject); // This was causing issues
         }
         else
         {
@@ -111,9 +111,13 @@ public class EndGameManager : NetworkBehaviour
         if (newValue != GameResult.None)
         {
             // Show UI with a small delay to ensure it's ready
-            Invoke(nameof(ShowEndGameUI), 0.5f);
-            DisableAllPlayerControls();
+            Invoke(nameof(ShowEndGameUIForClient), 0.5f);
         }
+    }
+
+    private void ShowEndGameUIForClient()
+    {
+        ShowEndGameUI();
     }
 
     private void ShowEndGameUI()
@@ -124,13 +128,46 @@ public class EndGameManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning("EndGameUI.Instance is null, trying to find it in scene...");
+            Debug.LogWarning("EndGameUI.Instance is null, trying to find or create it...");
+
             // Try to find it if it hasn't been initialized yet
             var endGameUI = FindObjectOfType<EndGameUI>();
             if (endGameUI != null)
             {
                 endGameUI.ShowEndGameScreen(gameResult.Value);
             }
+            else
+            {
+                // Create EndGameUI for dead players who might not have it
+                CreateEndGameUIForDeadPlayers();
+            }
+        }
+
+        // Force enable HUD for dead players so they can see the end game UI
+        if (GameHUDManager.Instance != null)
+        {
+            GameHUDManager.Instance.gameObject.SetActive(true);
+            // Re-enable all HUD elements
+            GameHUDManager.Instance.ResetHUD();
+        }
+    }
+
+    private void CreateEndGameUIForDeadPlayers()
+    {
+        // Try to find or create EndGameUI for clients who might not have it
+        GameObject endGameUIPrefab = Resources.Load<GameObject>("EndGameUI");
+        if (endGameUIPrefab != null)
+        {
+            GameObject endGameUIObject = Instantiate(endGameUIPrefab);
+            EndGameUI endGameUI = endGameUIObject.GetComponent<EndGameUI>();
+            if (endGameUI != null)
+            {
+                endGameUI.ShowEndGameScreen(gameResult.Value);
+            }
+        }
+        else
+        {
+            Debug.LogError("EndGameUI prefab not found in Resources!");
         }
     }
 
@@ -305,8 +342,11 @@ public class EndGameManager : NetworkBehaviour
         Debug.Log($"🎮 GAME ENDED: {result} 🎮");
         OnGameEnded?.Invoke();
 
-        // Notify all clients
+        // Notify all clients with a direct RPC call
         EndGameClientRpc(result);
+
+        // Also disable controls for all players
+        DisableAllPlayerControls();
     }
 
     [ClientRpc]
@@ -314,16 +354,17 @@ public class EndGameManager : NetworkBehaviour
     {
         Debug.Log($"Client received end game notification: {result}");
 
-        // The NetworkVariable change will trigger OnGameResultChanged
-        // which will show the UI
+        // Force show UI for all clients, including dead ones
+        ShowEndGameUI();
     }
 
     // NEW: Method to return to Main Menu (called by UI)
     public void ReturnToMainMenu()
     {
-        if (!IsServer) return;
-
         Debug.Log("Returning to Main Menu...");
+
+        // Clean up all UI instances before returning
+        CleanupEndGameUI();
 
         // Notify all clients
         ReturnToMainMenuClientRpc();
@@ -336,6 +377,25 @@ public class EndGameManager : NetworkBehaviour
     private void ReturnToMainMenuClientRpc()
     {
         Debug.Log("Server is returning everyone to Main Menu...");
+
+        // Clean up UI on client side too
+        CleanupEndGameUI();
+    }
+
+    private void CleanupEndGameUI()
+    {
+        // Destroy all EndGameUI instances
+        EndGameUI[] allEndGameUIs = FindObjectsOfType<EndGameUI>();
+        foreach (var ui in allEndGameUIs)
+        {
+            if (ui != null && ui.gameObject != null)
+            {
+                Destroy(ui.gameObject);
+            }
+        }
+
+        // Also reset the static instance
+        EndGameUI.Instance = null;
     }
 
     private void LoadMainMenuScene()

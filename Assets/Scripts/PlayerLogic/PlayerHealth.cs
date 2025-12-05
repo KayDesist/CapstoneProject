@@ -263,17 +263,19 @@ public class PlayerHealth : NetworkBehaviour
                 playerController.enabled = false;
             }
 
-            // Hide HUD for dead players
+            // IMPORTANT: Don't hide the HUD completely for dead players
+            // They still need to see the end game UI
             if (GameHUDManager.Instance != null)
             {
-                GameHUDManager.Instance.gameObject.SetActive(false);
+                // Instead of hiding, just show minimal HUD or keep it visible
+                GameHUDManager.Instance.ResetHUD();
             }
 
             // Unlock cursor
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            Debug.Log("Local player died - controls disabled");
+            Debug.Log("Local player died - controls disabled (but HUD kept for end game)");
         }
     }
 

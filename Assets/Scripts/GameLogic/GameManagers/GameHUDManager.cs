@@ -61,7 +61,6 @@ public class GameHUDManager : MonoBehaviour
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
-      
 
         // CRITICAL FIX: Ensure interaction panel is ALWAYS hidden at start
         HideInteractionPrompt();
@@ -175,6 +174,18 @@ public class GameHUDManager : MonoBehaviour
         // FIX: CRITICAL - Ensure interaction panel remains hidden when showing persistent HUD
         HideInteractionPrompt();
         HideInteractionProgress();
+    }
+
+    // NEW: Special method to show HUD for end game (for dead players)
+    public void ShowHUDForEndGame()
+    {
+        Debug.Log("Showing HUD for end game");
+
+        // Make sure the gameObject is active
+        gameObject.SetActive(true);
+
+        // Show all HUD elements
+        ShowPersistentHUD();
     }
 
 
@@ -399,7 +410,6 @@ public class GameHUDManager : MonoBehaviour
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
-   
 
         Debug.Log("HUD fully reset");
     }
