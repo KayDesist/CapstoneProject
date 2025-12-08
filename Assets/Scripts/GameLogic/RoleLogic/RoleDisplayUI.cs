@@ -15,6 +15,10 @@ public class RoleDisplayUI : MonoBehaviour
     [SerializeField] private Image roleBackground;
     [SerializeField] private Button continueButton;
 
+    [Header("Audio")]
+    public AudioClip roleRevealSound;
+    private AudioSource audioSource;
+
     [Header("Role Colors")]
     [SerializeField] private Color survivorColor = Color.blue;
     [SerializeField] private Color cultistColor = Color.red;
@@ -23,7 +27,6 @@ public class RoleDisplayUI : MonoBehaviour
     [SerializeField] private string survivorDescription = "Complete tasks and survive! Work with other survivors to escape before the cultist completes their ritual.";
     [SerializeField] private string cultistDescription = "Eliminate all survivors or complete the dark ritual before they escape! Use your abilities to hunt them down.";
 
-    // Event for when the role display is hidden
     public static event Action OnRoleDisplayHidden;
 
     private void Awake()
@@ -38,11 +41,14 @@ public class RoleDisplayUI : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // Hide panel initially
+        // Setup audio source
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
         if (roleDisplayPanel != null)
             roleDisplayPanel.SetActive(false);
 
-        // Setup continue button
         if (continueButton != null)
             continueButton.onClick.AddListener(HideRoleDisplay);
     }
@@ -51,7 +57,12 @@ public class RoleDisplayUI : MonoBehaviour
     {
         if (roleDisplayPanel == null) return;
 
-        // Update UI based on role
+        // Play role reveal sound
+        if (audioSource != null && roleRevealSound != null)
+        {
+            audioSource.PlayOneShot(roleRevealSound);
+        }
+
         switch (role)
         {
             case RoleManager.PlayerRole.Survivor:
@@ -68,16 +79,13 @@ public class RoleDisplayUI : MonoBehaviour
                 break;
         }
 
-        // Show the panel
         roleDisplayPanel.SetActive(true);
-
-        // Auto-hide after 3 seconds if player doesn't click continue
         StartCoroutine(AutoHideRoleDisplay());
     }
 
     private IEnumerator AutoHideRoleDisplay()
     {
-        yield return new WaitForSeconds(3f); // Reduced from 10f to 3f
+        yield return new WaitForSeconds(3f);
         HideRoleDisplay();
     }
 
@@ -87,28 +95,7 @@ public class RoleDisplayUI : MonoBehaviour
             roleDisplayPanel.SetActive(false);
 
         StopAllCoroutines();
-
-        // Notify that the role display has been hidden
         OnRoleDisplayHidden?.Invoke();
         Debug.Log("RoleDisplayUI hidden and event triggered");
-    }
-
-    // For testing in editor
-    [ContextMenu("Test Survivor Display")]
-    private void TestSurvivorDisplay()
-    {
-        ShowRole(RoleManager.PlayerRole.Survivor);
-    }
-
-    [ContextMenu("Test Cultist Display")]
-    private void TestCultistDisplay()
-    {
-        ShowRole(RoleManager.PlayerRole.Cultist);
-    }
-
-    [ContextMenu("Hide Display")]
-    private void TestHideDisplay()
-    {
-        HideRoleDisplay();
     }
 }

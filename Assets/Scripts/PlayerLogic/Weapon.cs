@@ -14,24 +14,24 @@ public class Weapon : NetworkBehaviour
     [Header("Animation Settings")]
     public string attackAnimationName = "Attack";
 
+    [Header("Audio")]
+    public AudioClip swingSound;
+
     protected float lastAttackTime;
     protected PlayerHealth ownerHealth;
     public ulong ownerId;
     public PlayerHitboxDamage playerHitbox;
     protected NetworkPlayerController playerController;
 
-    // Timer-based attack system
     protected float weaponAttackEndTime = 0f;
     protected bool isAttackActive = false;
 
-    // Updated Initialize method with hitbox parameter
     public virtual void Initialize(ulong ownerClientId, PlayerHealth health, PlayerHitboxDamage hitbox)
     {
         ownerId = ownerClientId;
         ownerHealth = health;
         playerHitbox = hitbox;
 
-        // Get player controller for animations
         if (health != null)
         {
             playerController = health.GetComponent<NetworkPlayerController>();
@@ -42,7 +42,6 @@ public class Weapon : NetworkBehaviour
 
     protected virtual void Update()
     {
-        // Handle attack duration without coroutines
         if (isAttackActive && Time.time >= weaponAttackEndTime)
         {
             Debug.Log("Weapon: Attack duration ended, deactivating");
@@ -69,7 +68,6 @@ public class Weapon : NetworkBehaviour
     {
         Debug.Log($"Weapon: Local attack initiated by client {ownerId}");
 
-        // Only do minimal local checks for immediate feedback
         if (Time.time < lastAttackTime + attackCooldown)
         {
             Debug.Log("Weapon on cooldown - rejected locally");
@@ -91,7 +89,6 @@ public class Weapon : NetworkBehaviour
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        // Verify the sender is the owner of this weapon
         if (senderClientId != ownerId)
         {
             Debug.LogWarning($"Client {senderClientId} attempted to attack with weapon owned by {ownerId}");
@@ -100,7 +97,6 @@ public class Weapon : NetworkBehaviour
 
         Debug.Log($"Weapon: Server received attack request from {senderClientId}");
 
-        // Server-side validation
         if (Time.time < lastAttackTime + attackCooldown)
         {
             Debug.Log($"Server rejected attack - on cooldown");
@@ -127,13 +123,11 @@ public class Weapon : NetworkBehaviour
 
         ConsumeStamina();
 
-        // Trigger attack animation on player
         if (playerController != null)
         {
             playerController.PlayAttackAnimation();
         }
 
-        // Activate player's hitbox
         if (playerHitbox != null)
         {
             playerHitbox.SetActive(true, damage, ownerId);
@@ -144,7 +138,7 @@ public class Weapon : NetworkBehaviour
             Debug.LogError("playerHitbox is null in PerformAttack! Weapon may not be properly initialized.");
         }
 
-        // Visual feedback on all clients
+        // Play swing sound on all clients
         PlayAttackEffectsClientRpc();
 
         Debug.Log($"Player {ownerId} performed attack with {weaponName}");
@@ -168,15 +162,10 @@ public class Weapon : NetworkBehaviour
     [ClientRpc]
     private void PlayAttackEffectsClientRpc()
     {
-        // Play attack effects on all clients
-        if (IsOwner)
+        // Play swing sound
+        if (swingSound != null)
         {
-            Debug.Log("Playing local attack effects");
-        }
-        else
-        {
-            Debug.Log("Playing remote attack effects");
-            // Add particle effects, sounds, etc. for other players' attacks
+            AudioSource.PlayClipAtPoint(swingSound, transform.position, 0.5f);
         }
     }
 
@@ -217,7 +206,6 @@ public class Weapon : NetworkBehaviour
 
     public virtual void OnUnequipped()
     {
-        // Ensure attack is deactivated when unequipped
         if (isAttackActive)
         {
             Debug.Log("Weapon unequipped during active attack - deactivating");
@@ -228,26 +216,11 @@ public class Weapon : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        // Clean up any active attacks
         if (isAttackActive)
         {
             Debug.Log("Weapon network despawn - deactivating attack");
             DeactivateAttack();
         }
         base.OnNetworkDespawn();
-    }
-
-    // Debug method to test weapon directly
-    [ContextMenu("Test Attack")]
-    private void TestAttack()
-    {
-        if (IsOwner)
-        {
-            Attack();
-        }
-        else
-        {
-            Debug.Log("Cannot test attack - not owner");
-        }
     }
 }
