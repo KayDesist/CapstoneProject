@@ -19,6 +19,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
     [Header("Animation")]
     public Animator animator;
+    private NetworkAnimationController networkAnimationController;
 
     [Header("Footstep Audio")]
     public AudioClip[] footstepSounds;
@@ -47,6 +48,9 @@ public class NetworkPlayerController : NetworkBehaviour
         playerHealth = GetComponent<PlayerHealth>();
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
+
+        // Get NetworkAnimationController
+        networkAnimationController = GetComponent<NetworkAnimationController>();
 
         // Setup audio source
         audioSource = GetComponent<AudioSource>();
@@ -106,6 +110,8 @@ public class NetworkPlayerController : NetworkBehaviour
             enabled = false;
             Debug.Log("Disabled camera and controls for non-owner player");
         }
+
+        isInitialized = true;
     }
 
     private void Update()
@@ -115,7 +121,7 @@ public class NetworkPlayerController : NetworkBehaviour
 
         HandleMouseLook();
         HandleSprint();
-        HandleFootsteps(); // Added footstep handling
+        HandleFootsteps();
 
         lastPosition = transform.position;
     }
@@ -126,7 +132,6 @@ public class NetworkPlayerController : NetworkBehaviour
         if (SceneManager.GetActiveScene().name != "GameScene") return;
 
         HandleMovement();
-        UpdateAnimations();
     }
 
     private void HandleFootsteps()
@@ -171,18 +176,6 @@ public class NetworkPlayerController : NetworkBehaviour
             audioSource.pitch = Random.Range(0.9f, 1.1f);
             audioSource.PlayOneShot(footstepSounds[soundIndex]);
         }
-    }
-
-    private void UpdateAnimations()
-    {
-        if (animator == null) return;
-
-        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
-        float speed = horizontalVelocity.magnitude;
-        float normalizedSpeed = Mathf.Clamp01(speed / walkSpeed);
-
-        animator.SetFloat("Speed", normalizedSpeed);
-        animator.SetBool("IsSprinting", isSprinting);
     }
 
     private void UpdateCursorState()
@@ -232,7 +225,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     currentSpeed = sprintSpeed;
                     if (playerHealth != null)
                     {
-                        playerHealth.SetSprinting(true);
+                        playerHealth.SetSprinting(true); // Add this line
                     }
                 }
 
@@ -265,7 +258,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     currentSpeed = walkSpeed;
                     if (playerHealth != null)
                     {
-                        playerHealth.SetSprinting(false);
+                        playerHealth.SetSprinting(false); // Add this line
                     }
                 }
             }
@@ -278,7 +271,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 currentSpeed = walkSpeed;
                 if (playerHealth != null)
                 {
-                    playerHealth.SetSprinting(false);
+                    playerHealth.SetSprinting(false); // Add this line
                 }
             }
         }
@@ -287,7 +280,7 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             isSprinting = false;
             currentSpeed = walkSpeed;
-            playerHealth.SetSprinting(false);
+            playerHealth.SetSprinting(false); // Add this line
         }
     }
 
@@ -355,18 +348,33 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public void PlayAttackAnimation()
     {
-        if (animator != null)
+        if (networkAnimationController != null)
+        {
+            networkAnimationController.TriggerAttack();
+        }
+        else if (animator != null)
         {
             animator.SetTrigger("Attack");
         }
     }
 
-    public void PlayTaskAnimation(bool isPerformingTask)
+   
+    public void SetPerformingTask(bool isPerformingTask)
     {
-        if (animator != null)
+        if (networkAnimationController != null)
+        {
+            networkAnimationController.SetPerformingTask(isPerformingTask);
+        }
+        else if (animator != null)
         {
             animator.SetBool("IsPerformingTask", isPerformingTask);
         }
+    }
+
+    // Keep old method name for compatibility (will call the new one)
+    public void PlayTaskAnimation(bool isPerformingTask)
+    {
+        SetPerformingTask(isPerformingTask);
     }
 
     public string GetCharacterName()

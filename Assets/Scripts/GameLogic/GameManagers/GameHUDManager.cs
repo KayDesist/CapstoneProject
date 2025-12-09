@@ -40,6 +40,10 @@ public class GameHUDManager : MonoBehaviour
     private List<string> currentTasks = new List<string>();
     private RoleManager.PlayerRole currentRole;
 
+    // Reference to local player's health component
+    private PlayerHealth localPlayerHealth;
+    private NetworkPlayerController localPlayerController;
+
     private void Awake()
     {
         if (Instance == null)
@@ -88,6 +92,55 @@ public class GameHUDManager : MonoBehaviour
                 OnRoleAssigned(currentRole);
             }
         }
+
+        // Find local player health
+        StartCoroutine(FindLocalPlayerHealth());
+    }
+
+    private IEnumerator FindLocalPlayerHealth()
+    {
+        int attempts = 0;
+        while (localPlayerHealth == null && attempts < 10)
+        {
+            attempts++;
+
+            // Find the local player
+            var playerControllers = FindObjectsOfType<NetworkPlayerController>();
+            foreach (var controller in playerControllers)
+            {
+                if (controller.IsOwner)
+                {
+                    localPlayerController = controller;
+                    localPlayerHealth = controller.GetComponent<PlayerHealth>();
+
+                    if (localPlayerHealth != null)
+                    {
+                        Debug.Log($"Found local player health component for client {NetworkManager.Singleton.LocalClientId}");
+                        // Subscribe to health changes
+                        SubscribeToHealthChanges();
+                        break;
+                    }
+                }
+            }
+
+            if (localPlayerHealth == null)
+            {
+                Debug.Log($"Attempt {attempts}: Could not find local player health, trying again...");
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+
+        if (localPlayerHealth == null)
+        {
+            Debug.LogWarning("Could not find local player health component after 10 attempts");
+        }
+    }
+
+    private void SubscribeToHealthChanges()
+    {
+        // We'll need to modify PlayerHealth to expose events or NetworkVariable callbacks
+        // For now, we'll update UI in Update() by polling
+        Debug.Log("Subscribed to local player health changes");
     }
 
     public void OnRoleAssigned(RoleManager.PlayerRole role)
@@ -174,6 +227,19 @@ public class GameHUDManager : MonoBehaviour
         // FIX: CRITICAL - Ensure interaction panel remains hidden when showing persistent HUD
         HideInteractionPrompt();
         HideInteractionProgress();
+    }
+
+    // NEW: Update method to poll health and stamina values
+    private void Update()
+    {
+        if (localPlayerHealth != null)
+        {
+            // Update health UI
+            UpdateHealth(localPlayerHealth.GetCurrentHealth(), localPlayerHealth.maxHealth);
+
+            // Update stamina UI
+            UpdateStamina(localPlayerHealth.GetStamina(), localPlayerHealth.maxStamina);
+        }
     }
 
     // NEW: Special method to show HUD for end game (for dead players)
@@ -263,7 +329,7 @@ public class GameHUDManager : MonoBehaviour
 
         if (healthText != null)
         {
-            healthText.text = $"{currentHealth}/{maxHealth}";
+            healthText.text = $"{Mathf.Round(currentHealth)}/{maxHealth}";
         }
     }
 
@@ -277,7 +343,7 @@ public class GameHUDManager : MonoBehaviour
 
         if (staminaText != null)
         {
-            staminaText.text = $"{currentStamina}/{maxStamina}";
+            staminaText.text = $"{Mathf.Round(currentStamina)}/{maxStamina}";
         }
     }
 
@@ -450,7 +516,7 @@ public class GameHUDManager : MonoBehaviour
     {
         if (currentTasks.Count > 0)
         {
-            currentTasks[0] = "- Repair Generator ✓";
+            currentTasks[0] = "- Repair Generator: DONE";
             UpdateTasksText();
             UpdateTotalTasksText(1, currentTasks.Count);
         }

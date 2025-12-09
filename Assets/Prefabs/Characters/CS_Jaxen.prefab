@@ -138,6 +138,7 @@ GameObject:
   - component: {fileID: 6767008318784022378}
   - component: {fileID: -1188128960415896532}
   - component: {fileID: -2095307408133354571}
+  - component: {fileID: -8483127152525755271}
   m_Layer: 0
   m_Name: CS_Jaxen
   m_TagString: Untagged
@@ -179,7 +180,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -369,11 +370,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
-  staminaRegenRate: 15
-  currentHealth:
-    m_InternalValue: 100
-  currentStamina:
-    m_InternalValue: 100
 --- !u!114 &6767008318784022378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -511,6 +507,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-8483127152525755271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57156517736671299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60df1467a3a64ed469498f0d2e77a87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  smoothTime: 0.1
+  animator: {fileID: 5218745564344304846}
+  playerController: {fileID: 8337019986176635268}
+  playerHealth: {fileID: 30701581948435637}
 --- !u!1 &124936893894354656
 GameObject:
   m_ObjectHideFlags: 0

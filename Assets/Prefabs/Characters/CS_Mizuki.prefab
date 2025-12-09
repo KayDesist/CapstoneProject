@@ -1874,6 +1874,7 @@ GameObject:
   - component: {fileID: 4854590826355010678}
   - component: {fileID: 8775076098434360546}
   - component: {fileID: -6170828838829799877}
+  - component: {fileID: 8394381137171367882}
   m_Layer: 0
   m_Name: CS_Mizuki
   m_TagString: Untagged
@@ -1915,7 +1916,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -2105,11 +2106,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
-  staminaRegenRate: 15
-  currentHealth:
-    m_InternalValue: 100
-  currentStamina:
-    m_InternalValue: 100
 --- !u!114 &8775076098434360546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2232,6 +2228,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &8394381137171367882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4020392051932624757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60df1467a3a64ed469498f0d2e77a87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  smoothTime: 0.1
+  animator: {fileID: 9135152093068836895}
+  playerController: {fileID: 4269191830149170046}
+  playerHealth: {fileID: 4854590826355010678}
 --- !u!1 &4165524203057759324
 GameObject:
   m_ObjectHideFlags: 0

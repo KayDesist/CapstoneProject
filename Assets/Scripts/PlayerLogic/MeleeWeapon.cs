@@ -23,6 +23,21 @@ public class MeleeWeapon : Weapon
         // Let base class handle timing and hitbox activation
         base.PerformAttack();
 
+        // Trigger attack animation on player
+        if (ownerId == NetworkManager.Singleton.LocalClientId)
+        {
+            // Find local player and trigger animation
+            var playerObjects = FindObjectsOfType<NetworkPlayerController>();
+            foreach (var player in playerObjects)
+            {
+                if (player.IsOwner)
+                {
+                    player.PlayAttackAnimation();
+                    break;
+                }
+            }
+        }
+
         // Melee-specific visual feedback
         PlayAttackAnimationClientRpc();
         Debug.Log($"Player {ownerId} performed melee attack with {weaponName}");
@@ -32,14 +47,8 @@ public class MeleeWeapon : Weapon
     private void PlayAttackAnimationClientRpc()
     {
         // Play melee-specific attack effects on all clients
-        if (IsOwner)
-        {
-            Debug.Log("Playing local melee attack animation");
-        }
-        else
-        {
-            Debug.Log("Playing remote melee attack animation");
-        }
+        // This is for weapon effects, not character animations
+        Debug.Log("Playing melee attack visual effects");
     }
 
     public override void OnEquipped()

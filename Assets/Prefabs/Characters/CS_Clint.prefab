@@ -3420,6 +3420,7 @@ GameObject:
   - component: {fileID: 3822091969501637731}
   - component: {fileID: -6703415696544339406}
   - component: {fileID: -7508738652290747443}
+  - component: {fileID: 4592791981899935140}
   m_Layer: 0
   m_Name: CS_Clint
   m_TagString: Untagged
@@ -3462,7 +3463,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -3628,11 +3629,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
-  staminaRegenRate: 15
-  currentHealth:
-    m_InternalValue: 100
-  currentStamina:
-    m_InternalValue: 100
 --- !u!114 &5779367519950129852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3794,6 +3790,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &4592791981899935140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8049183420308316499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60df1467a3a64ed469498f0d2e77a87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  smoothTime: 0.1
+  animator: {fileID: 4420065911202463239}
+  playerController: {fileID: 3822091969501637731}
+  playerHealth: {fileID: 1415942590911948855}
 --- !u!1 &8215148618606363341
 GameObject:
   m_ObjectHideFlags: 0

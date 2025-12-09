@@ -550,6 +550,7 @@ GameObject:
   - component: {fileID: 6076584114086122474}
   - component: {fileID: 7081659188833570545}
   - component: {fileID: 4545751474471550548}
+  - component: {fileID: -8268514398253766512}
   m_Layer: 0
   m_Name: CS_Elijah
   m_TagString: Untagged
@@ -591,7 +592,7 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
@@ -781,11 +782,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
-  staminaRegenRate: 15
-  currentHealth:
-    m_InternalValue: 100
-  currentStamina:
-    m_InternalValue: 100
 --- !u!114 &6076584114086122474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -923,6 +919,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-8268514398253766512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650211236402527682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60df1467a3a64ed469498f0d2e77a87f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  smoothTime: 0.1
+  animator: {fileID: 3602564811745678603}
+  playerController: {fileID: 4277100813559988450}
+  playerHealth: {fileID: 5597485992886045341}
 --- !u!1 &1829677293766211198
 GameObject:
   m_ObjectHideFlags: 0
