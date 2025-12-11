@@ -70,6 +70,12 @@ public class PlayerSpectator : NetworkBehaviour
         // Check if player is dead and can spectate
         if (playerHealth != null && !playerHealth.IsAlive())
         {
+            // Auto-start spectating if not already
+            if (!isSpectating && NetworkManager.Singleton.ConnectedClientsIds.Count > 2)
+            {
+                StartCoroutine(DelayedStartSpectating());
+            }
+
             HandleSpectateInput();
 
             // Update spectator camera position if spectating
@@ -85,22 +91,17 @@ public class PlayerSpectator : NetworkBehaviour
         }
     }
 
+    private System.Collections.IEnumerator DelayedStartSpectating()
+    {
+        yield return new WaitForSeconds(1f);
+        if (!isSpectating && playerHealth != null && !playerHealth.IsAlive())
+        {
+            StartSpectating();
+        }
+    }
+
     private void HandleSpectateInput()
     {
-        // Start spectating if not already
-        if (!isSpectating && (Input.GetKeyDown(spectatePreviousKey) || Input.GetKeyDown(spectateNextKey)))
-        {
-            // Check if there are enough players to spectate (more than 2 total players)
-            if (NetworkManager.Singleton.ConnectedClientsIds.Count <= 2)
-            {
-                Debug.Log("Not enough players to spectate. Minimum 3 players required.");
-                return;
-            }
-
-            StartSpectating();
-            return;
-        }
-
         if (!isSpectating) return;
 
         // Handle camera rotation when right mouse button is held
@@ -152,13 +153,12 @@ public class PlayerSpectator : NetworkBehaviour
         spectatorCamera.transform.LookAt(currentSpectatedPlayer.transform.position + Vector3.up * cameraHeight * 0.5f);
     }
 
-    private void StartSpectating()
+    public void StartSpectating()
     {
         if (isSpectating) return;
 
         UpdateSpectatablePlayers();
 
-        // Check again for 2-player game
         if (spectatablePlayers.Count == 0)
         {
             Debug.Log("No other players alive to spectate.");
@@ -191,7 +191,7 @@ public class PlayerSpectator : NetworkBehaviour
         currentPitch = 15f;
         cameraDistance = 3f;
 
-        // Ensure cursor is unlocked
+        // Ensure cursor is unlocked for spectator controls
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -240,6 +240,10 @@ public class PlayerSpectator : NetworkBehaviour
 
         // Clear current spectated player
         currentSpectatedPlayer = null;
+
+        // Lock cursor back to game mode
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
         Debug.Log("Stopped spectating");
     }
@@ -372,7 +376,7 @@ public class PlayerSpectator : NetworkBehaviour
         DestroyImmediate(backgroundTexture);
     }
 
-    // ADDED BACK: This method is called by PlayerHealth when player dies
+    // This method is called by PlayerHealth when player dies
     public void HandlePlayerDeath()
     {
         OnPlayerDied();
@@ -381,7 +385,6 @@ public class PlayerSpectator : NetworkBehaviour
     // Auto-start spectating when player dies
     private void OnPlayerDied()
     {
-        // Check if there are enough players to spectate (more than 2 total players)
         if (IsOwner && !isSpectating && NetworkManager.Singleton.ConnectedClientsIds.Count > 2)
         {
             Debug.Log("Player died - auto-starting spectating in 1 second");

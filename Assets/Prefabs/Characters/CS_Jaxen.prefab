@@ -139,6 +139,7 @@ GameObject:
   - component: {fileID: -1188128960415896532}
   - component: {fileID: -2095307408133354571}
   - component: {fileID: -8483127152525755271}
+  - component: {fileID: -7636660729009377179}
   m_Layer: 0
   m_Name: CS_Jaxen
   m_TagString: Untagged
@@ -370,6 +371,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
+  staminaRegenRate: 15
+  staminaRegenDelay: 2
+  staminaRegenCooldown: 0
+  enableRagdollOnDeath: 1
+  ragdollForce: 10
+  ragdollDestroyTime: 10
 --- !u!114 &6767008318784022378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,6 +531,20 @@ MonoBehaviour:
   animator: {fileID: 5218745564344304846}
   playerController: {fileID: 8337019986176635268}
   playerHealth: {fileID: 30701581948435637}
+--- !u!114 &-7636660729009377179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 57156517736671299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c54df6b3e9424a41af15cd15532b6e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableRagdollByDefault: 0
+  ragdollForceMultiplier: 1
 --- !u!1 &124936893894354656
 GameObject:
   m_ObjectHideFlags: 0

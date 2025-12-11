@@ -2019,6 +2019,7 @@ GameObject:
   - component: {fileID: 6185100014070886305}
   - component: {fileID: 3015077703178835596}
   - component: {fileID: 8686750999897840323}
+  - component: {fileID: -1135364456323926268}
   m_Layer: 0
   m_Name: CS_Sam
   m_TagString: Player
@@ -2250,6 +2251,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
+  staminaRegenRate: 15
+  staminaRegenDelay: 2
+  staminaRegenCooldown: 0
+  enableRagdollOnDeath: 1
+  ragdollForce: 10
+  ragdollDestroyTime: 10
 --- !u!114 &1502269378521832112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2404,6 +2411,20 @@ MonoBehaviour:
   animator: {fileID: 677437171258297522}
   playerController: {fileID: 4596312460314539264}
   playerHealth: {fileID: 8699834245067858748}
+--- !u!114 &-1135364456323926268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3666280288708664868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c54df6b3e9424a41af15cd15532b6e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableRagdollByDefault: 0
+  ragdollForceMultiplier: 1
 --- !u!1 &3675485787523840050
 GameObject:
   m_ObjectHideFlags: 0

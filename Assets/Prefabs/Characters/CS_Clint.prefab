@@ -3421,6 +3421,7 @@ GameObject:
   - component: {fileID: -6703415696544339406}
   - component: {fileID: -7508738652290747443}
   - component: {fileID: 4592791981899935140}
+  - component: {fileID: -1374358761158109067}
   m_Layer: 0
   m_Name: CS_Clint
   m_TagString: Untagged
@@ -3629,6 +3630,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
+  staminaRegenRate: 15
+  staminaRegenDelay: 2
+  staminaRegenCooldown: 0
+  enableRagdollOnDeath: 1
+  ragdollForce: 10
+  ragdollDestroyTime: 10
 --- !u!114 &5779367519950129852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3807,6 +3814,20 @@ MonoBehaviour:
   animator: {fileID: 4420065911202463239}
   playerController: {fileID: 3822091969501637731}
   playerHealth: {fileID: 1415942590911948855}
+--- !u!114 &-1374358761158109067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8049183420308316499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c54df6b3e9424a41af15cd15532b6e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableRagdollByDefault: 0
+  ragdollForceMultiplier: 1
 --- !u!1 &8215148618606363341
 GameObject:
   m_ObjectHideFlags: 0

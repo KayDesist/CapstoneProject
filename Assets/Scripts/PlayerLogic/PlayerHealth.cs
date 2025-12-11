@@ -8,11 +8,16 @@ public class PlayerHealth : NetworkBehaviour
     public int maxStamina = 100;
 
     [Header("Stamina Settings")]
-    public float staminaRegenRate = 15f; // Stamina per second
-    public float staminaRegenDelay = 2f; // Seconds before regen starts after using stamina
-    public float staminaRegenCooldown = 0f; // Time when we can start regenerating
+    public float staminaRegenRate = 15f;
+    public float staminaRegenDelay = 2f;
+    public float staminaRegenCooldown = 0f;
 
-    // Network variables - Server writes, everyone reads
+    [Header("Ragdoll Settings")]
+    public bool enableRagdollOnDeath = true;
+    public float ragdollForce = 10f;
+    public float ragdollDestroyTime = 10f;
+
+    // Network variables
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>(
         100,
         NetworkVariableReadPermission.Everyone,
@@ -35,6 +40,11 @@ public class PlayerHealth : NetworkBehaviour
     private NetworkAnimationController networkAnimationController;
     private NetworkPlayerController playerController;
     private PlayerSpectator playerSpectator;
+    private Rigidbody rb;
+    private Animator animator;
+    private Collider mainCollider;
+    private Rigidbody[] ragdollRigidbodies;
+    private Collider[] ragdollColliders;
 
     // Local stamina tracking
     private bool isSprinting = false;
@@ -46,25 +56,81 @@ public class PlayerHealth : NetworkBehaviour
         networkAnimationController = GetComponent<NetworkAnimationController>();
         playerController = GetComponent<NetworkPlayerController>();
         playerSpectator = GetComponent<PlayerSpectator>();
+        rb = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();
+        mainCollider = GetComponent<Collider>();
+
+        // Initialize ragdoll
+        InitializeRagdoll();
+    }
+
+    private void InitializeRagdoll()
+    {
+        if (!enableRagdollOnDeath) return;
+
+        // Get all rigidbodies and colliders for ragdoll
+        ragdollRigidbodies = GetComponentsInChildren<Rigidbody>();
+        ragdollColliders = GetComponentsInChildren<Collider>();
+
+        // Disable ragdoll by default
+        SetRagdollActive(false);
+    }
+
+    private void SetRagdollActive(bool active)
+    {
+        if (!enableRagdollOnDeath) return;
+
+        // Enable/disable animator
+        if (animator != null)
+        {
+            animator.enabled = !active;
+        }
+
+        // Enable/disable main rigidbody and collider
+        if (rb != null)
+        {
+            rb.isKinematic = active;
+        }
+
+        if (mainCollider != null)
+        {
+            mainCollider.enabled = !active;
+        }
+
+        // Enable/disable ragdoll rigidbodies and colliders
+        foreach (Rigidbody ragdollRb in ragdollRigidbodies)
+        {
+            if (ragdollRb != rb) // Don't touch the main rigidbody twice
+            {
+                ragdollRb.isKinematic = !active;
+                ragdollRb.useGravity = active;
+                ragdollRb.detectCollisions = active;
+            }
+        }
+
+        foreach (Collider collider in ragdollColliders)
+        {
+            if (collider != mainCollider) // Don't touch the main collider twice
+            {
+                collider.enabled = active;
+            }
+        }
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
 
-        // Set initial values on server
         if (IsServer)
         {
             currentHealth.Value = maxHealth;
             currentStamina.Value = maxStamina;
         }
 
-        // Subscribe to value changes for UI updates
         currentHealth.OnValueChanged += OnHealthChanged;
         currentStamina.OnValueChanged += OnStaminaChanged;
         isDead.OnValueChanged += OnDeathStateChanged;
 
-        // Debug logging
         Debug.Log($"PlayerHealth spawned for client {OwnerClientId} (IsOwner: {IsOwner}, IsServer: {IsServer})");
     }
 
@@ -78,13 +144,11 @@ public class PlayerHealth : NetworkBehaviour
 
     private void HandleStaminaRegeneration()
     {
-        // Don't regenerate if we're sprinting or recently used stamina
         if (isSprinting) return;
 
         float timeSinceLastUse = Time.time - lastStaminaUseTime;
         if (timeSinceLastUse < staminaRegenDelay) return;
 
-        // Regenerate stamina
         staminaAccumulator += staminaRegenRate * Time.deltaTime;
 
         if (staminaAccumulator >= 1f)
@@ -95,7 +159,6 @@ public class PlayerHealth : NetworkBehaviour
             if (newStamina != currentStamina.Value)
             {
                 currentStamina.Value = newStamina;
-                Debug.Log($"Regenerated {staminaToAdd} stamina, now at {currentStamina.Value}");
             }
 
             staminaAccumulator -= staminaToAdd;
@@ -106,7 +169,6 @@ public class PlayerHealth : NetworkBehaviour
     {
         Debug.Log($"Player {OwnerClientId} health changed: {oldValue} -> {newValue}");
 
-        // Update UI for local player
         if (IsOwner && GameHUDManager.Instance != null)
         {
             GameHUDManager.Instance.UpdateHealth(newValue, maxHealth);
@@ -117,7 +179,6 @@ public class PlayerHealth : NetworkBehaviour
     {
         Debug.Log($"Player {OwnerClientId} stamina changed: {oldValue} -> {newValue}");
 
-        // Update UI for local player
         if (IsOwner && GameHUDManager.Instance != null)
         {
             GameHUDManager.Instance.UpdateStamina(newValue, maxStamina);
@@ -128,10 +189,16 @@ public class PlayerHealth : NetworkBehaviour
     {
         Debug.Log($"Player {OwnerClientId} death state changed: {oldValue} -> {newValue}");
 
-        if (newValue && IsOwner)
+        if (newValue)
         {
+            // Handle death visuals on all clients
+            HandleDeathVisuals();
+
             // Handle local player death
-            OnLocalPlayerDeath();
+            if (IsOwner)
+            {
+                OnLocalPlayerDeath();
+            }
         }
     }
 
@@ -159,7 +226,7 @@ public class PlayerHealth : NetworkBehaviour
         // Set death state
         isDead.Value = true;
 
-        // Disable player controller (handled by client via OnDeathStateChanged)
+        // Disable player controller
         DisablePlayerControllerClientRpc();
 
         // Notify EndGameManager
@@ -173,8 +240,50 @@ public class PlayerHealth : NetworkBehaviour
             }
         }
 
-        // Notify player died to all clients (for spectating, etc.)
-        PlayerDiedClientRpc(killerId);
+        // Apply ragdoll force
+        ApplyRagdollForceClientRpc(killerId);
+    }
+
+    private void HandleDeathVisuals()
+    {
+        if (!enableRagdollOnDeath) return;
+
+        // Enable ragdoll
+        SetRagdollActive(true);
+
+        // Apply some force to make ragdoll more dramatic
+        if (rb != null)
+        {
+            Vector3 randomForce = new Vector3(
+                Random.Range(-ragdollForce, ragdollForce),
+                Random.Range(ragdollForce * 0.5f, ragdollForce),
+                Random.Range(-ragdollForce, ragdollForce)
+            );
+            rb.AddForce(randomForce, ForceMode.Impulse);
+        }
+
+        Debug.Log("Enabled ragdoll on death");
+    }
+
+    [ClientRpc]
+    private void ApplyRagdollForceClientRpc(ulong killerId)
+    {
+        if (!enableRagdollOnDeath) return;
+
+        // Find the killer to apply force away from them
+        NetworkPlayerController[] allPlayers = FindObjectsOfType<NetworkPlayerController>();
+        foreach (NetworkPlayerController player in allPlayers)
+        {
+            if (player.NetworkObject != null && player.NetworkObject.OwnerClientId == killerId)
+            {
+                if (rb != null)
+                {
+                    Vector3 direction = (transform.position - player.transform.position).normalized;
+                    rb.AddForce(direction * ragdollForce, ForceMode.Impulse);
+                }
+                break;
+            }
+        }
     }
 
     [ClientRpc]
@@ -189,10 +298,10 @@ public class PlayerHealth : NetworkBehaviour
             playerController.enabled = false;
         }
 
-        // Enable spectator mode after a delay
+        // Enable spectator mode after a short delay
         if (playerSpectator != null)
         {
-            Invoke(nameof(EnableSpectatorMode), 1f);
+            Invoke(nameof(EnableSpectatorMode), 0.5f);
         }
     }
 
@@ -201,68 +310,20 @@ public class PlayerHealth : NetworkBehaviour
         if (playerSpectator != null && IsOwner)
         {
             playerSpectator.enabled = true;
-            Debug.Log("Enabling spectator mode");
+
+            // Call the death handler to start spectating
+            if (playerSpectator.enabled)
+            {
+                playerSpectator.HandlePlayerDeath();
+            }
+
+            Debug.Log("Enabled spectator mode");
         }
-    }
-
-    [ClientRpc]
-    private void PlayerDiedClientRpc(ulong killerId)
-    {
-        Debug.Log($"Player {OwnerClientId} died (killed by {killerId}) - notified all clients");
-
-        // No death animation - just disable the character visually
-        if (IsOwner)
-        {
-            // For the dead player, hide or disable their model
-            HandleLocalDeathVisuals();
-        }
-        else
-        {
-            // For other players, they might see a ragdoll or just leave the body
-            HandleRemoteDeathVisuals();
-        }
-    }
-
-    private void HandleLocalDeathVisuals()
-    {
-        // For local player who died - disable rendering
-        var renderers = GetComponentsInChildren<Renderer>();
-        foreach (var renderer in renderers)
-        {
-            renderer.enabled = false;
-        }
-
-        // Disable colliders
-        var colliders = GetComponentsInChildren<Collider>();
-        foreach (var collider in colliders)
-        {
-            collider.enabled = false;
-        }
-
-        Debug.Log("Disabled local player visuals due to death");
-    }
-
-    private void HandleRemoteDeathVisuals()
-    {
-        // For remote players - you might want to show a ragdoll or just leave the body
-        // For now, we'll just disable the animator to freeze them
-        if (networkAnimationController != null && networkAnimationController.enabled)
-        {
-            networkAnimationController.enabled = false;
-        }
-
-        Debug.Log("Disabled remote player animator due to death");
     }
 
     private void OnLocalPlayerDeath()
     {
         Debug.Log("Local player death handler called");
-
-        // Disable player controller
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
 
         // Show death screen or spectator mode
         ShowDeathScreenOrSpectator();
@@ -270,15 +331,7 @@ public class PlayerHealth : NetworkBehaviour
 
     private void ShowDeathScreenOrSpectator()
     {
-        // You might want to show a death screen here
-        // For now, we'll just log and enable spectator mode
-        Debug.Log("You died! Waiting for game to end or enabling spectator mode...");
-
-        // If there are enough players, auto-enable spectator after a delay
-        if (NetworkManager.Singleton.ConnectedClientsIds.Count > 2)
-        {
-            Invoke(nameof(EnableSpectatorMode), 2f);
-        }
+        Debug.Log("You died! Enabling spectator mode...");
     }
 
     public void ConsumeStamina(int amount)
@@ -288,24 +341,17 @@ public class PlayerHealth : NetworkBehaviour
         int newStamina = currentStamina.Value - amount;
         currentStamina.Value = Mathf.Max(0, newStamina);
 
-        // Record when we last used stamina
         lastStaminaUseTime = Time.time;
-
-        Debug.Log($"Consumed {amount} stamina, now at {currentStamina.Value}");
     }
 
     public void SetSprinting(bool sprinting)
     {
-        // Update sprinting state for stamina regeneration
         isSprinting = sprinting;
 
-        // If we just stopped sprinting, record the time
         if (!sprinting)
         {
             lastStaminaUseTime = Time.time;
         }
-
-        Debug.Log($"Player {OwnerClientId} sprinting: {sprinting}");
     }
 
     public int GetStamina()
@@ -336,6 +382,9 @@ public class PlayerHealth : NetworkBehaviour
         lastStaminaUseTime = Time.time;
         staminaAccumulator = 0f;
 
+        // Disable ragdoll
+        SetRagdollActive(false);
+
         // Enable player on all clients
         EnablePlayerClientRpc();
     }
@@ -345,19 +394,8 @@ public class PlayerHealth : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        // Re-enable visuals for local player
-        var renderers = GetComponentsInChildren<Renderer>();
-        foreach (var renderer in renderers)
-        {
-            renderer.enabled = true;
-        }
-
-        // Re-enable colliders
-        var colliders = GetComponentsInChildren<Collider>();
-        foreach (var collider in colliders)
-        {
-            collider.enabled = true;
-        }
+        // Disable ragdoll
+        SetRagdollActive(false);
 
         // Re-enable player controller
         if (playerController != null)
@@ -366,9 +404,16 @@ public class PlayerHealth : NetworkBehaviour
         }
 
         // Re-enable animator
-        if (networkAnimationController != null)
+        if (animator != null)
         {
-            networkAnimationController.enabled = true;
+            animator.enabled = true;
+        }
+
+        // Disable spectator if active
+        if (playerSpectator != null)
+        {
+            playerSpectator.StopSpectating();
+            playerSpectator.enabled = false;
         }
 
         Debug.Log("Player respawned and re-enabled");
@@ -378,7 +423,6 @@ public class PlayerHealth : NetworkBehaviour
     {
         base.OnNetworkDespawn();
 
-        // Unsubscribe from events
         currentHealth.OnValueChanged -= OnHealthChanged;
         currentStamina.OnValueChanged -= OnStaminaChanged;
         isDead.OnValueChanged -= OnDeathStateChanged;

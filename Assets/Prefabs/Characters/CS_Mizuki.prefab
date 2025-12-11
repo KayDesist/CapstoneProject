@@ -1875,6 +1875,7 @@ GameObject:
   - component: {fileID: 8775076098434360546}
   - component: {fileID: -6170828838829799877}
   - component: {fileID: 8394381137171367882}
+  - component: {fileID: -6444224147764952471}
   m_Layer: 0
   m_Name: CS_Mizuki
   m_TagString: Untagged
@@ -2106,6 +2107,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
+  staminaRegenRate: 15
+  staminaRegenDelay: 2
+  staminaRegenCooldown: 0
+  enableRagdollOnDeath: 1
+  ragdollForce: 10
+  ragdollDestroyTime: 10
 --- !u!114 &8775076098434360546
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2245,6 +2252,20 @@ MonoBehaviour:
   animator: {fileID: 9135152093068836895}
   playerController: {fileID: 4269191830149170046}
   playerHealth: {fileID: 4854590826355010678}
+--- !u!114 &-6444224147764952471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4020392051932624757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c54df6b3e9424a41af15cd15532b6e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableRagdollByDefault: 0
+  ragdollForceMultiplier: 1
 --- !u!1 &4165524203057759324
 GameObject:
   m_ObjectHideFlags: 0

@@ -551,6 +551,7 @@ GameObject:
   - component: {fileID: 7081659188833570545}
   - component: {fileID: 4545751474471550548}
   - component: {fileID: -8268514398253766512}
+  - component: {fileID: -7286655665095558982}
   m_Layer: 0
   m_Name: CS_Elijah
   m_TagString: Untagged
@@ -782,6 +783,12 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   maxStamina: 100
+  staminaRegenRate: 15
+  staminaRegenDelay: 2
+  staminaRegenCooldown: 0
+  enableRagdollOnDeath: 1
+  ragdollForce: 10
+  ragdollDestroyTime: 10
 --- !u!114 &6076584114086122474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -936,6 +943,20 @@ MonoBehaviour:
   animator: {fileID: 3602564811745678603}
   playerController: {fileID: 4277100813559988450}
   playerHealth: {fileID: 5597485992886045341}
+--- !u!114 &-7286655665095558982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1650211236402527682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c54df6b3e9424a41af15cd15532b6e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableRagdollByDefault: 0
+  ragdollForceMultiplier: 1
 --- !u!1 &1829677293766211198
 GameObject:
   m_ObjectHideFlags: 0
