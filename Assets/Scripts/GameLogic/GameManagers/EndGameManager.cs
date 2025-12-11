@@ -14,25 +14,19 @@ public class EndGameManager : NetworkBehaviour
     private NetworkVariable<bool> isGameEnded = new NetworkVariable<bool>(false);
     private NetworkVariable<GameResult> gameResult = new NetworkVariable<GameResult>();
 
-    // Track deaths
     private NetworkVariable<int> survivorDeaths = new NetworkVariable<int>(0);
     private NetworkVariable<int> cultistDeaths = new NetworkVariable<int>(0);
     private NetworkVariable<bool> survivorTasksComplete = new NetworkVariable<bool>(false);
     private NetworkVariable<bool> cultistTasksComplete = new NetworkVariable<bool>(false);
 
-    // Track player states
     private Dictionary<ulong, bool> playerDeathStates = new Dictionary<ulong, bool>();
     private Dictionary<ulong, RoleManager.PlayerRole> playerRoles = new Dictionary<ulong, RoleManager.PlayerRole>();
 
-    // For Update-based checking
     private float lastCheckTime = 0f;
     private float checkInterval = 1f;
-
-    // Heartbeat for Relay
     private float lastHeartbeatTime = 0f;
     private float heartbeatInterval = 3f;
 
-    // Game end event
     public event System.Action OnGameEnded;
 
     public enum GameResult
@@ -64,22 +58,16 @@ public class EndGameManager : NetworkBehaviour
             InitializeGameState();
         }
 
-        // Subscribe to changes - THIS IS CRITICAL FOR CLIENTS
         isGameEnded.OnValueChanged += OnGameEndedChanged;
         gameResult.OnValueChanged += OnGameResultChanged;
-
-        Debug.Log($"EndGameManager spawned for {(IsServer ? "Server" : "Client")}");
     }
 
     private void Update()
     {
-        // Only check win conditions on server and if game hasn't ended
         if (!IsServer || isGameEnded.Value) return;
 
-        // Check win conditions
         CheckWinConditions();
 
-        // Send heartbeat to keep Relay connection alive
         if (Time.time - lastHeartbeatTime >= heartbeatInterval)
         {
             SendHeartbeatClientRpc();
@@ -95,26 +83,21 @@ public class EndGameManager : NetworkBehaviour
     [ClientRpc]
     private void SendHeartbeatClientRpc()
     {
-        // Empty RPC - just keeps connection alive
     }
 
     private void OnGameEndedChanged(bool oldValue, bool newValue)
     {
-        Debug.Log($"GameEnded changed: {oldValue} -> {newValue}");
     }
 
     private void OnGameResultChanged(GameResult oldValue, GameResult newValue)
     {
-        Debug.Log($"GameResult changed: {oldValue} -> {newValue} (Client: {!IsServer})");
-
-        // Show UI immediately when result changes - THIS FIXES CLIENT UI
         if (newValue != GameResult.None)
         {
-            // Show UI immediately
             ShowEndGameUI();
         }
     }
 
+    // Display end game UI
     private void ShowEndGameUI()
     {
         if (EndGameUI.Instance != null)
@@ -123,9 +106,6 @@ public class EndGameManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning("EndGameUI.Instance is null, trying to find or create it...");
-
-            // Try to find it if it hasn't been initialized yet
             var endGameUI = FindObjectOfType<EndGameUI>();
             if (endGameUI != null)
             {
@@ -133,23 +113,20 @@ public class EndGameManager : NetworkBehaviour
             }
             else
             {
-                // Create EndGameUI for dead players who might not have it
                 CreateEndGameUIForDeadPlayers();
             }
         }
 
-        // Force enable HUD for dead players so they can see the end game UI
         if (GameHUDManager.Instance != null)
         {
             GameHUDManager.Instance.gameObject.SetActive(true);
-            // Re-enable all HUD elements
             GameHUDManager.Instance.ResetHUD();
         }
     }
 
+    // Create UI for dead players
     private void CreateEndGameUIForDeadPlayers()
     {
-        // Try to find or create EndGameUI for clients who might not have it
         GameObject endGameUIPrefab = Resources.Load<GameObject>("EndGameUI");
         if (endGameUIPrefab != null)
         {
@@ -160,12 +137,9 @@ public class EndGameManager : NetworkBehaviour
                 endGameUI.ShowEndGameScreen(gameResult.Value);
             }
         }
-        else
-        {
-            Debug.LogError("EndGameUI prefab not found in Resources!");
-        }
     }
 
+    // Check win conditions
     private void CheckWinConditions()
     {
         if (isGameEnded.Value)
@@ -178,7 +152,6 @@ public class EndGameManager : NetworkBehaviour
         int aliveSurvivors = 0;
         int aliveCultists = 0;
 
-        // Count players and their status
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             RoleManager.PlayerRole role = RoleManager.PlayerRole.Survivor;
@@ -202,44 +175,34 @@ public class EndGameManager : NetworkBehaviour
             }
         }
 
-        // WIN CONDITION CHECKS
-
-        // 1. All survivors dead (cultists win by elimination)
         if (aliveSurvivors == 0 && totalSurvivors > 0)
         {
-            Debug.Log("🎯 WIN CONDITION: Cultists win by eliminating all survivors!");
             EndGame(GameResult.CultistsWinByElimination);
             return;
         }
 
-        // 2. All cultists dead (survivors win by kill)
         if (aliveCultists == 0 && totalCultists > 0)
         {
-            Debug.Log("🎯 WIN CONDITION: Survivors win by killing all cultists!");
             EndGame(GameResult.SurvivorsWinByKill);
             return;
         }
 
-        // 3. Survivor tasks complete
         if (survivorTasksComplete.Value)
         {
-            Debug.Log("🎯 WIN CONDITION: Survivors win by tasks!");
             EndGame(GameResult.SurvivorsWinByTasks);
             return;
         }
 
-        // 4. Cultist tasks complete (with at least one kill)
         if (cultistTasksComplete.Value && survivorDeaths.Value >= 1)
         {
-            Debug.Log("🎯 WIN CONDITION: Cultists win by tasks and at least one kill!");
             EndGame(GameResult.CultistsWinByTasksAndKill);
             return;
         }
     }
 
+    // Initialize game state
     private void InitializeGameState()
     {
-        Debug.Log("Initializing game state in EndGameManager");
         Invoke(nameof(DelayedInitialize), 1f);
     }
 
@@ -250,7 +213,6 @@ public class EndGameManager : NetworkBehaviour
         playerDeathStates.Clear();
         playerRoles.Clear();
 
-        // Initialize player tracking
         if (RoleManager.Instance != null)
         {
             foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
@@ -260,11 +222,9 @@ public class EndGameManager : NetworkBehaviour
                 playerDeathStates[clientId] = false;
             }
         }
-
-        Debug.Log($"EndGameManager initialized with {playerDeathStates.Count} players");
     }
 
-    // Called when a player dies
+    // Handle player death
     public void OnPlayerDied(ulong clientId, RoleManager.PlayerRole role)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -286,7 +246,7 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
-    // Called when tasks are completed
+    // Handle task completion
     public void OnTasksCompleted(RoleManager.PlayerRole role)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -303,6 +263,7 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
+    // End the game
     private void EndGame(GameResult result)
     {
         if (!IsServer || isGameEnded.Value) return;
@@ -310,31 +271,20 @@ public class EndGameManager : NetworkBehaviour
         isGameEnded.Value = true;
         gameResult.Value = result;
 
-        Debug.Log($"🎮 GAME ENDED: {result} 🎮");
         OnGameEnded?.Invoke();
-
-        // Notify all clients with a direct RPC call
         EndGameClientRpc(result);
     }
 
     [ClientRpc]
     private void EndGameClientRpc(GameResult result)
     {
-        Debug.Log($"Client received end game notification: {result}");
-
-        // Force show UI for all clients, including dead ones
         ShowEndGameUI();
     }
 
-    // Method to return to Main Menu (called by UI)
+    // Return to main menu
     public void ReturnToMainMenu()
     {
-        Debug.Log("Returning to Main Menu...");
-
-        // Clean up cross-scene data
         CrossSceneData.Reset();
-
-        // Immediately load Main Menu scene for all clients
         NetworkManager.Singleton.SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
     }
 
@@ -342,8 +292,6 @@ public class EndGameManager : NetworkBehaviour
     public void OnClientDisconnected(ulong clientId)
     {
         if (!IsServer || isGameEnded.Value) return;
-
-        Debug.Log($"Client {clientId} disconnected - checking if game should end");
 
         if (playerRoles.ContainsKey(clientId))
         {
@@ -364,7 +312,7 @@ public class EndGameManager : NetworkBehaviour
         CheckWinConditions();
     }
 
-    // Method to manually add a player
+    // Register player
     public void RegisterPlayer(ulong clientId, RoleManager.PlayerRole role)
     {
         if (!IsServer) return;
@@ -373,7 +321,6 @@ public class EndGameManager : NetworkBehaviour
         {
             playerRoles[clientId] = role;
             playerDeathStates[clientId] = false;
-            Debug.Log($"Registered player {clientId} with role {role}");
         }
     }
 
@@ -384,13 +331,11 @@ public class EndGameManager : NetworkBehaviour
         {
             Destroy(Instance.gameObject);
             Instance = null;
-            Debug.Log("EndGameManager instance reset");
         }
     }
 
     public override void OnNetworkDespawn()
     {
-        // Unsubscribe from changes
         if (isGameEnded != null)
             isGameEnded.OnValueChanged -= OnGameEndedChanged;
 

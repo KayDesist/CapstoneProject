@@ -1,42 +1,36 @@
-// CrossSceneData.cs
 using UnityEngine;
 
 public static class CrossSceneData
 {
-    // Lobby connection data
-    public static string LobbyMode { get; set; } = ""; // "Host" or "Client"
+    public static string LobbyMode { get; set; } = "";
     public static string JoinCode { get; set; } = "";
-
-    // Player preferences (optional - for future use)
     public static string PlayerName { get; set; } = "Player";
     public static int PlayerAvatarIndex { get; set; } = 0;
-
-    // Game settings (optional - for future use)
     public static int MaxPlayers { get; set; } = 10;
-    public static float GameDuration { get; set; } = 600f; // 10 minutes in seconds
+    public static float GameDuration { get; set; } = 600f;
 
-    // Reset all data (useful when returning to main menu)
+    // Resets all data to default values
     public static void Reset()
     {
         LobbyMode = "";
         JoinCode = "";
         PlayerName = "Player";
         PlayerAvatarIndex = 0;
-        // Don't reset game settings as they might be user preferences
     }
 
-    // Validation methods
+    // Validates if the join code is not empty and has minimum length
     public static bool IsValidJoinCode()
     {
         return !string.IsNullOrEmpty(JoinCode) && JoinCode.Length >= 4;
     }
 
+    // Validates if lobby mode is either Host or Client
     public static bool IsValidLobbyMode()
     {
         return LobbyMode == "Host" || LobbyMode == "Client";
     }
 
-    // Debug helper
+    // Logs current data for debugging purposes
     public static void LogCurrentData()
     {
         Debug.Log($"CrossSceneData: Mode={LobbyMode}, JoinCode={JoinCode}, PlayerName={PlayerName}");

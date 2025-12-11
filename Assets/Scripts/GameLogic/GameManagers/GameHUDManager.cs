@@ -40,7 +40,6 @@ public class GameHUDManager : MonoBehaviour
     private List<string> currentTasks = new List<string>();
     private RoleManager.PlayerRole currentRole;
 
-    // Reference to local player's health component
     private PlayerHealth localPlayerHealth;
     private NetworkPlayerController localPlayerController;
 
@@ -59,22 +58,16 @@ public class GameHUDManager : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("GameHUDManager started");
-
-        // Initialize UI state - hide all panels initially
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
 
-        // CRITICAL FIX: Ensure interaction panel is ALWAYS hidden at start
         HideInteractionPrompt();
         HideInteractionProgress();
 
-        // Initialize with default values
         UpdateHealth(100, 100);
         UpdateStamina(100, 100);
 
-        // Start checking for role assignment
         StartCoroutine(InitializeWithDelay());
     }
 
@@ -82,18 +75,15 @@ public class GameHUDManager : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
 
-        // Check if we already have a role
         if (RoleManager.Instance != null)
         {
             currentRole = RoleManager.Instance.GetLocalPlayerRole();
             if (currentRole != RoleManager.PlayerRole.Survivor || RoleManager.Instance.IsCultist(NetworkManager.Singleton.LocalClientId))
             {
-                Debug.Log($"Found existing role: {currentRole}");
                 OnRoleAssigned(currentRole);
             }
         }
 
-        // Find local player health
         StartCoroutine(FindLocalPlayerHealth());
     }
 
@@ -104,7 +94,6 @@ public class GameHUDManager : MonoBehaviour
         {
             attempts++;
 
-            // Find the local player
             var playerControllers = FindObjectsOfType<NetworkPlayerController>();
             foreach (var controller in playerControllers)
             {
@@ -115,8 +104,6 @@ public class GameHUDManager : MonoBehaviour
 
                     if (localPlayerHealth != null)
                     {
-                        Debug.Log($"Found local player health component for client {NetworkManager.Singleton.LocalClientId}");
-                        // Subscribe to health changes
                         SubscribeToHealthChanges();
                         break;
                     }
@@ -125,28 +112,17 @@ public class GameHUDManager : MonoBehaviour
 
             if (localPlayerHealth == null)
             {
-                Debug.Log($"Attempt {attempts}: Could not find local player health, trying again...");
                 yield return new WaitForSeconds(0.5f);
             }
-        }
-
-        if (localPlayerHealth == null)
-        {
-            Debug.LogWarning("Could not find local player health component after 10 attempts");
         }
     }
 
     private void SubscribeToHealthChanges()
     {
-        // We'll need to modify PlayerHealth to expose events or NetworkVariable callbacks
-        // For now, we'll update UI in Update() by polling
-        Debug.Log("Subscribed to local player health changes");
     }
 
     public void OnRoleAssigned(RoleManager.PlayerRole role)
     {
-        Debug.Log($"GameHUDManager: Role assigned - {role}");
-
         currentRole = role;
         SetupRoleSpecificHUD();
         ShowTemporaryRoleDisplay();
@@ -154,8 +130,6 @@ public class GameHUDManager : MonoBehaviour
 
     private void SetupRoleSpecificHUD()
     {
-        Debug.Log($"Setting up HUD for role: {currentRole}");
-
         Sprite roleIcon = null;
         string roleName = "";
 
@@ -174,25 +148,19 @@ public class GameHUDManager : MonoBehaviour
                 break;
         }
 
-        // Update persistent display
         if (persistentRoleText != null) persistentRoleText.text = roleName;
         if (persistentRoleIcon != null && roleIcon != null) persistentRoleIcon.sprite = roleIcon;
     }
 
     private void ShowTemporaryRoleDisplay()
     {
-        // Show the temporary role display using RoleDisplayUI
         if (RoleDisplayUI.Instance != null)
         {
             RoleDisplayUI.Instance.ShowRole(currentRole);
-            Debug.Log("Temporary role display shown via RoleDisplayUI");
-
-            // Start coroutine to show persistent HUD after temporary display is hidden
             StartCoroutine(ShowPersistentHUDAfterDelay(3f));
         }
         else
         {
-            Debug.LogWarning("RoleDisplayUI.Instance is null! Showing persistent HUD immediately");
             ShowPersistentHUD();
         }
     }
@@ -205,57 +173,29 @@ public class GameHUDManager : MonoBehaviour
 
     private void ShowPersistentHUD()
     {
-        // Show all persistent HUD elements
-        if (persistentRoleDisplay != null)
-        {
-            persistentRoleDisplay.SetActive(true);
-            Debug.Log("Persistent role display shown");
-        }
+        if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(true);
+        if (healthStaminaPanel != null) healthStaminaPanel.SetActive(true);
+        if (taskPanel != null) taskPanel.SetActive(true);
 
-        if (healthStaminaPanel != null)
-        {
-            healthStaminaPanel.SetActive(true);
-            Debug.Log("Health/stamina panel shown");
-        }
-
-        if (taskPanel != null)
-        {
-            taskPanel.SetActive(true);
-            Debug.Log("Task panel shown");
-        }
-
-        // FIX: CRITICAL - Ensure interaction panel remains hidden when showing persistent HUD
         HideInteractionPrompt();
         HideInteractionProgress();
     }
 
-    // NEW: Update method to poll health and stamina values
     private void Update()
     {
         if (localPlayerHealth != null)
         {
-            // Update health UI
             UpdateHealth(localPlayerHealth.GetCurrentHealth(), localPlayerHealth.maxHealth);
-
-            // Update stamina UI
             UpdateStamina(localPlayerHealth.GetStamina(), localPlayerHealth.maxStamina);
         }
     }
 
-    // NEW: Special method to show HUD for end game (for dead players)
     public void ShowHUDForEndGame()
     {
-        Debug.Log("Showing HUD for end game");
-
-        // Make sure the gameObject is active
         gameObject.SetActive(true);
-
-        // Show all HUD elements
         ShowPersistentHUD();
     }
 
-
-    // ============ TASK MANAGEMENT ============
     private void SetupSurvivorTasks()
     {
         survivorTaskList.Clear();
@@ -269,7 +209,6 @@ public class GameHUDManager : MonoBehaviour
         }
         else
         {
-            // Fallback tasks
             survivorTaskList.AddRange(new string[] {
                 "- Repair Generator (0/3)",
                 "- Collect Firewood (0/5)",
@@ -280,7 +219,6 @@ public class GameHUDManager : MonoBehaviour
         }
 
         UpdateTasksText();
-        Debug.Log($"Setup {survivorTaskList.Count} survivor tasks");
     }
 
     private void SetupCultistTasks()
@@ -296,7 +234,6 @@ public class GameHUDManager : MonoBehaviour
         }
         else
         {
-            // Fallback tasks
             cultistTaskList.AddRange(new string[] {
                 "- Place Ritual Candles (0/3)",
                 "- Collect Sacrificial Items (0/2)",
@@ -307,7 +244,6 @@ public class GameHUDManager : MonoBehaviour
         }
 
         UpdateTasksText();
-        Debug.Log($"Setup {cultistTaskList.Count} cultist tasks");
     }
 
     private void UpdateTasksText()
@@ -318,7 +254,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // ============ HEALTH & STAMINA ============
+    // Update health display
     public void UpdateHealth(float currentHealth, float maxHealth)
     {
         if (healthBar != null)
@@ -333,6 +269,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // Update stamina display
     public void UpdateStamina(float currentStamina, float maxStamina)
     {
         if (staminaBar != null)
@@ -347,23 +284,15 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // ============ TASK PROGRESS ============
+    // Update specific task progress
     public void UpdateTaskProgress(int taskIndex, string newStatus)
     {
-        Debug.Log($"Updating task {taskIndex}, status: {newStatus}");
-
-        // Update the appropriate task list based on current role
         if (currentRole == RoleManager.PlayerRole.Survivor)
         {
             if (taskIndex >= 0 && taskIndex < survivorTaskList.Count)
             {
                 survivorTaskList[taskIndex] = newStatus;
                 currentTasks = new List<string>(survivorTaskList);
-                Debug.Log($"Updated survivor task {taskIndex}");
-            }
-            else
-            {
-                Debug.LogWarning($"Invalid survivor task index: {taskIndex}");
             }
         }
         else if (currentRole == RoleManager.PlayerRole.Cultist)
@@ -372,24 +301,18 @@ public class GameHUDManager : MonoBehaviour
             {
                 cultistTaskList[taskIndex] = newStatus;
                 currentTasks = new List<string>(cultistTaskList);
-                Debug.Log($"Updated cultist task {taskIndex}");
-            }
-            else
-            {
-                Debug.LogWarning($"Invalid cultist task index: {taskIndex}");
             }
         }
         else
         {
-            Debug.Log($"Skipping task update - Role: {currentRole}");
             return;
         }
 
         UpdateTasksText();
         UpdateTotalTasksCompleted();
-        Debug.Log($"Task {taskIndex} updated successfully");
     }
 
+    // Count completed tasks
     private void UpdateTotalTasksCompleted()
     {
         int completed = 0;
@@ -404,6 +327,7 @@ public class GameHUDManager : MonoBehaviour
         UpdateTotalTasksText(completed, currentTasks.Count);
     }
 
+    // Update task completion counter
     private void UpdateTotalTasksText(int completed, int total)
     {
         if (totalTasksText != null)
@@ -419,32 +343,32 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // ============ INTERACTION UI METHODS ============
+    // Show interaction prompt
     public void ShowInteractionPrompt(string promptText)
     {
         if (interactionPanel != null && interactionText != null)
         {
             interactionText.text = promptText;
             interactionPanel.SetActive(true);
-            Debug.Log($"Showing interaction prompt: {promptText}");
         }
     }
 
+    // Hide interaction prompt
     public void HideInteractionPrompt()
     {
         if (interactionPanel != null)
         {
             interactionPanel.SetActive(false);
-            Debug.Log("Hiding interaction prompt");
         }
 
         if (interactionProgressBar != null)
         {
             interactionProgressBar.gameObject.SetActive(false);
-            interactionProgressBar.value = 0f; // Reset progress
+            interactionProgressBar.value = 0f;
         }
     }
 
+    // Show interaction progress bar
     public void ShowInteractionProgress(float progress, float maxProgress)
     {
         if (interactionProgressBar != null)
@@ -458,6 +382,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
+    // Hide interaction progress bar
     public void HideInteractionProgress()
     {
         if (interactionProgressBar != null)
@@ -467,7 +392,7 @@ public class GameHUDManager : MonoBehaviour
         }
     }
 
-    // FIX: Reset method to clean up UI state
+    // Reset all HUD elements
     public void ResetHUD()
     {
         HideInteractionPrompt();
@@ -476,23 +401,19 @@ public class GameHUDManager : MonoBehaviour
         if (persistentRoleDisplay != null) persistentRoleDisplay.SetActive(false);
         if (healthStaminaPanel != null) healthStaminaPanel.SetActive(false);
         if (taskPanel != null) taskPanel.SetActive(false);
-
-        Debug.Log("HUD fully reset");
     }
 
+    // Static reset method
     public static void ResetInstance()
     {
         if (Instance != null)
         {
-            // Reset HUD state before destroying
             Instance.ResetHUD();
             Destroy(Instance.gameObject);
             Instance = null;
-            Debug.Log("GameHUDManager instance reset");
         }
     }
 
-    // ============ TESTING METHODS ============
     [ContextMenu("Test Role Assignment - Survivor")]
     private void TestSurvivorRole()
     {
@@ -543,7 +464,6 @@ public class GameHUDManager : MonoBehaviour
     [ContextMenu("Debug Current Tasks")]
     private void DebugCurrentTasks()
     {
-        Debug.Log("=== CURRENT TASKS ===");
         for (int i = 0; i < currentTasks.Count; i++)
         {
             Debug.Log($"Task {i}: {currentTasks[i]}");

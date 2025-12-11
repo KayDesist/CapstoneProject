@@ -12,6 +12,7 @@ public class MultiplayerInitializer : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    // Initializes Unity Services and signs in anonymously
     private async Task InitializeServicesAsync()
     {
         try

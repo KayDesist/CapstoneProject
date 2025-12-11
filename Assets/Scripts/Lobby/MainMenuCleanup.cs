@@ -3,16 +3,17 @@ using Unity.Netcode;
 
 public class MainMenuCleanup : MonoBehaviour
 {
+    // Clean up previous session
     private void Start()
     {
         CleanupPreviousSession();
     }
 
+    // Clean up previous game session
     private void CleanupPreviousSession()
     {
         Debug.Log("Cleaning up previous game session...");
 
-        // Ensure NetworkManager is shut down
         if (NetworkManager.Singleton != null)
         {
             if (NetworkManager.Singleton.IsListening)
@@ -22,21 +23,18 @@ public class MainMenuCleanup : MonoBehaviour
             }
         }
 
-        // Destroy any leftover manager objects
         DestroyManagers();
 
-        // Clean up EndGameUI specifically
         CleanupEndGameUI();
 
-        // Reset cross-scene data
         CrossSceneData.Reset();
 
         Debug.Log("Previous session cleanup completed");
     }
 
+    // Destroy leftover managers
     private void DestroyManagers()
     {
-        // Destroy any leftover manager objects from previous game
         RoleManager[] roleManagers = FindObjectsOfType<RoleManager>();
         foreach (RoleManager manager in roleManagers)
         {
@@ -77,7 +75,6 @@ public class MainMenuCleanup : MonoBehaviour
             }
         }
 
-        // Clean up RoleDisplayUI if it exists
         RoleDisplayUI[] roleDisplays = FindObjectsOfType<RoleDisplayUI>();
         foreach (RoleDisplayUI display in roleDisplays)
         {
@@ -88,13 +85,12 @@ public class MainMenuCleanup : MonoBehaviour
             }
         }
 
-        // Reset static instances using the new methods
         ResetStaticInstances();
     }
 
+    // Clean up EndGameUI
     private void CleanupEndGameUI()
     {
-        // Clean up any EndGameUI instances
         EndGameUI[] endGameUIs = FindObjectsOfType<EndGameUI>();
         foreach (EndGameUI ui in endGameUIs)
         {
@@ -105,7 +101,6 @@ public class MainMenuCleanup : MonoBehaviour
             }
         }
 
-        // Also clean up any temporary end game canvases
         GameObject tempCanvas = GameObject.Find("TempEndGameCanvas");
         if (tempCanvas != null)
         {
@@ -114,6 +109,7 @@ public class MainMenuCleanup : MonoBehaviour
         }
     }
 
+    // Reset static instances
     private void ResetStaticInstances()
     {
         RoleManager.ResetInstance();

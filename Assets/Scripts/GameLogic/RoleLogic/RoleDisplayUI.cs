@@ -41,7 +41,6 @@ public class RoleDisplayUI : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // Setup audio source
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -53,11 +52,11 @@ public class RoleDisplayUI : MonoBehaviour
             continueButton.onClick.AddListener(HideRoleDisplay);
     }
 
+    // Shows role display UI
     public void ShowRole(RoleManager.PlayerRole role)
     {
         if (roleDisplayPanel == null) return;
 
-        // Play role reveal sound
         if (audioSource != null && roleRevealSound != null)
         {
             audioSource.PlayOneShot(roleRevealSound);
@@ -83,12 +82,14 @@ public class RoleDisplayUI : MonoBehaviour
         StartCoroutine(AutoHideRoleDisplay());
     }
 
+    // Automatically hides role display after delay
     private IEnumerator AutoHideRoleDisplay()
     {
         yield return new WaitForSeconds(3f);
         HideRoleDisplay();
     }
 
+    // Hides role display UI
     private void HideRoleDisplay()
     {
         if (roleDisplayPanel != null)
@@ -96,6 +97,5 @@ public class RoleDisplayUI : MonoBehaviour
 
         StopAllCoroutines();
         OnRoleDisplayHidden?.Invoke();
-        Debug.Log("RoleDisplayUI hidden and event triggered");
     }
 }

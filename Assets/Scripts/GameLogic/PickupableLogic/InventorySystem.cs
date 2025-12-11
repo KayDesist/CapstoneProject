@@ -57,7 +57,6 @@ public class InventorySystem : NetworkBehaviour
     {
         inventorySlots = new NetworkList<InventorySlot>();
 
-        // Setup audio source
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -66,6 +65,7 @@ public class InventorySystem : NetworkBehaviour
             playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
     }
 
+    // Called when object spawns on network
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -76,10 +76,6 @@ public class InventorySystem : NetworkBehaviour
         if (playerHitbox == null)
         {
             playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
-            if (playerHitbox == null)
-            {
-                Debug.LogError("PlayerHitboxDamage not found on player!");
-            }
         }
 
         inventorySlots.OnListChanged += OnInventoryChanged;
@@ -96,6 +92,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Initializes empty inventory slots
     private void InitializeEmptySlots()
     {
         for (int i = 0; i < maxSlots; i++)
@@ -109,6 +106,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Main update loop
     private void Update()
     {
         if (!IsOwner || gameEnded) return;
@@ -117,6 +115,7 @@ public class InventorySystem : NetworkBehaviour
         CheckForItemsInRange();
     }
 
+    // Checks for items in pickup range
     private void CheckForItemsInRange()
     {
         Collider[] hitColliders = Physics.OverlapSphere(transform.position, 3f);
@@ -144,6 +143,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Handles player input
     private void HandleInput()
     {
         if (gameEnded) return;
@@ -163,7 +163,6 @@ public class InventorySystem : NetworkBehaviour
 
         if (Input.GetKeyDown(pickupKey) && itemInRange != null && HasEmptySlots())
         {
-            // Play pickup sound locally
             if (audioSource != null && pickupSound != null && IsOwner)
             {
                 audioSource.PlayOneShot(pickupSound);
@@ -174,7 +173,6 @@ public class InventorySystem : NetworkBehaviour
 
         if (Input.GetKeyDown(dropKey) && currentSlotIndex.Value != -1)
         {
-            // Play drop sound locally
             if (audioSource != null && dropSound != null && IsOwner)
             {
                 audioSource.PlayOneShot(dropSound);
@@ -194,6 +192,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Fixed update for physics-based actions
     private void FixedUpdate()
     {
         if (gameEnded) return;
@@ -210,6 +209,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Trigger enter handler
     private void OnTriggerEnter(Collider other)
     {
         if (!IsOwner || gameEnded) return;
@@ -222,6 +222,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Trigger exit handler
     private void OnTriggerExit(Collider other)
     {
         if (!IsOwner || gameEnded) return;
@@ -234,6 +235,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Updates interaction prompt UI
     private void UpdateInteractionPrompt()
     {
         if (itemInRange != null && itemInRange.CanBePickedUp)
@@ -253,22 +255,22 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Server RPC to switch inventory slot
     [ServerRpc]
     private void SwitchToSlotServerRpc(int slotIndex)
     {
         if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
         {
             currentSlotIndex.Value = slotIndex;
-            Debug.Log($"Server updated current slot to {slotIndex}");
         }
     }
 
+    // Server RPC to pickup item
     [ServerRpc]
     private void PickupItemServerRpc(ulong itemId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
         {
-            Debug.LogWarning($"Cannot pickup item - network object {itemId} not found");
             return;
         }
 
@@ -298,36 +300,29 @@ public class InventorySystem : NetworkBehaviour
                     if (playerHitbox == null)
                     {
                         playerHitbox = GetComponentInChildren<PlayerHitboxDamage>(true);
-                        if (playerHitbox == null)
-                        {
-                            Debug.LogError("PlayerHitboxDamage not found on player!");
-                        }
                     }
 
                     weapon.Initialize(OwnerClientId, health, playerHitbox);
-                    Debug.Log($"Weapon {weapon.weaponName} initialized for player {OwnerClientId}");
                 }
 
                 UpdateHeldItemVisualsClientRpc();
-                Debug.Log($"Picked up {item.ItemName} into slot {i}");
-
-                // Play pickup sound on all clients
                 PlayPickupSoundClientRpc();
                 return;
             }
         }
     }
 
+    // Client RPC to play pickup sound
     [ClientRpc]
     private void PlayPickupSoundClientRpc()
     {
-        // Play pickup sound on all clients except the owner (already played locally)
         if (!IsOwner && audioSource != null && pickupSound != null)
         {
             audioSource.PlayOneShot(pickupSound);
         }
     }
 
+    // Client RPC to update held item visuals
     [ClientRpc]
     private void UpdateHeldItemVisualsClientRpc()
     {
@@ -338,6 +333,7 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Server RPC to drop current item
     [ServerRpc]
     private void DropCurrentItemServerRpc(Vector3 dropPosition, Vector3 forwardDirection)
     {
@@ -354,10 +350,6 @@ public class InventorySystem : NetworkBehaviour
                 item.DropItem(dropPosition, forwardDirection);
             }
         }
-        else
-        {
-            Debug.LogWarning($"Cannot drop item - network object {currentSlot.itemNetworkId} not found");
-        }
 
         inventorySlots[currentSlotIndex.Value] = new InventorySlot
         {
@@ -367,33 +359,30 @@ public class InventorySystem : NetworkBehaviour
         };
 
         UpdateHeldItemVisualsClientRpc();
-
-        // Play drop sound on all clients
         PlayDropSoundClientRpc();
     }
 
+    // Client RPC to play drop sound
     [ClientRpc]
     private void PlayDropSoundClientRpc()
     {
-        // Play drop sound on all clients except the owner (already played locally)
         if (!IsOwner && audioSource != null && dropSound != null)
         {
             audioSource.PlayOneShot(dropSound);
         }
     }
 
+    // Handles weapon attack
     private void HandleWeaponAttack()
     {
         if (currentSlotIndex.Value == -1)
         {
-            Debug.Log("No slot selected");
             return;
         }
 
         var currentSlot = inventorySlots[currentSlotIndex.Value];
         if (currentSlot.isEmpty)
         {
-            Debug.Log("Current slot is empty");
             return;
         }
 
@@ -401,8 +390,6 @@ public class InventorySystem : NetworkBehaviour
             NetworkManager.Singleton.SpawnManager == null ||
             !NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(currentSlot.itemNetworkId))
         {
-            Debug.LogWarning($"Cannot attack - network object {currentSlot.itemNetworkId} not found or network manager unavailable");
-
             if (IsServer)
             {
                 ClearInvalidSlot(currentSlotIndex.Value);
@@ -419,18 +406,11 @@ public class InventorySystem : NetworkBehaviour
             Weapon weapon = itemNetObject.GetComponent<Weapon>();
             if (weapon != null)
             {
-                Debug.Log($"Attempting attack with {weapon.weaponName}");
                 weapon.Attack();
-            }
-            else
-            {
-                Debug.Log("Item in slot is not a weapon");
             }
         }
         else
         {
-            Debug.LogWarning($"Could not find network object with ID: {currentSlot.itemNetworkId}");
-
             if (IsServer)
             {
                 ClearInvalidSlot(currentSlotIndex.Value);
@@ -442,12 +422,14 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Server RPC to clear invalid slot
     [ServerRpc]
     private void ClearInvalidSlotServerRpc(int slotIndex)
     {
         ClearInvalidSlot(slotIndex);
     }
 
+    // Clears invalid inventory slot
     private void ClearInvalidSlot(int slotIndex)
     {
         if (slotIndex >= 0 && slotIndex < inventorySlots.Count)
@@ -458,10 +440,10 @@ public class InventorySystem : NetworkBehaviour
                 isEmpty = true,
                 itemName = "Empty"
             };
-            Debug.Log($"Cleared invalid slot {slotIndex}");
         }
     }
 
+    // Called when inventory changes
     private void OnInventoryChanged(NetworkListEvent<InventorySlot> changeEvent)
     {
         if (IsOwner)
@@ -471,15 +453,16 @@ public class InventorySystem : NetworkBehaviour
         }
     }
 
+    // Called when current slot changes
     private void OnCurrentSlotChanged(int oldValue, int newValue)
     {
         if (IsOwner)
         {
-            Debug.Log($"Slot changed from {oldValue} to {newValue}");
             UpdateHeldItemVisuals();
         }
     }
 
+    // Updates held item visuals for specific slot
     private void UpdateHeldItemVisualsForSlot(int slotIndex)
     {
         if (currentHeldItem != null)
@@ -517,21 +500,12 @@ public class InventorySystem : NetworkBehaviour
                     {
                         weapon.OnEquipped();
                     }
-
-                    Debug.Log($"Immediately updated visuals for slot {slotIndex}");
                 }
             }
-            else
-            {
-                Debug.LogWarning($"Cannot update visuals - network object {targetSlot.itemNetworkId} not found");
-            }
-        }
-        else
-        {
-            Debug.Log($"Slot {slotIndex} is empty - no item to show");
         }
     }
 
+    // Updates held item visuals
     private void UpdateHeldItemVisuals()
     {
         if (currentHeldItem != null)
@@ -569,21 +543,12 @@ public class InventorySystem : NetworkBehaviour
                     {
                         weapon.OnEquipped();
                     }
-
-                    Debug.Log($"Updated held item visuals for slot {currentSlotIndex.Value}");
                 }
             }
-            else
-            {
-                Debug.LogWarning($"Cannot update held item - network object {currentSlot.itemNetworkId} not found");
-            }
-        }
-        else
-        {
-            Debug.Log($"Current slot {currentSlotIndex.Value} is empty - no item to show");
         }
     }
 
+    // Checks if inventory has empty slots
     private bool HasEmptySlots()
     {
         foreach (var slot in inventorySlots)
@@ -593,6 +558,7 @@ public class InventorySystem : NetworkBehaviour
         return false;
     }
 
+    // Handles game ended event
     private void HandleGameEnded()
     {
         gameEnded = true;
@@ -604,9 +570,9 @@ public class InventorySystem : NetworkBehaviour
         }
 
         GameHUDManager.Instance?.HideInteractionPrompt();
-        Debug.Log("InventorySystem: Game ended - disabled input and cleared visuals");
     }
 
+    // Called when object despawns from network
     public override void OnNetworkDespawn()
     {
         inventorySlots.OnListChanged -= OnInventoryChanged;

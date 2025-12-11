@@ -12,11 +12,13 @@ public class SimplePickupSystem : NetworkBehaviour
     private GameObject currentHeldItem;
     private PickupableItem itemInRange;
 
+    // Called when object spawns on network
     public override void OnNetworkSpawn()
     {
         carriedItemId.OnValueChanged += OnCarriedItemChanged;
     }
 
+    // Main update loop
     private void Update()
     {
         if (!IsOwner) return;
@@ -25,6 +27,7 @@ public class SimplePickupSystem : NetworkBehaviour
         HandleInput();
     }
 
+    // Checks for pickup items in range
     private void CheckForPickupItems()
     {
         Ray ray = new Ray(transform.position + Vector3.up * 0.5f, transform.forward);
@@ -59,9 +62,9 @@ public class SimplePickupSystem : NetworkBehaviour
         }
     }
 
+    // Handles player input
     private void HandleInput()
     {
-        // Pick up item
         if (Input.GetKeyDown(pickupKey) && itemInRange != null && carriedItemId.Value == 0)
         {
             if (IsServer)
@@ -74,7 +77,6 @@ public class SimplePickupSystem : NetworkBehaviour
             }
         }
 
-        // Drop item - FIXED: Now sends both parameters
         if (Input.GetKeyDown(dropKey) && carriedItemId.Value != 0)
         {
             Vector3 dropPosition = transform.position;
@@ -90,17 +92,18 @@ public class SimplePickupSystem : NetworkBehaviour
         }
     }
 
+    // Server RPC to pickup item
     [ServerRpc]
     private void PickupItemServerRpc(ulong itemId)
     {
         PickupItem(itemId);
     }
 
+    // Picks up item
     private void PickupItem(ulong itemId)
     {
         if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.ContainsKey(itemId))
         {
-            Debug.LogError($"Item with network ID {itemId} not found!");
             return;
         }
 
@@ -109,27 +112,25 @@ public class SimplePickupSystem : NetworkBehaviour
 
         if (item == null || !item.CanBePickedUp || item.IsPickedUp)
         {
-            Debug.Log("Item cannot be picked up");
             return;
         }
 
         carriedItemId.Value = itemId;
         item.PickupItem(NetworkObjectId);
-
-        Debug.Log($"Picked up {item.ItemName}");
     }
 
+    // Server RPC to drop item
     [ServerRpc]
     private void DropItemServerRpc(Vector3 dropPosition, Vector3 forwardDirection)
     {
         DropItem(dropPosition, forwardDirection);
     }
 
+    // Drops item
     private void DropItem(Vector3 dropPosition, Vector3 forwardDirection)
     {
         if (carriedItemId.Value == 0)
         {
-            Debug.Log("No item to drop");
             return;
         }
 
@@ -140,26 +141,25 @@ public class SimplePickupSystem : NetworkBehaviour
             {
                 item.DropItem(dropPosition, forwardDirection);
                 carriedItemId.Value = 0;
-                Debug.Log($"Dropped {item.ItemName}");
             }
         }
     }
 
+    // Called when carried item changes
     private void OnCarriedItemChanged(ulong oldValue, ulong newValue)
     {
         UpdateHeldItemVisuals();
     }
 
+    // Updates held item visuals
     private void UpdateHeldItemVisuals()
     {
-        // Remove current held item
         if (currentHeldItem != null)
         {
             Destroy(currentHeldItem);
             currentHeldItem = null;
         }
 
-        // Add new held item if we're carrying something
         if (carriedItemId.Value != 0)
         {
             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(carriedItemId.Value, out NetworkObject itemNetObject))
@@ -170,23 +170,17 @@ public class SimplePickupSystem : NetworkBehaviour
                     currentHeldItem = Instantiate(item.HeldPrefab, itemHoldPoint);
                     currentHeldItem.transform.localPosition = Vector3.zero;
                     currentHeldItem.transform.localRotation = Quaternion.identity;
-
-                    Debug.Log($"Now holding: {item.ItemName}");
                 }
             }
         }
-        else
-        {
-            Debug.Log("No item carried");
-        }
 
-        // Update UI
         if (GameHUDManager.Instance != null)
         {
             GameHUDManager.Instance.HideInteractionPrompt();
         }
     }
 
+    // Draws gizmos in editor
     private void OnDrawGizmos()
     {
         if (!IsOwner) return;
@@ -196,6 +190,7 @@ public class SimplePickupSystem : NetworkBehaviour
         Gizmos.DrawRay(start, transform.forward * 3f);
     }
 
+    // Called when object despawns from network
     public override void OnNetworkDespawn()
     {
         carriedItemId.OnValueChanged -= OnCarriedItemChanged;

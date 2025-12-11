@@ -11,12 +11,13 @@ public class LobbyUIManager : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private Button leaveButton;
 
-    [Header("Player Slots - Drag ALL player slots here")]
-    [SerializeField] private List<GameObject> playerSlots; // Drag Player_1, Player_2, etc. here
+    [Header("Player Slots")]
+    [SerializeField] private List<GameObject> playerSlots;
 
     [Header("Manager Reference")]
     [SerializeField] private LobbyManager lobbyManager;
 
+    // Initialize components
     private void Awake()
     {
         if (lobbyManager == null)
@@ -24,24 +25,23 @@ public class LobbyUIManager : MonoBehaviour
 
         SetupUI();
 
-        // Initially hide all player slots
         HideAllPlayerSlots();
     }
 
+    // Setup UI components
     private void SetupUI()
     {
-        // Button listeners
         if (startButton != null)
             startButton.onClick.AddListener(OnStartClicked);
 
         if (leaveButton != null)
             leaveButton.onClick.AddListener(OnLeaveClicked);
 
-        // Initially hide start button
         if (startButton != null)
             startButton.gameObject.SetActive(false);
     }
 
+    // Hide all player slots
     private void HideAllPlayerSlots()
     {
         foreach (var slot in playerSlots)
@@ -51,11 +51,13 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Update each frame
     private void Update()
     {
         UpdatePlayerCountDisplay();
     }
 
+    // Update player count display
     public void UpdatePlayerCountDisplay()
     {
         if (playerCountText != null && lobbyManager != null)
@@ -65,6 +67,7 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Update lobby code display
     public void UpdateLobbyCodeDisplay(string joinCode)
     {
         if (lobbyCodeText != null)
@@ -73,12 +76,11 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Update player list display
     public void UpdatePlayerList(List<NetworkPlayerInfo> players)
     {
-        // First hide all slots
         HideAllPlayerSlots();
 
-        // Then show and update slots for current players
         for (int i = 0; i < players.Count && i < playerSlots.Count; i++)
         {
             if (playerSlots[i] != null)
@@ -89,9 +91,9 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Setup individual player slot
     private void SetupPlayerSlot(GameObject playerSlot, NetworkPlayerInfo playerData)
     {
-        // Find the child text components and update them
         TMP_Text playerNameText = playerSlot.transform.Find("Player Name")?.GetComponent<TMP_Text>();
         TMP_Text readyStateText = playerSlot.transform.Find("Ready State")?.GetComponent<TMP_Text>();
 
@@ -99,8 +101,7 @@ public class LobbyUIManager : MonoBehaviour
         {
             playerNameText.text = playerData.PlayerName.ToString();
 
-            // Add (Host) indicator if this is the host
-            if (playerData.ClientId == 0) // Host is usually client ID 0
+            if (playerData.ClientId == 0)
             {
                 playerNameText.text += " (Host)";
             }
@@ -113,6 +114,7 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Show/hide start button
     public void SetStartButtonVisible(bool visible)
     {
         if (startButton != null)
@@ -121,12 +123,14 @@ public class LobbyUIManager : MonoBehaviour
         }
     }
 
+    // Start button clicked
     private void OnStartClicked()
     {
         if (lobbyManager != null)
             lobbyManager.StartGame();
     }
 
+    // Leave button clicked
     private void OnLeaveClicked()
     {
         if (lobbyManager != null)

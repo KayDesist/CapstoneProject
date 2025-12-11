@@ -29,6 +29,7 @@ public class TaskManager : NetworkBehaviour
         cultistTasks = new NetworkList<TaskData>();
     }
 
+    // Called when object spawns on network
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -36,19 +37,15 @@ public class TaskManager : NetworkBehaviour
             InitializeTasks();
         }
 
-        // All clients should get the HUD manager reference
         hudManager = GameHUDManager.Instance;
-
-        Debug.Log("TaskManager spawned and ready");
     }
 
+    // Initializes tasks
     private void InitializeTasks()
     {
-        // Clear any existing tasks
         survivorTasks.Clear();
         cultistTasks.Clear();
 
-        // Initialize survivor tasks
         survivorTasks.Add(new TaskData
         {
             baseDescription = "Repair Generator",
@@ -71,7 +68,6 @@ public class TaskManager : NetworkBehaviour
             isCompleted = false
         });
 
-        // Initialize cultist tasks
         cultistTasks.Add(new TaskData
         {
             baseDescription = "Place Ritual Candles",
@@ -93,42 +89,29 @@ public class TaskManager : NetworkBehaviour
             requiredProgress = 2,
             isCompleted = false
         });
-
-        Debug.Log($"Initialized {survivorTasks.Count} survivor tasks and {cultistTasks.Count} cultist tasks");
     }
 
+    // Server RPC to update task progress
     [ServerRpc(RequireOwnership = false)]
     public void UpdateTaskProgressServerRpc(int taskIndex, bool isSurvivorTask, int progressToAdd)
     {
-        Debug.Log($"ServerRpc: Updating task {taskIndex}, isSurvivor: {isSurvivorTask}, progressToAdd: {progressToAdd}");
-
         if (isSurvivorTask && taskIndex >= 0 && taskIndex < survivorTasks.Count)
         {
             TaskData task = survivorTasks[taskIndex];
 
-            // Accumulate progress instead of setting it
             task.currentProgress = Mathf.Min(task.currentProgress + progressToAdd, task.requiredProgress);
             bool wasCompleted = task.isCompleted;
             task.isCompleted = (task.currentProgress >= task.requiredProgress);
 
             survivorTasks[taskIndex] = task;
 
-            // Notify all clients about this survivor task update
             UpdateTaskClientRpc(taskIndex, true, task.currentProgress, task.requiredProgress, task.isCompleted);
 
-            Debug.Log($"Updated survivor task {taskIndex}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress}, Completed: {task.isCompleted}");
-
-            // Check if all survivor tasks are now complete
             if (!wasCompleted && task.isCompleted && AreAllTasksComplete(true))
             {
-                Debug.Log("🎉 ALL SURVIVOR TASKS COMPLETED! Notifying EndGameManager...");
                 if (EndGameManager.Instance != null)
                 {
                     EndGameManager.Instance.OnTasksCompleted(RoleManager.PlayerRole.Survivor);
-                }
-                else
-                {
-                    Debug.LogError("EndGameManager.Instance is null! Cannot notify task completion.");
                 }
             }
         }
@@ -136,46 +119,30 @@ public class TaskManager : NetworkBehaviour
         {
             TaskData task = cultistTasks[taskIndex];
 
-            // Accumulate progress instead of setting it
             task.currentProgress = Mathf.Min(task.currentProgress + progressToAdd, task.requiredProgress);
             bool wasCompleted = task.isCompleted;
             task.isCompleted = (task.currentProgress >= task.requiredProgress);
 
             cultistTasks[taskIndex] = task;
 
-            // Notify all clients about this cultist task update
             UpdateTaskClientRpc(taskIndex, false, task.currentProgress, task.requiredProgress, task.isCompleted);
 
-            Debug.Log($"Updated cultist task {taskIndex}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress}, Completed: {task.isCompleted}");
-
-            // Check if all cultist tasks are now complete
             if (!wasCompleted && task.isCompleted && AreAllTasksComplete(false))
             {
-                Debug.Log("🎉 ALL CULTIST TASKS COMPLETED! Notifying EndGameManager...");
                 if (EndGameManager.Instance != null)
                 {
                     EndGameManager.Instance.OnTasksCompleted(RoleManager.PlayerRole.Cultist);
                 }
-                else
-                {
-                    Debug.LogError("EndGameManager.Instance is null! Cannot notify task completion.");
-                }
             }
-        }
-        else
-        {
-            Debug.LogWarning($"Invalid task update - Index: {taskIndex}, IsSurvivor: {isSurvivorTask}");
         }
     }
 
+    // Client RPC to update task
     [ClientRpc]
     private void UpdateTaskClientRpc(int taskIndex, bool isSurvivorTask, int currentProgress, int requiredProgress, bool isCompleted)
     {
-        Debug.Log($"ClientRpc: Task {taskIndex}, isSurvivor: {isSurvivorTask}, progress: {currentProgress}/{requiredProgress}, completed: {isCompleted}");
-
         if (hudManager != null)
         {
-            // Only update if this client's role matches the task type
             if (RoleManager.Instance != null)
             {
                 var localPlayerRole = RoleManager.Instance.GetLocalPlayerRole();
@@ -187,16 +154,12 @@ public class TaskManager : NetworkBehaviour
                     string taskDescription = $"- {GetBaseDescriptionForTask(taskIndex, isSurvivorTask)}{status}";
 
                     hudManager.UpdateTaskProgress(taskIndex, taskDescription);
-                    Debug.Log($"Updating HUD for local player - Task: {taskDescription}");
-                }
-                else
-                {
-                    Debug.Log($"Skipping HUD update - Local role {localPlayerRole} doesn't match task type {isSurvivorTask}");
                 }
             }
         }
     }
 
+    // Gets base description for task
     private string GetBaseDescriptionForTask(int taskIndex, bool isSurvivorTask)
     {
         if (isSurvivorTask && taskIndex < survivorTasks.Count)
@@ -210,14 +173,13 @@ public class TaskManager : NetworkBehaviour
         return "Unknown Task";
     }
 
-    // Check if all tasks for a role are complete
+    // Checks if all tasks for a role are complete
     public bool AreAllTasksComplete(bool isSurvivorTasks)
     {
         var taskList = isSurvivorTasks ? survivorTasks : cultistTasks;
 
         if (taskList.Count == 0)
         {
-            Debug.LogWarning($"Task list for {(isSurvivorTasks ? "Survivor" : "Cultist")} is empty!");
             return false;
         }
 
@@ -225,15 +187,14 @@ public class TaskManager : NetworkBehaviour
         {
             if (!task.isCompleted)
             {
-                Debug.Log($"Task {task.baseDescription} is not complete: {task.currentProgress}/{task.requiredProgress}");
                 return false;
             }
         }
 
-        Debug.Log($"All {(isSurvivorTasks ? "Survivor" : "Cultist")} tasks are complete!");
         return true;
     }
 
+    // Gets survivor tasks for UI
     public List<string> GetSurvivorTasksForUI()
     {
         List<string> tasks = new List<string>();
@@ -245,6 +206,7 @@ public class TaskManager : NetworkBehaviour
         return tasks;
     }
 
+    // Gets cultist tasks for UI
     public List<string> GetCultistTasksForUI()
     {
         List<string> tasks = new List<string>();
@@ -256,87 +218,78 @@ public class TaskManager : NetworkBehaviour
         return tasks;
     }
 
-    // NEW: Reset static instance
+    // Resets static instance
     public static void ResetInstance()
     {
         if (Instance != null)
         {
             Destroy(Instance.gameObject);
             Instance = null;
-            Debug.Log("TaskManager instance reset");
         }
     }
 
-    // Test method to simulate task completion
+    // Test method to complete first survivor task
     [ContextMenu("Test Complete First Survivor Task")]
     public void TestCompleteFirstSurvivorTask()
     {
         if (IsServer)
         {
-            Debug.Log("TEST: Completing first survivor task");
-            UpdateTaskProgressServerRpc(0, true, 3); // Complete first survivor task
+            UpdateTaskProgressServerRpc(0, true, 3);
         }
     }
 
+    // Test method to complete all survivor tasks
     [ContextMenu("Test Complete All Survivor Tasks")]
     public void TestCompleteAllSurvivorTasks()
     {
         if (IsServer)
         {
-            Debug.Log("TEST: Completing ALL survivor tasks");
-            // Complete all survivor tasks
             for (int i = 0; i < survivorTasks.Count; i++)
             {
-                UpdateTaskProgressServerRpc(i, true, 10); // Enough to complete any task
+                UpdateTaskProgressServerRpc(i, true, 10);
             }
         }
     }
 
+    // Test method to complete first cultist task
     [ContextMenu("Test Complete First Cultist Task")]
     public void TestCompleteFirstCultistTask()
     {
         if (IsServer)
         {
-            Debug.Log("TEST: Completing first cultist task");
-            UpdateTaskProgressServerRpc(0, false, 3); // Complete first cultist task
+            UpdateTaskProgressServerRpc(0, false, 3);
         }
     }
 
+    // Test method to complete all cultist tasks
     [ContextMenu("Test Complete All Cultist Tasks")]
     public void TestCompleteAllCultistTasks()
     {
         if (IsServer)
         {
-            Debug.Log("TEST: Completing ALL cultist tasks");
-            // Complete all cultist tasks
             for (int i = 0; i < cultistTasks.Count; i++)
             {
-                UpdateTaskProgressServerRpc(i, false, 10); // Enough to complete any task
+                UpdateTaskProgressServerRpc(i, false, 10);
             }
         }
     }
 
+    // Debugs task states
     [ContextMenu("Debug Task States")]
     public void DebugTaskStates()
     {
-        Debug.Log("=== SURVIVOR TASKS ===");
         for (int i = 0; i < survivorTasks.Count; i++)
         {
             var task = survivorTasks[i];
-            Debug.Log($"Task {i}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress} - Completed: {task.isCompleted}");
         }
 
-        Debug.Log("=== CULTIST TASKS ===");
         for (int i = 0; i < cultistTasks.Count; i++)
         {
             var task = cultistTasks[i];
-            Debug.Log($"Task {i}: {task.baseDescription} - Progress: {task.currentProgress}/{task.requiredProgress} - Completed: {task.isCompleted}");
         }
-
-        Debug.Log($"All survivor tasks complete: {AreAllTasksComplete(true)}");
-        Debug.Log($"All cultist tasks complete: {AreAllTasksComplete(false)}");
     }
 
+    // Called when object despawns from network
     public override void OnNetworkDespawn()
     {
         survivorTasks?.Dispose();

@@ -12,7 +12,6 @@ public class NetworkAnimationController : NetworkBehaviour
     [SerializeField] private NetworkPlayerController playerController;
     [SerializeField] private PlayerHealth playerHealth;
 
-    // Network variables for animation synchronization
     private NetworkVariable<float> networkSpeed = new NetworkVariable<float>(0f,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner);
@@ -33,7 +32,6 @@ public class NetworkAnimationController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
 
-    // Local animation state
     private Vector3 lastPosition;
     private float currentVelocity;
     private bool isInitialized = false;
@@ -41,7 +39,6 @@ public class NetworkAnimationController : NetworkBehaviour
 
     private void Awake()
     {
-        // Get references if not set
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
@@ -60,23 +57,17 @@ public class NetworkAnimationController : NetworkBehaviour
 
         if (IsOwner)
         {
-            // Owner sends animation data
             isInitialized = true;
-            Debug.Log("NetworkAnimationController: Owner initialized");
         }
         else
         {
-            // Non-owners receive animation data
             isInitialized = true;
 
-            // Subscribe to network variable changes
             networkSpeed.OnValueChanged += OnSpeedChanged;
             networkIsSprinting.OnValueChanged += OnSprintingChanged;
             networkIsPerformingTask.OnValueChanged += OnTaskChanged;
             networkAttackTrigger.OnValueChanged += OnAttackTriggered;
             networkIsDead.OnValueChanged += OnDeathStateChanged;
-
-            Debug.Log("NetworkAnimationController: Client initialized");
         }
     }
 
@@ -94,19 +85,17 @@ public class NetworkAnimationController : NetworkBehaviour
         }
     }
 
+    // Update animations for owner
     private void UpdateOwnerAnimations()
     {
         if (animator == null || playerController == null || playerHealth == null) return;
 
-        // Check if player is dead
         bool isDead = networkIsDead.Value || (playerHealth != null && !playerHealth.IsAlive());
 
         if (isDead)
         {
-            // Player is dead, stop movement animations
             if (!deathAnimationTriggered)
             {
-                // Trigger death animation on owner
                 TriggerDeath();
                 deathAnimationTriggered = true;
             }
@@ -117,21 +106,15 @@ public class NetworkAnimationController : NetworkBehaviour
             return;
         }
 
-        // Player is alive, update movement animations
         deathAnimationTriggered = false;
 
-        // Calculate speed based on movement
         Vector3 currentPosition = transform.position;
         float distance = Vector3.Distance(currentPosition, lastPosition);
         float speed = distance / Time.deltaTime;
 
-        // Smooth speed value
         float smoothedSpeed = Mathf.SmoothDamp(animator.GetFloat("Speed"), speed, ref currentVelocity, smoothTime);
-
-        // Normalize speed
         float normalizedSpeed = Mathf.Clamp01(smoothedSpeed / playerController.walkSpeed);
 
-        // Update network variables
         if (Mathf.Abs(networkSpeed.Value - normalizedSpeed) > 0.05f)
         {
             networkSpeed.Value = normalizedSpeed;
@@ -143,7 +126,6 @@ public class NetworkAnimationController : NetworkBehaviour
             networkIsSprinting.Value = isSprinting;
         }
 
-        // Update local animator
         animator.SetFloat("Speed", normalizedSpeed);
         animator.SetBool("IsSprinting", isSprinting);
         animator.SetBool("IsPerformingTask", networkIsPerformingTask.Value);
@@ -151,6 +133,7 @@ public class NetworkAnimationController : NetworkBehaviour
         lastPosition = currentPosition;
     }
 
+    // Update animations from network variables
     private void UpdateAnimatorFromNetwork()
     {
         if (animator == null) return;
@@ -159,8 +142,6 @@ public class NetworkAnimationController : NetworkBehaviour
         animator.SetBool("IsSprinting", networkIsSprinting.Value);
         animator.SetBool("IsPerformingTask", networkIsPerformingTask.Value);
     }
-
-    // ============ EVENT HANDLERS ============
 
     private void OnSpeedChanged(float oldValue, float newValue)
     {
@@ -191,7 +172,6 @@ public class NetworkAnimationController : NetworkBehaviour
         if (newValue && !IsOwner && animator != null)
         {
             animator.SetTrigger("Attack");
-            // Reset on server
             if (IsServer)
             {
                 StartCoroutine(ResetAttackTrigger());
@@ -201,16 +181,12 @@ public class NetworkAnimationController : NetworkBehaviour
 
     private void OnDeathStateChanged(bool oldValue, bool newValue)
     {
-        Debug.Log($"NetworkAnimationController: Death state changed from {oldValue} to {newValue}");
-
         if (newValue && animator != null)
         {
-            // Trigger death animation on all clients
             TriggerDeath();
         }
         else if (!newValue && animator != null)
         {
-            // Reset death state when player respawns
             ResetDeathState();
         }
     }
@@ -224,41 +200,34 @@ public class NetworkAnimationController : NetworkBehaviour
         }
     }
 
-    // ============ DEATH ANIMATION METHODS ============
-
+    // Trigger death animation
     public void TriggerDeath()
     {
         if (animator != null)
         {
             animator.SetTrigger("Die");
-            Debug.Log($"NetworkAnimationController: Triggered death animation for player {OwnerClientId}");
         }
 
-        // Set network variable for all clients
         if (IsServer)
         {
             networkIsDead.Value = true;
         }
     }
 
+    // Reset death state
     public void ResetDeathState()
     {
         if (animator != null)
         {
-            // Reset death trigger and set IsDead parameter to false
             animator.ResetTrigger("Die");
             animator.SetBool("IsDead", false);
 
-            // Force animator back to idle state
             if (animator.isActiveAndEnabled)
             {
                 animator.Play("Idle", 0, 0f);
             }
-
-            Debug.Log("NetworkAnimationController: Reset death animation state");
         }
 
-        // Reset network variable for all clients
         if (IsServer)
         {
             networkIsDead.Value = false;
@@ -267,8 +236,7 @@ public class NetworkAnimationController : NetworkBehaviour
         deathAnimationTriggered = false;
     }
 
-    // ============ PUBLIC METHODS ============
-
+    // Set task performance state
     public void SetPerformingTask(bool isPerforming)
     {
         if (!IsOwner || (playerHealth != null && !playerHealth.IsAlive())) return;
@@ -280,6 +248,7 @@ public class NetworkAnimationController : NetworkBehaviour
         }
     }
 
+    // Trigger attack animation
     public void TriggerAttack()
     {
         if (!IsOwner || (playerHealth != null && !playerHealth.IsAlive())) return;
@@ -290,11 +259,10 @@ public class NetworkAnimationController : NetworkBehaviour
         }
         networkAttackTrigger.Value = true;
 
-        // Reset after a moment
         StartCoroutine(ResetAttackTrigger());
     }
 
-    // Helper method for PlayerHealth to set death state
+    // Set death state
     public void SetDeathState(bool isDead)
     {
         if (IsServer)

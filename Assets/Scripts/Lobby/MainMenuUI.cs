@@ -15,32 +15,34 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button confirmJoinButton;
     [SerializeField] private Button cancelJoinButton;
 
+    // Initialize UI
     private void Start()
     {
         joinPanel.SetActive(false);
 
-        // Button events
         hostButton.GetComponent<Button>().onClick.AddListener(OnHostClicked);
         joinButton.GetComponent<Button>().onClick.AddListener(OnJoinClicked);
         confirmJoinButton.onClick.AddListener(OnConfirmJoinClicked);
         cancelJoinButton.onClick.AddListener(OnCancelJoinClicked);
     }
 
+    // Host button clicked
     private void OnHostClicked()
     {
         CrossSceneData.LobbyMode = "Host";
         SceneManager.LoadScene("Lobby");
     }
 
+    // Join button clicked
     private void OnJoinClicked()
     {
-        // Hide menu buttons, show join UI
         hostButton.SetActive(false);
         joinButton.SetActive(false);
         joinPanel.SetActive(true);
         joinCodeInput.text = "";
     }
 
+    // Confirm join clicked
     private void OnConfirmJoinClicked()
     {
         string code = joinCodeInput.text.Trim();
@@ -56,9 +58,9 @@ public class MainMenuUI : MonoBehaviour
         SceneManager.LoadScene("Lobby");
     }
 
+    // Cancel join clicked
     private void OnCancelJoinClicked()
     {
-        // Bring buttons back, hide join panel
         joinPanel.SetActive(false);
         hostButton.SetActive(true);
         joinButton.SetActive(true);

@@ -22,7 +22,6 @@ public class EndGameUI : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -34,47 +33,34 @@ public class EndGameUI : MonoBehaviour
             return;
         }
 
-        // Hide panel initially
         if (endGamePanel != null)
             endGamePanel.SetActive(false);
 
-        // Setup return button
         if (returnButton != null)
         {
             returnButton.onClick.AddListener(OnReturnButtonClicked);
         }
 
-        Debug.Log("EndGameUI initialized");
-
-        // Subscribe to scene change event
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Auto-destroy if we're in the MainMenu scene
         if (scene.name == "MainMenu")
         {
-            Debug.Log("EndGameUI detected MainMenu scene - cleaning up");
             Cleanup();
         }
     }
 
+    // Display end game screen
     public void ShowEndGameScreen(EndGameManager.GameResult result)
     {
-        if (endGamePanel == null)
-        {
-            Debug.LogError("EndGamePanel reference is null!");
-            return;
-        }
+        if (endGamePanel == null) return;
 
         isEndGameActive = true;
-
-        // Force the gameObject to be active
         gameObject.SetActive(true);
         endGamePanel.SetActive(true);
 
-        // Set content based on game result
         switch (result)
         {
             case EndGameManager.GameResult.SurvivorsWinByTasks:
@@ -98,10 +84,7 @@ public class EndGameUI : MonoBehaviour
                 break;
         }
 
-        // Disable player controls and enable mouse interaction
         DisablePlayerControls();
-
-        Debug.Log($"End game UI shown for result: {result}");
     }
 
     private void SetSurvivorWinUI(string description)
@@ -128,15 +111,14 @@ public class EndGameUI : MonoBehaviour
             descriptionText.text = description;
     }
 
+    // Disable player controls
     private void DisablePlayerControls()
     {
-        // Find local player and disable controls
         var localPlayer = FindObjectOfType<NetworkPlayerController>();
         if (localPlayer != null && localPlayer.IsOwner)
         {
             localPlayer.enabled = false;
 
-            // Also disable PlayerSpectator
             var spectator = localPlayer.GetComponent<PlayerSpectator>();
             if (spectator != null)
             {
@@ -144,20 +126,15 @@ public class EndGameUI : MonoBehaviour
             }
         }
 
-        // Unlock cursor for UI interaction
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-
-        Debug.Log("Player controls disabled for end game UI");
     }
 
+    // Handle return button click
     private void OnReturnButtonClicked()
     {
         if (!isEndGameActive) return;
 
-        Debug.Log("Return to main menu button clicked");
-
-        // Prevent multiple clicks
         isEndGameActive = false;
 
         if (returnButton != null)
@@ -166,10 +143,8 @@ public class EndGameUI : MonoBehaviour
             returnButton.GetComponentInChildren<TMP_Text>().text = "Returning...";
         }
 
-        // Request server to return to Main Menu
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            // We are the host
             if (EndGameManager.Instance != null)
             {
                 EndGameManager.Instance.ReturnToMainMenu();
@@ -177,7 +152,6 @@ public class EndGameUI : MonoBehaviour
         }
         else if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsClient)
         {
-            // We are a client, request the host
             RequestReturnToMainMenuServerRpc();
         }
     }
@@ -191,7 +165,7 @@ public class EndGameUI : MonoBehaviour
         }
     }
 
-    // Method to hide the UI (useful for testing)
+    // Hide end game screen
     public void HideEndGameScreen()
     {
         if (endGamePanel != null)
@@ -200,14 +174,11 @@ public class EndGameUI : MonoBehaviour
         isEndGameActive = false;
     }
 
+    // Clean up UI
     private void Cleanup()
     {
-        Debug.Log("EndGameUI cleaning up in MainMenu scene");
-
-        // Hide the UI
         HideEndGameScreen();
 
-        // Destroy this gameObject
         if (Instance == this)
         {
             Instance = null;
@@ -216,7 +187,6 @@ public class EndGameUI : MonoBehaviour
         Destroy(gameObject);
     }
 
-    // Clean up when returning to main menu
     private void OnDestroy()
     {
         if (Instance == this)
@@ -224,7 +194,6 @@ public class EndGameUI : MonoBehaviour
             Instance = null;
         }
 
-        // Unsubscribe from scene change event
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }
