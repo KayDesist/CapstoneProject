@@ -40,6 +40,9 @@ public class NetworkPlayerController : NetworkBehaviour
     private void Start()
     {
         InitializeComponents();
+
+        if (networkAnimationController == null)
+            networkAnimationController = GetComponent<NetworkAnimationController>();
     }
 
     private void InitializeComponents()
@@ -49,10 +52,9 @@ public class NetworkPlayerController : NetworkBehaviour
         currentSpeed = walkSpeed;
         lastPosition = transform.position;
 
-        // Get NetworkAnimationController
-        networkAnimationController = GetComponent<NetworkAnimationController>();
+        if (networkAnimationController == null)
+            networkAnimationController = GetComponent<NetworkAnimationController>();
 
-        // Setup audio source
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
@@ -118,6 +120,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
         if (SceneManager.GetActiveScene().name != "GameScene") return;
+        if (playerHealth != null && !playerHealth.IsAlive()) return;
 
         HandleMouseLook();
         HandleSprint();
@@ -130,6 +133,7 @@ public class NetworkPlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
         if (SceneManager.GetActiveScene().name != "GameScene") return;
+        if (playerHealth != null && !playerHealth.IsAlive()) return;
 
         HandleMovement();
     }
@@ -139,18 +143,15 @@ public class NetworkPlayerController : NetworkBehaviour
         if (!IsMoving() || Time.time < nextFootstepTime || footstepSounds == null || footstepSounds.Length == 0)
             return;
 
-        // Play footstep sound locally
         if (audioSource != null && IsOwner)
         {
             int randomIndex = Random.Range(0, footstepSounds.Length);
             audioSource.pitch = Random.Range(0.9f, 1.1f);
             audioSource.PlayOneShot(footstepSounds[randomIndex]);
 
-            // Tell server to play footstep for other clients
             PlayFootstepServerRpc(randomIndex);
         }
 
-        // Calculate next footstep time
         float interval = footstepInterval;
         if (IsSprinting())
             interval *= sprintIntervalMultiplier;
@@ -167,10 +168,8 @@ public class NetworkPlayerController : NetworkBehaviour
     [ClientRpc]
     private void PlayFootstepClientRpc(int soundIndex)
     {
-        // Don't play for owner (already played locally)
         if (IsOwner) return;
 
-        // Play footstep for other players
         if (audioSource != null && footstepSounds != null && soundIndex < footstepSounds.Length)
         {
             audioSource.pitch = Random.Range(0.9f, 1.1f);
@@ -225,7 +224,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     currentSpeed = sprintSpeed;
                     if (playerHealth != null)
                     {
-                        playerHealth.SetSprinting(true); // Add this line
+                        playerHealth.SetSprinting(true);
                     }
                 }
 
@@ -258,7 +257,7 @@ public class NetworkPlayerController : NetworkBehaviour
                     currentSpeed = walkSpeed;
                     if (playerHealth != null)
                     {
-                        playerHealth.SetSprinting(false); // Add this line
+                        playerHealth.SetSprinting(false);
                     }
                 }
             }
@@ -271,7 +270,7 @@ public class NetworkPlayerController : NetworkBehaviour
                 currentSpeed = walkSpeed;
                 if (playerHealth != null)
                 {
-                    playerHealth.SetSprinting(false); // Add this line
+                    playerHealth.SetSprinting(false);
                 }
             }
         }
@@ -280,7 +279,7 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             isSprinting = false;
             currentSpeed = walkSpeed;
-            playerHealth.SetSprinting(false); // Add this line
+            playerHealth.SetSprinting(false);
         }
     }
 
@@ -358,7 +357,6 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-   
     public void SetPerformingTask(bool isPerformingTask)
     {
         if (networkAnimationController != null)
@@ -371,7 +369,6 @@ public class NetworkPlayerController : NetworkBehaviour
         }
     }
 
-    // Keep old method name for compatibility (will call the new one)
     public void PlayTaskAnimation(bool isPerformingTask)
     {
         SetPerformingTask(isPerformingTask);

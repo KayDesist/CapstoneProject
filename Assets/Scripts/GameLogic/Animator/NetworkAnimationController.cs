@@ -29,10 +29,15 @@ public class NetworkAnimationController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner);
 
+    private NetworkVariable<bool> networkIsDead = new NetworkVariable<bool>(false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     // Local animation state
     private Vector3 lastPosition;
     private float currentVelocity;
     private bool isInitialized = false;
+    private bool deathAnimationTriggered = false;
 
     private void Awake()
     {
@@ -69,6 +74,7 @@ public class NetworkAnimationController : NetworkBehaviour
             networkIsSprinting.OnValueChanged += OnSprintingChanged;
             networkIsPerformingTask.OnValueChanged += OnTaskChanged;
             networkAttackTrigger.OnValueChanged += OnAttackTriggered;
+            networkIsDead.OnValueChanged += OnDeathStateChanged;
 
             Debug.Log("NetworkAnimationController: Client initialized");
         }
@@ -90,17 +96,29 @@ public class NetworkAnimationController : NetworkBehaviour
 
     private void UpdateOwnerAnimations()
     {
-        if (animator == null || playerController == null) return;
+        if (animator == null || playerController == null || playerHealth == null) return;
 
-        // Check if player is alive
-        if (playerHealth != null && !playerHealth.IsAlive())
+        // Check if player is dead
+        bool isDead = networkIsDead.Value || (playerHealth != null && !playerHealth.IsAlive());
+
+        if (isDead)
         {
-            // Player is dead, stop animations
+            // Player is dead, stop movement animations
+            if (!deathAnimationTriggered)
+            {
+                // Trigger death animation on owner
+                TriggerDeath();
+                deathAnimationTriggered = true;
+            }
+
             networkSpeed.Value = 0f;
             networkIsSprinting.Value = false;
             networkIsPerformingTask.Value = false;
             return;
         }
+
+        // Player is alive, update movement animations
+        deathAnimationTriggered = false;
 
         // Calculate speed based on movement
         Vector3 currentPosition = transform.position;
@@ -181,6 +199,22 @@ public class NetworkAnimationController : NetworkBehaviour
         }
     }
 
+    private void OnDeathStateChanged(bool oldValue, bool newValue)
+    {
+        Debug.Log($"NetworkAnimationController: Death state changed from {oldValue} to {newValue}");
+
+        if (newValue && animator != null)
+        {
+            // Trigger death animation on all clients
+            TriggerDeath();
+        }
+        else if (!newValue && animator != null)
+        {
+            // Reset death state when player respawns
+            ResetDeathState();
+        }
+    }
+
     private IEnumerator ResetAttackTrigger()
     {
         yield return new WaitForSeconds(0.1f);
@@ -188,6 +222,49 @@ public class NetworkAnimationController : NetworkBehaviour
         {
             networkAttackTrigger.Value = false;
         }
+    }
+
+    // ============ DEATH ANIMATION METHODS ============
+
+    public void TriggerDeath()
+    {
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+            Debug.Log($"NetworkAnimationController: Triggered death animation for player {OwnerClientId}");
+        }
+
+        // Set network variable for all clients
+        if (IsServer)
+        {
+            networkIsDead.Value = true;
+        }
+    }
+
+    public void ResetDeathState()
+    {
+        if (animator != null)
+        {
+            // Reset death trigger and set IsDead parameter to false
+            animator.ResetTrigger("Die");
+            animator.SetBool("IsDead", false);
+
+            // Force animator back to idle state
+            if (animator.isActiveAndEnabled)
+            {
+                animator.Play("Idle", 0, 0f);
+            }
+
+            Debug.Log("NetworkAnimationController: Reset death animation state");
+        }
+
+        // Reset network variable for all clients
+        if (IsServer)
+        {
+            networkIsDead.Value = false;
+        }
+
+        deathAnimationTriggered = false;
     }
 
     // ============ PUBLIC METHODS ============
@@ -217,6 +294,15 @@ public class NetworkAnimationController : NetworkBehaviour
         StartCoroutine(ResetAttackTrigger());
     }
 
+    // Helper method for PlayerHealth to set death state
+    public void SetDeathState(bool isDead)
+    {
+        if (IsServer)
+        {
+            networkIsDead.Value = isDead;
+        }
+    }
+
     public override void OnNetworkDespawn()
     {
         base.OnNetworkDespawn();
@@ -227,6 +313,7 @@ public class NetworkAnimationController : NetworkBehaviour
             networkIsSprinting.OnValueChanged -= OnSprintingChanged;
             networkIsPerformingTask.OnValueChanged -= OnTaskChanged;
             networkAttackTrigger.OnValueChanged -= OnAttackTriggered;
+            networkIsDead.OnValueChanged -= OnDeathStateChanged;
         }
     }
 }

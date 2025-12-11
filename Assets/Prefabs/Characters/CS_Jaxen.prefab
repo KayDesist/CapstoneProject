@@ -181,10 +181,10 @@ Animator:
   m_Controller: {fileID: 9100000, guid: 326551ba0f0f74849a7f1bdb96aaf68c, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
-  m_ApplyRootMotion: 0
+  m_ApplyRootMotion: 1
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
+  m_AnimatePhysics: 1
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -375,8 +375,10 @@ MonoBehaviour:
   staminaRegenDelay: 2
   staminaRegenCooldown: 0
   enableRagdollOnDeath: 1
+  enableDeathAnimation: 1
   ragdollForce: 10
   ragdollDestroyTime: 10
+  deathAnimationDuration: 2
 --- !u!114 &6767008318784022378
 MonoBehaviour:
   m_ObjectHideFlags: 0
